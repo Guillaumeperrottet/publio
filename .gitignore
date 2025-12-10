@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+# Sauf le certificat CA d'Aiven
+!ca.pem
 
 # debug
 npm-debug.log*

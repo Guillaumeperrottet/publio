@@ -1,13 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 Publio - Plateforme SaaS pour Appels d'Offres
 
-## Getting Started
+Publio est une application web destinée aux **communes**, **entreprises**, **architectes**, **ingénieurs**, **bureaux professionnels** et aux **privés** pour la gestion moderne et équitable des appels d'offres.
 
-First, run the development server:
+## 🎨 Stack Technique
+
+- **Framework**: Next.js 16 (App Router)
+- **UI**: shadcn/ui + Tailwind CSS
+- **Base de données**: PostgreSQL + Prisma
+- **Authentification**: Better Auth
+- **Paiements**: Stripe
+- **Fichiers**: Cloudinary
+- **Hébergement**: Vercel
+- **Langage**: TypeScript
+
+## 📁 Architecture du Projet
+
+```
+publio/
+├── app/                    # Pages et routes (Next.js App Router)
+├── components/             # Composants UI réutilisables
+│   ├── ui/                # Composants shadcn/ui
+│   └── layout/            # Layout components
+├── features/              # Modules métier organisés par domaine
+│   ├── organizations/     # Gestion des organisations
+│   ├── tenders/           # Appels d'offres
+│   ├── offers/            # Offres
+│   ├── auth/              # Authentification
+│   └── veille/            # Veille communale
+├── lib/                   # Utilitaires et configurations
+│   ├── db/               # Client Prisma
+│   ├── auth/             # Configuration Better Auth
+│   ├── stripe/           # Configuration Stripe
+│   ├── cloudinary/       # Configuration Cloudinary
+│   └── utils/            # Helpers et utilitaires
+├── types/                 # Types TypeScript globaux
+├── prisma/                # Schéma de base de données
+└── public/                # Assets statiques
+```
+
+## 🚀 Installation
+
+### Prérequis
+
+- Node.js 20+
+- PostgreSQL 15+
+- npm ou yarn
+
+### 1. Installer les dépendances
 
 ```bash
-npm run dev
-# or
-yarn dev
+npm install
 # or
 pnpm dev
 # or

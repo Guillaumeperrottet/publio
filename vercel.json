@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/close-tenders",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/search-alerts",
+      "schedule": "0 8,20 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-veille",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

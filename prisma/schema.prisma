@@ -1,0 +1,683 @@
+// Publio - Schéma de base de données
+// Prisma schema pour PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// UTILISATEURS & AUTHENTIFICATION
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  name          String?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  accounts             Account[]
+  sessions             Session[]
+  memberships          OrganizationMember[]
+  createdOrganizations Organization[]       @relation("CreatedOrganizations")
+  sentInvitations      InvitationToken[]    @relation("SentInvitations")
+
+  @@map("users")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  accountId         String? // Better Auth compatibility
+  userId            String
+  type              String   @default("credential")
+  provider          String   @default("credential")
+  providerId        String? // Better Auth compatibility
+  providerAccountId String   @default(cuid()) // Générer un ID unique par défaut
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  sessionToken String?   @unique
+  token        String?   @unique // Better Auth compatibility
+  userId       String
+  expires      DateTime?
+  expiresAt    DateTime? // Better Auth compatibility
+  ipAddress    String? // Better Auth compatibility
+  userAgent    String? // Better Auth compatibility
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// ORGANISATIONS
+// ============================================
+
+enum OrganizationType {
+  COMMUNE // Administration publique
+  ENTREPRISE // Entreprise / Bureau d'ingénieurs / Architectes
+  PRIVE // Privé / Indépendant
+}
+
+enum OrganizationRole {
+  OWNER // Créateur, gère facturation et paramètres globaux
+  ADMIN // Gère collaborateurs, appels d'offres, offres
+  EDITOR // Crée et modifie appels d'offres, dépose offres
+  VIEWER // Lecture seule
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String
+  type        OrganizationType
+  description String?
+  logo        String?
+  website     String?
+  address     String?
+  city        String?
+  canton      String?
+  country     String           @default("CH")
+  phone       String?
+
+  // Informations administratives
+  siret String? // Numéro d'entreprise
+  taxId String?
+
+  // Stripe
+  stripeCustomerId       String? @unique
+  stripeSubscriptionId   String?
+  stripeSubscriptionPlan String? // VEILLE_BASIC ou VEILLE_UNLIMITED
+
+  // Paramètres
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdBy           String
+  creator             User                 @relation("CreatedOrganizations", fields: [createdBy], references: [id])
+  members             OrganizationMember[]
+  tenders             Tender[]
+  offers              Offer[]
+  subscriptions       Subscription[]
+  invoices            Invoice[]
+  veilleSubscriptions VeilleSubscription[]
+  invitations         InvitationToken[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id       String           @id @default(cuid())
+  role     OrganizationRole
+  joinedAt DateTime         @default(now())
+
+  // Relations
+  userId         String
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_members")
+}
+
+// ============================================
+// APPELS D'OFFRES (TENDERS)
+// ============================================
+
+enum TenderStatus {
+  DRAFT // Brouillon
+  PUBLISHED // Publié
+  CLOSED // Clôturé (deadline passée)
+  AWARDED // Attribué
+  CANCELLED // Annulé
+}
+
+enum TenderVisibility {
+  PUBLIC // Visible par tous
+  PRIVATE // Sur invitation uniquement
+}
+
+enum TenderMode {
+  CLASSIC // Mode classique (identité visible)
+  ANONYMOUS // Mode anonyme (identité masquée jusqu'à deadline)
+}
+
+enum MarketType {
+  CONSTRUCTION // Travaux de construction
+  ENGINEERING // Ingénierie
+  ARCHITECTURE // Architecture
+  IT_SERVICES // Services informatiques
+  CONSULTING // Conseil
+  SUPPLIES // Fournitures
+  MAINTENANCE // Maintenance
+  SERVICES // Services généraux
+  OTHER // Autre
+}
+
+enum TenderProcedure {
+  OPEN // Appel d'offres ouvert à tous
+  SELECTIVE // Procédure sélective / sur invitation
+  PRIVATE // De gré à gré / privé
+}
+
+enum SelectionPriority {
+  LOWEST_PRICE // Prix le plus bas
+  QUALITY_PRICE // Meilleur rapport qualité/prix (défaut)
+  FASTEST_DELIVERY // Délais les plus rapides
+  BEST_REFERENCES // Entreprise avec bonnes références
+  ECO_FRIENDLY // Matériaux écologiques/durables
+}
+
+model Tender {
+  id          String  @id @default(cuid())
+  title       String
+  summary     String? // Résumé court (200-300 caractères)
+  description String // Description détaillée
+
+  // État existant (nouveau champ pour PME/particuliers)
+  currentSituation String? // État existant, situation actuelle (optionnel)
+
+  // Détails du projet
+  marketType MarketType
+  cfcCodes   String[] // Codes de Frais de Construction (CFC) - Multi-sélection
+  budget     Float? // Budget indicatif en CHF
+  currency   String   @default("CHF")
+  showBudget Boolean  @default(true) // Afficher le budget publiquement
+
+  // Quantités et mesures (optionnelles)
+  surfaceM2 Float?  // Surface en m²
+  volumeM3  Float?  // Volume en m³
+
+  // Contraintes spécifiques du chantier (texte libre, personnalisables)
+  constraints String[] @default([]) // Ex: ["Accès difficile", "Site occupé", "Horaires limités"]
+
+  // Durée et planning (optionnels)
+  contractDuration  Int?      // Durée en jours
+  contractStartDate DateTime? // Date de début souhaitée
+  isRenewable       Boolean   @default(false) // Contrat reconductible
+
+  // Publication
+  status       TenderStatus     @default(DRAFT)
+  visibility   TenderVisibility @default(PUBLIC)
+  mode         TenderMode       @default(ANONYMOUS)
+  procedure    TenderProcedure  @default(OPEN)
+  isSimpleMode Boolean          @default(true) // Mode simplifié pour particuliers
+
+  // Critère de sélection prioritaire
+  selectionPriority SelectionPriority @default(QUALITY_PRICE) // Ce qui compte le plus
+
+  // Dates et délais
+  publishedAt      DateTime?
+  deadline         DateTime // Date/heure limite de dépôt des offres
+  questionDeadline DateTime? // Date limite pour questions
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Localisation complète
+  location String? // Lieu d'exécution (texte libre)
+  address  String? // Adresse exacte (optionnelle)
+  city     String?
+  canton   String?
+  country  String  @default("CH")
+
+  // Gestion des lots
+  hasLots            Boolean @default(false)
+  allowPartialOffers Boolean @default(true) // Offres partielles autorisées
+
+  // Conditions de participation
+  participationConditions String? // Texte libre
+  requiredDocuments       String? // Liste des pièces justificatives
+  requiresReferences      Boolean @default(false)
+  requiresInsurance       Boolean @default(false)
+  minExperience           Int? // Expérience minimale en années
+
+  // Conditions contractuelles
+  contractualTerms String? // Conditions contractuelles principales
+
+  // Fichiers
+  documents TenderDocument[]
+  lots      TenderLot[]
+  criteria  TenderCriteria[]
+
+  // Organisation émettrice
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Relations
+  offers      Offer[]
+  invitations TenderInvitation[]
+
+  // Identité révélée (pour mode anonyme)
+  identityRevealed Boolean   @default(false)
+  revealedAt       DateTime?
+
+  @@index([status, visibility, deadline])
+  @@index([organizationId])
+  @@map("tenders")
+}
+
+model TenderDocument {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  size       Int // Taille en bytes
+  mimeType   String
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_documents")
+}
+
+model TenderInvitation {
+  id        String   @id @default(cuid())
+  email     String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  invitedAt DateTime @default(now())
+
+  // Relations
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@unique([tenderId, email])
+  @@map("tender_invitations")
+}
+
+model TenderLot {
+  id          String @id @default(cuid())
+  number      Int // Numéro du lot (1, 2, 3...)
+  title       String // Titre du lot
+  description String // Description du lot
+  budget      Float? // Budget indicatif pour ce lot
+
+  // Relations
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@unique([tenderId, number])
+  @@map("tender_lots")
+}
+
+model TenderCriteria {
+  id          String  @id @default(cuid())
+  name        String // Nom du critère (ex: "Prix", "Qualité technique")
+  description String? // Description du critère
+  weight      Int // Pondération en % (ex: 40 pour 40%)
+  order       Int // Ordre d'affichage
+
+  // Relations
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_criteria")
+}
+
+// ============================================
+// OFFRES (OFFERS)
+// ============================================
+
+enum OfferStatus {
+  DRAFT // Brouillon
+  SUBMITTED // Soumise
+  WITHDRAWN // Retirée
+  ACCEPTED // Acceptée
+  REJECTED // Rejetée
+}
+
+model Offer {
+  id String @id @default(cuid())
+
+  // Informations générales de l'offre
+  offerNumber   String? // Référence interne
+  validityDays  Int     @default(60) // Validité de l'offre en jours
+  projectSummary String // Résumé de compréhension du projet
+
+  // Prix
+  price        Float  // Prix total TTC
+  currency     String @default("CHF")
+  priceType    String @default("GLOBAL") // "GLOBAL" ou "DETAILED"
+  totalHT      Float? // Total HT (si détaillé)
+  totalTVA     Float? // Total TVA (si détaillé)
+  tvaRate      Float  @default(7.7) // Taux de TVA par défaut
+
+  // Description et méthodologie (gardé pour compatibilité)
+  description String  // Méthode / Description
+  methodology String? // Méthodologie détaillée
+  timeline    String? // Délai d'exécution (texte libre)
+
+  // Délais détaillés
+  startDate     DateTime? // Date de début possible
+  durationDays  Int? // Durée estimée en jours
+  constraints   String? // Contraintes/dépendances
+
+  // Conditions de paiement (JSON flexible)
+  paymentTerms Json? // Structure: { deposit: 30, intermediate: 40, final: 30, netDays: 30 }
+
+  // Garanties et assurances
+  warrantyYears   Int? // Garantie travaux en années
+  insuranceAmount Float? // Montant RC professionnelle
+  manufacturerWarranty String? // Garantie fabricant
+
+  // Références
+  references String? // Références de projets similaires
+
+  // Statut
+  status OfferStatus @default(DRAFT)
+
+  // Dates
+  submittedAt DateTime?
+  viewedAt    DateTime? // Date de première consultation par l'émetteur
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Paiement (pour futurs modèles payants)
+  paymentStatus   String    @default("PENDING") // PENDING, PAID, REFUNDED
+  stripePaymentId String?
+  paidAt          DateTime?
+
+  // Relations
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  documents   OfferDocument[]
+  lineItems   OfferLineItem[] // Lignes de prix détaillées
+  inclusions  OfferInclusion[] // Prestations incluses
+  exclusions  OfferExclusion[] // Prestations non incluses
+  materials   OfferMaterial[] // Matériaux proposés
+
+  // Anonymisation (pour mode anonyme)
+  anonymousId  String? @unique // ID anonyme type "Entreprise #0482"
+  isAnonymized Boolean @default(false)
+
+  @@index([tenderId])
+  @@index([organizationId])
+  @@map("offers")
+}
+
+// Lignes de prix détaillées (postes)
+model OfferLineItem {
+  id          String @id @default(cuid())
+  position    Int // Ordre d'affichage
+  description String // Description du poste
+  quantity    Float? // Quantité
+  unit        String? // Unité (m², pièces, heures...)
+  priceHT     Float // Prix HT
+  tvaRate     Float  @default(7.7) // Taux de TVA
+  
+  // Relations
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_line_items")
+}
+
+// Prestations incluses
+model OfferInclusion {
+  id          String @id @default(cuid())
+  position    Int // Ordre d'affichage
+  description String // Description de la prestation
+  
+  // Relations
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_inclusions")
+}
+
+// Prestations NON incluses (exclusions)
+model OfferExclusion {
+  id          String @id @default(cuid())
+  position    Int // Ordre d'affichage
+  description String // Description de ce qui est exclu
+  
+  // Relations
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_exclusions")
+}
+
+// Matériaux proposés
+model OfferMaterial {
+  id               String  @id @default(cuid())
+  position         Int // Ordre d'affichage
+  name             String // Nom du matériau/équipement
+  brand            String? // Marque
+  model            String? // Modèle
+  range            String? // Gamme
+  manufacturerWarranty String? // Garantie fabricant
+  
+  // Relations
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_materials")
+}
+
+model OfferDocument {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  size       Int
+  mimeType   String
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_documents")
+}
+
+// ============================================
+// PAIEMENTS & FACTURATION
+// ============================================
+
+enum SubscriptionPlan {
+  FREE // Gratuit
+  VEILLE_BASIC // CHF 5/mois - 5 communes
+  VEILLE_UNLIMITED // CHF 10/mois - illimité
+}
+
+model Subscription {
+  id     String           @id @default(cuid())
+  plan   SubscriptionPlan @default(FREE)
+  status String           @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+
+  // Stripe
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+  stripePriceId        String?
+
+  // Dates
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id          String @id @default(cuid())
+  number      String @unique
+  amount      Float
+  currency    String @default("CHF")
+  status      String @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  description String
+
+  // Stripe
+  stripeInvoiceId       String? @unique
+  stripePaymentIntentId String?
+
+  // Dates
+  dueDate   DateTime?
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// ============================================
+// MODULE VEILLE COMMUNALE
+// ============================================
+
+model VeilleSubscription {
+  id String @id @default(cuid())
+
+  // Cantons suivis
+  cantons  String[] // Array de cantons (FR, VD, VS, GE, NE, JU, BE)
+  keywords String[] // Mots-clés à surveiller
+
+  // Notifications
+  emailNotifications Boolean @default(true)
+  appNotifications   Boolean @default(true)
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId])
+  @@map("veille_subscriptions")
+}
+
+model VeillePublication {
+  id String @id @default(cuid())
+
+  // Informations de la publication
+  title       String
+  description String?
+  url         String
+  commune     String
+  canton      String
+
+  // Type de publication
+  type String // MISE_A_LENQUETE, PERMIS_CONSTRUIRE, AVIS, etc.
+
+  // Dates
+  publishedAt DateTime
+  scrapedAt   DateTime @default(now())
+
+  // Métadonnées
+  metadata Json? // Données supplémentaires en JSON
+
+  @@index([commune, canton])
+  @@index([publishedAt])
+  @@map("veille_publications")
+}
+
+// ============================================
+// RECHERCHES SAUVEGARDÉES & ALERTES
+// ============================================
+
+model SavedSearch {
+  id   String @id @default(cuid())
+  name String
+
+  // Critères de recherche (JSON)
+  criteria Json // {keywords, location, marketType, budget, etc.}
+
+  // Alertes
+  alertsEnabled Boolean   @default(false)
+  lastAlertSent DateTime?
+
+  // Relations
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("saved_searches")
+}
+
+// ============================================
+// INVITATIONS
+// ============================================
+
+enum InvitationStatus {
+  PENDING // En attente
+  ACCEPTED // Acceptée
+  DECLINED // Refusée
+  EXPIRED // Expirée
+}
+
+model InvitationToken {
+  id     String           @id @default(cuid())
+  token  String           @unique
+  email  String
+  role   OrganizationRole
+  status InvitationStatus @default(PENDING)
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  invitedBy String
+  inviter   User   @relation("SentInvitations", fields: [invitedBy], references: [id])
+
+  // Dates
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+  @@index([organizationId])
+  @@map("invitation_tokens")
+}

@@ -1,0 +1,906 @@
+// Actions pour la gestion des appels d'offres
+"use server";
+
+import { prisma } from "@/lib/db/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
+import {
+  TenderVisibility,
+  TenderMode,
+  TenderStatus,
+  MarketType,
+  TenderProcedure,
+  SelectionPriority,
+  OfferStatus,
+} from "@prisma/client";
+import { createTenderPaymentSession } from "@/lib/stripe";
+import {
+  sendTenderPublishedEmail,
+  sendDeadlinePassedEmail,
+  sendTenderAwardedWinnerEmail,
+  sendTenderAwardedLosersEmail,
+} from "@/lib/email/tender-emails";
+
+/**
+ * Créer un nouvel appel d'offres
+ */
+export async function createTender(data: {
+  organizationId: string;
+  title: string;
+  description: string;
+  budget?: number;
+  deadline: Date;
+  visibility: TenderVisibility;
+  mode: TenderMode;
+  marketType: MarketType;
+  city?: string;
+  canton?: string;
+  location?: string;
+}) {
+  const user = await getCurrentUser();
+
+  // Vérifier que l'utilisateur a les droits
+  const membership = await prisma.organizationMember.findFirst({
+    where: {
+      organizationId: data.organizationId,
+      userId: user.id,
+      role: {
+        in: ["OWNER", "ADMIN", "EDITOR"],
+      },
+    },
+  });
+
+  if (!membership) {
+    throw new Error("Unauthorized");
+  }
+
+  const tender = await prisma.tender.create({
+    data: {
+      ...data,
+      status: TenderStatus.DRAFT,
+    },
+  });
+
+  return tender;
+}
+
+/**
+ * Récupérer les appels d'offres publics
+ */
+export async function getPublicTenders(filters?: {
+  search?: string;
+  canton?: string;
+  city?: string;
+  marketType?: MarketType;
+  budgetMin?: number;
+  budgetMax?: number;
+  mode?: TenderMode;
+  procedure?: TenderProcedure;
+  selectionPriority?: SelectionPriority;
+  deadlineFrom?: string;
+  deadlineTo?: string;
+  surfaceMin?: number;
+  surfaceMax?: number;
+  isRenewable?: boolean;
+  cfcCodes?: string[];
+}) {
+  const where: any = {
+    visibility: TenderVisibility.PUBLIC,
+    status: TenderStatus.PUBLISHED,
+  };
+
+  // Filtres de recherche
+  if (filters?.search) {
+    where.OR = [
+      { title: { contains: filters.search, mode: "insensitive" } },
+      { description: { contains: filters.search, mode: "insensitive" } },
+      { location: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+
+  if (filters?.canton) {
+    where.canton = filters.canton;
+  }
+
+  if (filters?.city) {
+    where.city = { contains: filters.city, mode: "insensitive" };
+  }
+
+  if (filters?.marketType) {
+    where.marketType = filters.marketType;
+  }
+
+  if (filters?.mode) {
+    where.mode = filters.mode;
+  }
+
+  if (filters?.procedure) {
+    where.procedure = filters.procedure;
+  }
+
+  if (filters?.selectionPriority) {
+    where.selectionPriority = filters.selectionPriority;
+  }
+
+  if (filters?.isRenewable !== undefined) {
+    where.isRenewable = filters.isRenewable;
+  }
+
+  // Filtre par codes CFC - matcher au moins un code
+  if (filters?.cfcCodes && filters.cfcCodes.length > 0) {
+    where.cfcCodes = {
+      hasSome: filters.cfcCodes,
+    };
+  }
+
+  // Filtres de budget
+  if (filters?.budgetMin || filters?.budgetMax) {
+    where.budget = {};
+    if (filters.budgetMin) {
+      where.budget.gte = filters.budgetMin;
+    }
+    if (filters.budgetMax) {
+      where.budget.lte = filters.budgetMax;
+    }
+  }
+
+  // Filtres de surface
+  if (filters?.surfaceMin || filters?.surfaceMax) {
+    where.surfaceM2 = {};
+    if (filters.surfaceMin) {
+      where.surfaceM2.gte = filters.surfaceMin;
+    }
+    if (filters.surfaceMax) {
+      where.surfaceM2.lte = filters.surfaceMax;
+    }
+  }
+
+  // Filtres de date limite
+  if (filters?.deadlineFrom || filters?.deadlineTo) {
+    where.deadline = {};
+    if (filters.deadlineFrom) {
+      where.deadline.gte = new Date(filters.deadlineFrom);
+    }
+    if (filters.deadlineTo) {
+      where.deadline.lte = new Date(filters.deadlineTo);
+    }
+  }
+
+  const tenders = await prisma.tender.findMany({
+    where,
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          city: true,
+          canton: true,
+        },
+      },
+      _count: {
+        select: {
+          offers: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return tenders;
+}
+
+/**
+ * Récupérer un appel d'offres par son ID
+ */
+export async function getTenderById(id: string) {
+  const tender = await prisma.tender.findUnique({
+    where: { id },
+    include: {
+      organization: {
+        include: {
+          members: {
+            select: {
+              userId: true,
+              role: true,
+            },
+          },
+        },
+      },
+      documents: true,
+      lots: {
+        orderBy: {
+          number: "asc",
+        },
+      },
+      criteria: {
+        orderBy: {
+          order: "asc",
+        },
+      },
+      _count: {
+        select: {
+          offers: true,
+        },
+      },
+    },
+  });
+
+  return tender;
+}
+
+/**
+ * Publier un appel d'offres
+ */
+export async function publishTender(tenderId: string) {
+  const user = await getCurrentUser();
+
+  // Vérifier que l'utilisateur a les droits
+  const tender = await prisma.tender.findUnique({
+    where: { id: tenderId },
+    include: {
+      organization: {
+        include: {
+          members: {
+            where: {
+              userId: user.id,
+              role: {
+                in: ["OWNER", "ADMIN", "EDITOR"],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!tender?.organization.members.length) {
+    throw new Error("Unauthorized");
+  }
+
+  const updatedTender = await prisma.tender.update({
+    where: { id: tenderId },
+    data: {
+      status: TenderStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+    include: {
+      organization: {
+        include: {
+          members: {
+            where: {
+              role: {
+                in: ["OWNER", "ADMIN"],
+              },
+            },
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Envoyer email de confirmation aux admins/owners
+  const adminEmails = updatedTender.organization.members
+    .map((m) => m.user.email)
+    .filter((email): email is string => !!email);
+
+  if (adminEmails.length > 0) {
+    try {
+      await sendTenderPublishedEmail({
+        to: adminEmails,
+        tenderTitle: updatedTender.title,
+        tenderId: updatedTender.id,
+        deadline: updatedTender.deadline,
+        budget: updatedTender.budget || undefined,
+      });
+    } catch (error) {
+      console.error("Error sending publication email:", error);
+      // Ne pas bloquer la publication si l'email échoue
+    }
+  }
+
+  return updatedTender;
+}
+
+/**
+ * Récupérer les appels d'offres d'une organisation
+ */
+export async function getOrganizationTenders(organizationId: string) {
+  const user = await getCurrentUser();
+
+  // Vérifier que l'utilisateur fait partie de l'organisation
+  const membership = await prisma.organizationMember.findFirst({
+    where: {
+      organizationId,
+      userId: user.id,
+    },
+  });
+
+  if (!membership) {
+    throw new Error("Unauthorized");
+  }
+
+  const tenders = await prisma.tender.findMany({
+    where: {
+      organizationId,
+    },
+    include: {
+      _count: {
+        select: {
+          offers: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return tenders;
+}
+
+/**
+ * Mettre à jour un tender en brouillon
+ */
+export async function updateDraftTender(data: {
+  id: string;
+  title?: string;
+  summary?: string;
+  description?: string;
+  marketType?: string;
+  budget?: number;
+  showBudget?: boolean;
+  contractDuration?: string;
+  contractStartDate?: string;
+  isRenewable?: boolean;
+  deadline?: Date;
+  address?: string;
+  city?: string;
+  canton?: string;
+  country?: string;
+  location?: string;
+  isSimpleMode?: boolean;
+  hasLots?: boolean;
+  lots?: Array<{
+    number: number;
+    title: string;
+    description: string;
+    budget?: string;
+  }>;
+  criteria?: Array<{
+    id?: string;
+    name: string;
+    description: string;
+    weight: number;
+    order: number;
+  }>;
+  questionDeadline?: string;
+  participationConditions?: string;
+  requiredDocuments?: string;
+  requiresReferences?: boolean;
+  requiresInsurance?: boolean;
+  minExperience?: string;
+  contractualTerms?: string;
+  procedure?: string;
+  allowPartialOffers?: boolean;
+  visibility?: string;
+  mode?: string;
+}) {
+  const user = await getCurrentUser();
+
+  // Vérifier que le tender existe et est en DRAFT
+  const tender = await prisma.tender.findUnique({
+    where: { id: data.id },
+    include: {
+      organization: {
+        include: {
+          members: {
+            where: { userId: user.id },
+          },
+        },
+      },
+    },
+  });
+
+  if (!tender) {
+    throw new Error("Tender not found");
+  }
+
+  if (tender.status !== TenderStatus.DRAFT) {
+    throw new Error("Only draft tenders can be edited");
+  }
+
+  const membership = tender.organization.members[0];
+  if (!membership || !["OWNER", "ADMIN", "EDITOR"].includes(membership.role)) {
+    throw new Error("Unauthorized");
+  }
+
+  // Mettre à jour le tender
+  const updatedTender = await prisma.tender.update({
+    where: { id: data.id },
+    data: {
+      title: data.title,
+      summary: data.summary,
+      description: data.description,
+      marketType: data.marketType as MarketType,
+      budget: data.budget,
+      showBudget: data.showBudget,
+      contractDuration: data.contractDuration
+        ? parseInt(data.contractDuration)
+        : null,
+      contractStartDate: data.contractStartDate
+        ? new Date(data.contractStartDate)
+        : null,
+      isRenewable: data.isRenewable,
+      deadline: data.deadline,
+      address: data.address,
+      city: data.city,
+      canton: data.canton,
+      country: data.country,
+      location: data.location,
+      isSimpleMode: data.isSimpleMode,
+      hasLots: data.hasLots,
+      allowPartialOffers: data.allowPartialOffers,
+      questionDeadline: data.questionDeadline
+        ? new Date(data.questionDeadline)
+        : null,
+      participationConditions: data.participationConditions,
+      requiredDocuments: data.requiredDocuments,
+      requiresReferences: data.requiresReferences,
+      requiresInsurance: data.requiresInsurance,
+      minExperience: data.minExperience ? parseInt(data.minExperience) : null,
+      contractualTerms: data.contractualTerms,
+      procedure: data.procedure as any,
+      visibility: data.visibility as TenderVisibility,
+      mode: data.mode as TenderMode,
+    },
+  });
+
+  // Gérer les lots - toujours supprimer et recréer
+  await prisma.tenderLot.deleteMany({
+    where: { tenderId: data.id },
+  });
+
+  if (data.lots && data.lots.length > 0) {
+    await prisma.tenderLot.createMany({
+      data: data.lots.map((lot) => ({
+        tenderId: data.id,
+        number: lot.number,
+        title: lot.title,
+        description: lot.description,
+        budget: lot.budget ? parseFloat(lot.budget) : null,
+      })),
+    });
+  }
+
+  // Gérer les critères - toujours supprimer et recréer
+  await prisma.tenderCriteria.deleteMany({
+    where: { tenderId: data.id },
+  });
+
+  if (data.criteria && data.criteria.length > 0) {
+    await prisma.tenderCriteria.createMany({
+      data: data.criteria.map((c) => ({
+        tenderId: data.id,
+        name: c.name,
+        description: c.description || null,
+        weight: c.weight,
+        order: c.order,
+      })),
+    });
+  }
+
+  return updatedTender;
+}
+
+/**
+ * Supprimer un appel d'offres en brouillon
+ */
+export async function deleteDraftTender(tenderId: string) {
+  const user = await getCurrentUser();
+
+  // Récupérer le tender pour vérifier les droits
+  const tender = await prisma.tender.findUnique({
+    where: { id: tenderId },
+    include: {
+      organization: {
+        include: {
+          members: {
+            where: {
+              userId: user.id,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!tender) {
+    throw new Error("Tender not found");
+  }
+
+  // Vérifier que l'utilisateur a les droits
+  const membership = tender.organization.members[0];
+  if (!membership || !["OWNER", "ADMIN", "EDITOR"].includes(membership.role)) {
+    throw new Error("Unauthorized");
+  }
+
+  // Vérifier que le tender est bien en brouillon
+  if (tender.status !== TenderStatus.DRAFT) {
+    throw new Error("Only draft tenders can be deleted");
+  }
+
+  // Supprimer le tender (cascade supprimera les documents, lots, critères)
+  await prisma.tender.delete({
+    where: { id: tenderId },
+  });
+
+  return { success: true };
+}
+
+// ============================================
+// GESTION DU CYCLE DE VIE DES TENDERS
+// ============================================
+
+/**
+ * Clôturer un appel d'offres
+ * L'émetteur ferme manuellement l'appel d'offres après la deadline
+ */
+export async function closeTender(tenderId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer le tender
+    const tender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                userId: user.id,
+                role: {
+                  in: ["OWNER", "ADMIN", "EDITOR"],
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            offers: true,
+          },
+        },
+      },
+    });
+
+    if (!tender) {
+      return { error: "Appel d'offres introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits
+    if (!tender.organization.members.length) {
+      return {
+        error: "Vous n'avez pas les droits pour clôturer cet appel d'offres",
+      };
+    }
+
+    // Vérifier que le tender est publié
+    if (tender.status !== TenderStatus.PUBLISHED) {
+      return {
+        error: "Seuls les appels d'offres publiés peuvent être clôturés",
+      };
+    }
+
+    // Optionnel : vérifier que la deadline est passée
+    // (mais on permet de clôturer avant si besoin)
+
+    // Mettre à jour le tender
+    const updatedTender = await prisma.tender.update({
+      where: { id: tenderId },
+      data: {
+        status: TenderStatus.CLOSED,
+      },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                role: {
+                  in: ["OWNER", "ADMIN"],
+                },
+              },
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Envoyer email de notification si des offres ont été reçues
+    if (tender._count.offers > 0) {
+      const adminEmails = updatedTender.organization.members
+        .map((m) => m.user.email)
+        .filter((email): email is string => !!email);
+
+      if (adminEmails.length > 0) {
+        try {
+          await sendDeadlinePassedEmail({
+            to: adminEmails,
+            tenderTitle: updatedTender.title,
+            tenderId: updatedTender.id,
+            offersCount: tender._count.offers,
+            isAnonymous: updatedTender.mode === "ANONYMOUS",
+          });
+        } catch (error) {
+          console.error("Error sending closure email:", error);
+          // Ne pas bloquer la clôture si l'email échoue
+        }
+      }
+    }
+
+    return { success: true, tender: updatedTender };
+  } catch (error) {
+    console.error("Error closing tender:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Attribuer le marché à une offre gagnante
+ */
+export async function awardTender(tenderId: string, winningOfferId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer le tender avec l'offre gagnante
+    const tender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                userId: user.id,
+                role: {
+                  in: ["OWNER", "ADMIN"],
+                },
+              },
+            },
+          },
+        },
+        offers: {
+          where: {
+            id: winningOfferId,
+          },
+          include: {
+            organization: true,
+          },
+        },
+      },
+    });
+
+    if (!tender) {
+      return { error: "Appel d'offres introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN seulement)
+    if (!tender.organization.members.length) {
+      return {
+        error: "Vous n'avez pas les droits pour attribuer cet appel d'offres",
+      };
+    }
+
+    // Vérifier que le tender est clôturé ou publié
+    if (
+      tender.status !== TenderStatus.CLOSED &&
+      tender.status !== TenderStatus.PUBLISHED
+    ) {
+      return {
+        error: "L'appel d'offres doit être clôturé avant d'être attribué",
+      };
+    }
+
+    // Vérifier que l'offre existe
+    const winningOffer = tender.offers[0];
+    if (!winningOffer) {
+      return { error: "Offre gagnante introuvable" };
+    }
+
+    // Vérifier que l'offre est acceptée ou soumise
+    if (
+      winningOffer.status !== "ACCEPTED" &&
+      winningOffer.status !== "SUBMITTED"
+    ) {
+      return {
+        error: "L'offre doit être acceptée ou soumise pour être attribuée",
+      };
+    }
+
+    // Transaction : mettre à jour tender + offre gagnante + rejeter les autres
+    await prisma.$transaction(async (tx) => {
+      // 1. Mettre à jour le tender
+      await tx.tender.update({
+        where: { id: tenderId },
+        data: {
+          status: TenderStatus.AWARDED,
+        },
+      });
+
+      // 2. Accepter l'offre gagnante si pas déjà fait
+      if (winningOffer.status !== "ACCEPTED") {
+        await tx.offer.update({
+          where: { id: winningOfferId },
+          data: {
+            status: OfferStatus.ACCEPTED,
+          },
+        });
+      }
+
+      // 3. Rejeter automatiquement toutes les autres offres soumises
+      await tx.offer.updateMany({
+        where: {
+          tenderId,
+          id: {
+            not: winningOfferId,
+          },
+          status: "SUBMITTED",
+        },
+        data: {
+          status: OfferStatus.REJECTED,
+        },
+      });
+    });
+
+    // Récupérer les informations complètes pour les emails
+    const finalTender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        organization: true,
+        offers: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: {
+                    role: {
+                      in: ["OWNER", "ADMIN"],
+                    },
+                  },
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (finalTender) {
+      // Email au gagnant
+      const winner = finalTender.offers.find((o) => o.id === winningOfferId);
+      if (winner) {
+        const winnerEmails = winner.organization.members
+          .map((m) => m.user.email)
+          .filter((email): email is string => !!email);
+
+        if (winnerEmails.length > 0) {
+          try {
+            await sendTenderAwardedWinnerEmail({
+              to: winnerEmails,
+              tenderTitle: finalTender.title,
+              tenderId: finalTender.id,
+              offerPrice: winner.price,
+              offerCurrency: winner.currency,
+              organizationName: finalTender.organization.name,
+            });
+          } catch (error) {
+            console.error("Error sending winner email:", error);
+          }
+        }
+      }
+
+      // Emails aux perdants
+      const losers = finalTender.offers.filter(
+        (o) => o.id !== winningOfferId && o.status === "REJECTED"
+      );
+
+      for (const loser of losers) {
+        const loserEmails = loser.organization.members
+          .map((m) => m.user.email)
+          .filter((email): email is string => !!email);
+
+        if (loserEmails.length > 0) {
+          try {
+            await sendTenderAwardedLosersEmail({
+              to: loserEmails,
+              tenderTitle: finalTender.title,
+            });
+          } catch (error) {
+            console.error("Error sending loser email:", error);
+          }
+        }
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error awarding tender:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Annuler un appel d'offres
+ */
+export async function cancelTender(tenderId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer le tender
+    const tender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                userId: user.id,
+                role: {
+                  in: ["OWNER", "ADMIN"],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tender) {
+      return { error: "Appel d'offres introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN seulement)
+    if (!tender.organization.members.length) {
+      return {
+        error: "Vous n'avez pas les droits pour annuler cet appel d'offres",
+      };
+    }
+
+    // Ne peut pas annuler un tender déjà attribué
+    if (tender.status === TenderStatus.AWARDED) {
+      return {
+        error: "Impossible d'annuler un appel d'offres déjà attribué",
+      };
+    }
+
+    // Mettre à jour le tender
+    const updatedTender = await prisma.tender.update({
+      where: { id: tenderId },
+      data: {
+        status: TenderStatus.CANCELLED,
+      },
+    });
+
+    // TODO: Envoyer email d'annulation aux soumissionnaires
+
+    return { success: true, tender: updatedTender };
+  } catch (error) {
+    console.error("Error cancelling tender:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
