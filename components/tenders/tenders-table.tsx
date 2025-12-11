@@ -28,6 +28,9 @@ import {
   XCircle,
   Lock,
   FileEdit,
+  ChevronDown,
+  ChevronUp,
+  Download,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -252,65 +255,257 @@ export function TendersTable({ tenders }: TendersTableProps) {
                   const isSelected = selectedTender === tender.id;
 
                   return (
-                    <div
-                      key={tender.id}
-                      onClick={() =>
-                        setSelectedTender(isSelected ? null : tender.id)
-                      }
-                      className={`grid grid-cols-12 gap-4 p-4 hover:bg-sand-light/30 cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-artisan-yellow/10 border-l-4 border-l-artisan-yellow"
-                          : ""
-                      }`}
-                    >
-                      {/* Titre */}
-                      <div className="col-span-5 flex items-center gap-2 min-w-0">
-                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{tender.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {tender.city && tender.canton && (
-                              <>
-                                <MapPin className="w-3 h-3 inline mr-1" />
-                                {tender.city}, {tender.canton}
-                              </>
-                            )}
-                          </p>
+                    <div key={tender.id}>
+                      {/* Ligne principale */}
+                      <div
+                        onClick={() =>
+                          setSelectedTender(isSelected ? null : tender.id)
+                        }
+                        className={`grid grid-cols-12 gap-4 p-4 hover:bg-sand-light/30 cursor-pointer transition-colors ${
+                          isSelected ? "bg-white" : ""
+                        }`}
+                      >
+                        {/* Titre avec chevron */}
+                        <div className="col-span-5 flex items-center gap-2 min-w-0">
+                          {isSelected ? (
+                            <ChevronUp className="w-4 h-4 text-artisan-yellow shrink-0" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">
+                              {tender.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {tender.city && tender.canton && (
+                                <>
+                                  <MapPin className="w-3 h-3 inline mr-1" />
+                                  {tender.city}, {tender.canton}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Statut */}
+                        <div className="col-span-2 flex items-center">
+                          <Badge
+                            className={`${
+                              statusConfig[tender.status]?.color
+                            } text-xs`}
+                          >
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {statusConfig[tender.status]?.label}
+                          </Badge>
+                        </div>
+
+                        {/* Échéance */}
+                        <div className="col-span-2 flex items-center gap-1 text-sm">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span className={deadlineStatus.color}>
+                            {deadlineStatus.label}
+                          </span>
+                        </div>
+
+                        {/* Offres */}
+                        <div className="col-span-2 flex items-center">
+                          {tender.status === "PUBLISHED" && (
+                            <Badge variant="outline" className="text-xs">
+                              {tender._count?.offers || 0} offre
+                              {(tender._count?.offers || 0) > 1 ? "s" : ""}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="col-span-1 flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/dashboard/tenders/${tender.id}`}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Voir les détails
+                                </Link>
+                              </DropdownMenuItem>
+                              {tender.status === "DRAFT" && (
+                                <>
+                                  <DropdownMenuItem asChild>
+                                    <Link
+                                      href={`/dashboard/tenders/${tender.id}/edit`}
+                                      className="cursor-pointer"
+                                    >
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Éditer
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <DeleteDraftButton
+                                      tenderId={tender.id}
+                                      tenderTitle={tender.title}
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
 
-                      {/* Statut */}
-                      <div className="col-span-2 flex items-center">
-                        <Badge
-                          className={`${
-                            statusConfig[tender.status]?.color
-                          } text-xs`}
+                      {/* Détails expandable - cliquable pour navigation */}
+                      {isSelected && (
+                        <Link
+                          href={`/dashboard/tenders/${tender.id}`}
+                          className="block p-6 bg-white border-t-2 border-gray-200 hover:bg-sand-light/20 transition-colors"
                         >
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig[tender.status]?.label}
-                        </Badge>
-                      </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Type de marché */}
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                <FileText className="w-4 h-4" />
+                                Type de marché
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {marketTypeLabels[tender.marketType]}
+                              </p>
+                            </div>
 
-                      {/* Échéance */}
-                      <div className="col-span-2 flex items-center gap-1 text-sm">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className={deadlineStatus.color}>
-                          {deadlineStatus.label}
-                        </span>
-                      </div>
+                            {/* Localisation */}
+                            {tender.city && tender.canton && (
+                              <div>
+                                <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                  <MapPin className="w-4 h-4" />
+                                  Localisation
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {tender.city}, {tender.canton}
+                                </p>
+                              </div>
+                            )}
 
-                      {/* Offres */}
-                      <div className="col-span-2 flex items-center">
-                        {tender.status === "PUBLISHED" && (
-                          <Badge variant="outline" className="text-xs">
-                            {tender._count?.offers || 0} offre
-                            {(tender._count?.offers || 0) > 1 ? "s" : ""}
-                          </Badge>
-                        )}
-                      </div>
+                            {/* Budget */}
+                            {tender.budget && (
+                              <div>
+                                <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                  <Euro className="w-4 h-4" />
+                                  Budget
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Intl.NumberFormat("fr-CH", {
+                                    style: "currency",
+                                    currency: tender.currency,
+                                    maximumFractionDigits: 0,
+                                  }).format(tender.budget)}
+                                </p>
+                              </div>
+                            )}
 
-                      {/* Actions */}
-                      <div className="col-span-1 flex items-center justify-end">
+                            {/* Date limite */}
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                <Calendar className="w-4 h-4" />
+                                Date limite
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {format(
+                                  new Date(tender.deadline),
+                                  "dd MMMM yyyy 'à' HH:mm",
+                                  {
+                                    locale: fr,
+                                  }
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Description si disponible */}
+                          {tender.description && (
+                            <div className="mt-4 pt-4 border-t-2 border-gray-200">
+                              <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                <FileText className="w-4 h-4" />
+                                Description
+                              </h4>
+                              <p className="text-sm text-muted-foreground line-clamp-3">
+                                {tender.description}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="mt-4 text-sm text-artisan-yellow font-medium flex items-center gap-2">
+                            <Eye className="w-4 h-4" />
+                            Cliquer pour voir tous les détails
+                          </div>
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Vue mobile - Cartes */}
+          <div className="md:hidden space-y-3">
+            {filteredTenders.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-gray-300 rounded-lg">
+                Aucun résultat trouvé
+              </div>
+            ) : (
+              filteredTenders.map((tender) => {
+                const StatusIcon =
+                  statusConfig[tender.status]?.icon || FileText;
+                const deadlineStatus = getDeadlineStatus(
+                  new Date(tender.deadline)
+                );
+                const isSelected = selectedTender === tender.id;
+
+                return (
+                  <div key={tender.id}>
+                    {/* Carte principale */}
+                    <div
+                      onClick={() =>
+                        setSelectedTender(isSelected ? null : tender.id)
+                      }
+                      className={`border-2 border-matte-black rounded-lg p-4 bg-white cursor-pointer ${
+                        isSelected ? "border-artisan-yellow" : ""
+                      }`}
+                    >
+                      {/* Header avec chevron */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                          {isSelected ? (
+                            <ChevronUp className="w-5 h-5 text-artisan-yellow shrink-0 mt-0.5" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate mb-1">
+                              {tender.title}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {tender.city && tender.canton && (
+                                <>
+                                  <MapPin className="w-3 h-3" />
+                                  <span>
+                                    {tender.city}, {tender.canton}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             asChild
@@ -353,135 +548,98 @@ export function TendersTable({ tenders }: TendersTableProps) {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
+
+                      {/* Info badges */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Badge
+                          className={`${
+                            statusConfig[tender.status]?.color
+                          } text-xs`}
+                        >
+                          <StatusIcon className="w-3 h-3 mr-1" />
+                          {statusConfig[tender.status]?.label}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {deadlineStatus.label}
+                        </Badge>
+                        {tender.status === "PUBLISHED" && (
+                          <Badge variant="outline" className="text-xs">
+                            {tender._count?.offers || 0} offre
+                            {(tender._count?.offers || 0) > 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{marketTypeLabels[tender.marketType]}</span>
+                        {tender.budget && (
+                          <span className="font-medium">
+                            {new Intl.NumberFormat("fr-CH", {
+                              style: "currency",
+                              currency: tender.currency,
+                              maximumFractionDigits: 0,
+                            }).format(tender.budget)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
-          {/* Vue mobile - Cartes */}
-          <div className="md:hidden space-y-3">
-            {filteredTenders.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-gray-300 rounded-lg">
-                Aucun résultat trouvé
-              </div>
-            ) : (
-              filteredTenders.map((tender) => {
-                const StatusIcon =
-                  statusConfig[tender.status]?.icon || FileText;
-                const deadlineStatus = getDeadlineStatus(
-                  new Date(tender.deadline)
-                );
-                const isSelected = selectedTender === tender.id;
+                    {/* Détails expandable mobile - cliquable pour navigation */}
+                    {isSelected && (
+                      <Link
+                        href={`/dashboard/tenders/${tender.id}`}
+                        className="mt-2 p-4 bg-white border-2 border-matte-black rounded-lg block hover:bg-sand-light/20 transition-colors"
+                      >
+                        <div className="space-y-4">
+                          {/* Type de marché */}
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                              <FileText className="w-4 h-4" />
+                              Type de marché
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {marketTypeLabels[tender.marketType]}
+                            </p>
+                          </div>
 
-                return (
-                  <div
-                    key={tender.id}
-                    onClick={() =>
-                      setSelectedTender(isSelected ? null : tender.id)
-                    }
-                    className={`border-2 border-matte-black rounded-lg p-4 bg-white ${
-                      isSelected
-                        ? "border-artisan-yellow bg-artisan-yellow/5"
-                        : ""
-                    }`}
-                  >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate mb-1">
-                          {tender.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {tender.city && tender.canton && (
-                            <>
-                              <MapPin className="w-3 h-3" />
-                              <span>
-                                {tender.city}, {tender.canton}
-                              </span>
-                            </>
+                          {/* Date limite */}
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                              <Calendar className="w-4 h-4" />
+                              Date limite
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {format(
+                                new Date(tender.deadline),
+                                "dd MMMM yyyy 'à' HH:mm",
+                                {
+                                  locale: fr,
+                                }
+                              )}
+                            </p>
+                          </div>
+
+                          {/* Description si disponible */}
+                          {tender.description && (
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
+                                <FileText className="w-4 h-4" />
+                                Description
+                              </h4>
+                              <p className="text-sm text-muted-foreground line-clamp-3">
+                                {tender.description}
+                              </p>
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href={`/dashboard/tenders/${tender.id}`}
-                              className="cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Voir les détails
-                            </Link>
-                          </DropdownMenuItem>
-                          {tender.status === "DRAFT" && (
-                            <>
-                              <DropdownMenuItem asChild>
-                                <Link
-                                  href={`/dashboard/tenders/${tender.id}/edit`}
-                                  className="cursor-pointer"
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Éditer
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <DeleteDraftButton
-                                  tenderId={tender.id}
-                                  tenderTitle={tender.title}
-                                />
-                              </div>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    {/* Info badges */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <Badge
-                        className={`${
-                          statusConfig[tender.status]?.color
-                        } text-xs`}
-                      >
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig[tender.status]?.label}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {deadlineStatus.label}
-                      </Badge>
-                      {tender.status === "PUBLISHED" && (
-                        <Badge variant="outline" className="text-xs">
-                          {tender._count?.offers || 0} offre
-                          {(tender._count?.offers || 0) > 1 ? "s" : ""}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{marketTypeLabels[tender.marketType]}</span>
-                      {tender.budget && (
-                        <span className="font-medium">
-                          {new Intl.NumberFormat("fr-CH", {
-                            style: "currency",
-                            currency: tender.currency,
-                            maximumFractionDigits: 0,
-                          }).format(tender.budget)}
-                        </span>
-                      )}
-                    </div>
+                        <div className="mt-4 text-sm text-artisan-yellow font-medium flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          Cliquer pour voir tous les détails
+                        </div>
+                      </Link>
+                    )}
                   </div>
                 );
               })
@@ -497,15 +655,11 @@ export function TendersTable({ tenders }: TendersTableProps) {
               <div className="p-4 bg-sand-light border-b-2 border-matte-black flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">
-                    {selectedTenderData.title}
+                    Actions rapides
                   </h3>
-                  <Badge
-                    className={`${
-                      statusConfig[selectedTenderData.status]?.color
-                    } text-xs`}
-                  >
-                    {statusConfig[selectedTenderData.status]?.label}
-                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedTenderData.title}
+                  </p>
                 </div>
                 <Button
                   variant="ghost"
@@ -517,55 +671,42 @@ export function TendersTable({ tenders }: TendersTableProps) {
               </div>
 
               {/* Contenu */}
-              <div className="p-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {/* Type de marché */}
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Type de marché
+              <div className="p-4 space-y-4">
+                {/* Statut actuel */}
+                <div className="p-3 border-2 border-gray-200 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Statut actuel
                   </p>
-                  <p className="font-medium">
-                    {marketTypeLabels[selectedTenderData.marketType]}
-                  </p>
+                  <Badge
+                    className={`${
+                      statusConfig[selectedTenderData.status]?.color
+                    } text-xs`}
+                  >
+                    {statusConfig[selectedTenderData.status]?.label}
+                  </Badge>
                 </div>
 
-                {/* Localisation */}
-                {selectedTenderData.city && selectedTenderData.canton && (
-                  <div>
+                {/* Statistiques rapides */}
+                {selectedTenderData.status === "PUBLISHED" && (
+                  <div className="p-3 border-2 border-artisan-yellow/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">
-                      Localisation
+                      Offres reçues
                     </p>
-                    <p className="font-medium flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {selectedTenderData.city}, {selectedTenderData.canton}
-                    </p>
-                  </div>
-                )}
-
-                {/* Budget */}
-                {selectedTenderData.budget && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Budget</p>
-                    <p className="font-medium flex items-center gap-2">
-                      <Euro className="w-4 h-4" />
-                      {new Intl.NumberFormat("fr-CH", {
-                        style: "currency",
-                        currency: selectedTenderData.currency,
-                        maximumFractionDigits: 0,
-                      }).format(selectedTenderData.budget)}
+                    <p className="font-semibold text-2xl text-artisan-yellow">
+                      {selectedTenderData._count?.offers || 0}
                     </p>
                   </div>
                 )}
 
                 {/* Échéance */}
-                <div>
+                <div className="p-3 border-2 border-gray-200 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">Échéance</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                  <p className="font-medium text-sm">
                     {format(new Date(selectedTenderData.deadline), "PPP", {
                       locale: fr,
                     })}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatDistanceToNow(
                       new Date(selectedTenderData.deadline),
                       {
@@ -576,42 +717,18 @@ export function TendersTable({ tenders }: TendersTableProps) {
                   </p>
                 </div>
 
-                {/* Description */}
-                {selectedTenderData.description && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Description
-                    </p>
-                    <p className="text-sm leading-relaxed">
-                      {selectedTenderData.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Offres reçues */}
-                {selectedTenderData.status === "PUBLISHED" && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Offres reçues
-                    </p>
-                    <p className="font-semibold text-lg text-artisan-yellow">
-                      {selectedTenderData._count?.offers || 0} offre
-                      {(selectedTenderData._count?.offers || 0) > 1 ? "s" : ""}
-                    </p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="pt-4 border-t space-y-2">
+                {/* Actions principales */}
+                <div className="space-y-2 pt-2">
                   <Link
                     href={`/dashboard/tenders/${selectedTenderData.id}`}
                     className="block"
                   >
                     <Button className="w-full">
                       <Eye className="w-4 h-4 mr-2" />
-                      Voir les détails complets
+                      Voir les détails
                     </Button>
                   </Link>
+
                   {selectedTenderData.status === "DRAFT" && (
                     <Link
                       href={`/dashboard/tenders/${selectedTenderData.id}/edit`}
@@ -623,6 +740,71 @@ export function TendersTable({ tenders }: TendersTableProps) {
                       </Button>
                     </Link>
                   )}
+
+                  {selectedTenderData.status === "PUBLISHED" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          // TODO: Implémenter la fonctionnalité de clôture
+                          alert("Fonctionnalité de clôture à venir");
+                        }}
+                      >
+                        <Lock className="w-4 h-4 mr-2" />
+                        Clôturer l&apos;appel d&apos;offre
+                      </Button>
+
+                      {selectedTenderData._count?.offers &&
+                        selectedTenderData._count.offers > 0 && (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              // TODO: Implémenter l'attribution
+                              alert("Fonctionnalité d'attribution à venir");
+                            }}
+                          >
+                            <Award className="w-4 h-4 mr-2" />
+                            Attribuer le marché
+                          </Button>
+                        )}
+                    </>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      // TODO: Implémenter l'export PDF
+                      alert("Export PDF à venir");
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exporter en PDF
+                  </Button>
+                </div>
+
+                {/* Info complémentaire */}
+                <div className="pt-4 border-t-2 border-gray-200">
+                  <p className="text-xs text-muted-foreground">
+                    {selectedTenderData.city && selectedTenderData.canton && (
+                      <span className="flex items-center gap-1 mb-1">
+                        <MapPin className="w-3 h-3" />
+                        {selectedTenderData.city}, {selectedTenderData.canton}
+                      </span>
+                    )}
+                    {selectedTenderData.budget && (
+                      <span className="flex items-center gap-1">
+                        <Euro className="w-3 h-3" />
+                        {new Intl.NumberFormat("fr-CH", {
+                          style: "currency",
+                          currency: selectedTenderData.currency,
+                          maximumFractionDigits: 0,
+                        }).format(selectedTenderData.budget)}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
