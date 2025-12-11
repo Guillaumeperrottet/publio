@@ -41,11 +41,23 @@ export function PublicationsListClient({
 }: PublicationsListClientProps) {
   const [selectedCommune, setSelectedCommune] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Extraire toutes les communes uniques des publications
   const communes = useMemo(() => {
     return Array.from(new Set(publications.map((p) => p.commune))).sort();
+  }, [publications]);
+
+  // Extraire toutes les sources uniques des publications
+  const sources = useMemo(() => {
+    const sourcesSet = new Set<string>();
+    publications.forEach((p) => {
+      if (p.metadata?.source) {
+        sourcesSet.add(p.metadata.source);
+      }
+    });
+    return Array.from(sourcesSet).sort();
   }, [publications]);
 
   // Filtrer les publications
@@ -61,6 +73,11 @@ export function PublicationsListClient({
         return false;
       }
 
+      // Filtre par source
+      if (selectedSource && pub.metadata?.source !== selectedSource) {
+        return false;
+      }
+
       // Filtre par recherche textuelle
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -73,7 +90,13 @@ export function PublicationsListClient({
 
       return true;
     });
-  }, [publications, selectedCommune, selectedType, searchQuery]);
+  }, [
+    publications,
+    selectedCommune,
+    selectedType,
+    selectedSource,
+    searchQuery,
+  ]);
 
   // Trier par date (plus récent en premier)
   const sortedPublications = useMemo(() => {
@@ -92,6 +115,9 @@ export function PublicationsListClient({
         onCommuneChange={setSelectedCommune}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
+        sources={sources}
+        selectedSource={selectedSource}
+        onSourceChange={setSelectedSource}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         totalCount={publications.length}

@@ -25,6 +25,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@stripe/stripe-js": "^8.5.3",
     "better-auth": "^1.4.6",
+    "canvas-confetti": "^1.9.4",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
@@ -37,6 +38,7 @@
     "pdf-parse": "^2.4.5",
     "pg": "^8.16.3",
     "prisma": "^6.0.0",
+    "puppeteer": "^24.32.1",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-hook-form": "^7.68.0",
@@ -48,6 +50,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/pg": "^8.15.6",
     "@types/react": "^19",

@@ -11,7 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Building2, Users, LogOut, ChevronDown } from "lucide-react";
+import {
+  User,
+  Building2,
+  Users,
+  LogOut,
+  ChevronDown,
+  CreditCard,
+} from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
 
@@ -101,6 +108,16 @@ export function UserMenu({ user, organization }: UserMenuProps) {
           >
             <User className="w-4 h-4" />
             <span>Profil</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link
+            href="/dashboard/billing"
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Facturation</span>
           </Link>
         </DropdownMenuItem>
 

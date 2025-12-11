@@ -40,6 +40,20 @@ const DATA_SOURCES = [
     ],
   },
   {
+    canton: "Valais (VS)",
+    sources: [
+      {
+        name: "Bulletin Officiel du canton du Valais",
+        url: "https://amtsblatt.vs.ch/",
+        description:
+          "Publication officielle quotidienne (PDF). Scrapage automatique chaque jour.",
+        types: "Autorisations de construire, oppositions, décisions",
+        status: "active",
+        featured: true,
+      },
+    ],
+  },
+  {
     canton: "Vaud (VD)",
     sources: [
       {

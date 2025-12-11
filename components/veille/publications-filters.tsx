@@ -19,6 +19,9 @@ interface PublicationsFiltersProps {
   onCommuneChange: (commune: string | null) => void;
   selectedType: string | null;
   onTypeChange: (type: string | null) => void;
+  sources: string[];
+  selectedSource: string | null;
+  onSourceChange: (source: string | null) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   totalCount: number;
@@ -31,17 +34,21 @@ export function PublicationsFilters({
   onCommuneChange,
   selectedType,
   onTypeChange,
+  sources,
+  selectedSource,
+  onSourceChange,
   searchQuery,
   onSearchChange,
   totalCount,
   filteredCount,
 }: PublicationsFiltersProps) {
   const hasActiveFilters =
-    selectedCommune || selectedType || searchQuery.length > 0;
+    selectedCommune || selectedType || selectedSource || searchQuery.length > 0;
 
   const clearFilters = () => {
     onCommuneChange(null);
     onTypeChange(null);
+    onSourceChange(null);
     onSearchChange("");
   };
 
@@ -97,6 +104,27 @@ export function PublicationsFilters({
             ))}
           </SelectContent>
         </Select>
+
+        {sources.length > 0 && (
+          <Select
+            value={selectedSource || "all"}
+            onValueChange={(value) =>
+              onSourceChange(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Toutes les sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les sources</SelectItem>
+              {sources.map((source) => (
+                <SelectItem key={source} value={source}>
+                  {source}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {hasActiveFilters && (
           <Button variant="ghost" size="icon" onClick={clearFilters}>

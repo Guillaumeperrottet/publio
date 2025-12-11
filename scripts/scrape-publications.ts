@@ -18,6 +18,8 @@ import {
 } from "@/features/veille/scraper";
 import { SimapScraper } from "@/features/veille/scrapers/simap";
 import { FribourgOfficialGazetteScraper } from "@/features/veille/scrapers/fribourg-official";
+import { ValaisOfficialScraper } from "@/features/veille/scrapers/valais-official";
+import { ValaisWebScraper } from "@/features/veille/scrapers/valais-web";
 
 async function scrapeAndStorePublications(includeWeekly = false) {
   console.log("=".repeat(60));
@@ -74,7 +76,29 @@ async function scrapeAndStorePublications(includeWeekly = false) {
       );
     }
 
-    // 4. Scraper les autres sources (canton-specific)
+    // 4. Scraper Valais - Double approche pour couverture complète
+    let valaisPublications: any[] = [];
+    if (allCantons.includes("VS")) {
+      // 4a. PDF Bulletin Officiel (constructions, marchés publics, annonces)
+      console.log(`\n📰 Scraping Valais BO PDF (constructions & marchés)...`);
+      const valaisPdfScraper = new ValaisOfficialScraper();
+      const valaisPdfPubs = await valaisPdfScraper.scrape();
+      console.log(
+        `📰 Valais PDF: ${valaisPdfPubs.length} publication(s) trouvée(s)`
+      );
+
+      // 4b. Web scraping (actes judiciaires, faillites, etc.)
+      console.log(`\n🌐 Scraping Valais BO Web (actes & faillites)...`);
+      const valaisWebScraper = new ValaisWebScraper();
+      const valaisWebPubs = await valaisWebScraper.scrape();
+      console.log(
+        `🌐 Valais Web: ${valaisWebPubs.length} publication(s) trouvée(s)`
+      );
+
+      valaisPublications = [...valaisPdfPubs, ...valaisWebPubs];
+    }
+
+    // 5. Scraper les autres sources (canton-specific)
     const scraper = new MasterScraper();
     const cantonPublications = await scraper.scrapeAll();
 
@@ -86,6 +110,7 @@ async function scrapeAndStorePublications(includeWeekly = false) {
     const rawPublications = [
       ...simapPublications,
       ...fribourgPublications,
+      ...valaisPublications,
       ...cantonPublications,
     ];
 

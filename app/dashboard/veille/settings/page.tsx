@@ -8,9 +8,10 @@ import {
 } from "@/features/veille/actions";
 import { VeilleSettingsForm } from "@/components/veille/veille-settings-form";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { UpgradeVeilleDialog } from "@/components/veille/upgrade-veille-dialog";
+import { Badge } from "@/components/ui/badge";
 
 export default async function VeilleSettingsPage() {
   await getCurrentUser();
@@ -79,12 +80,29 @@ export default async function VeilleSettingsPage() {
               Retour
             </Button>
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold text-matte-black mb-2">
-            Paramètres de veille
-          </h1>
-          <p className="text-muted-foreground">
-            Configurez vos alertes pour les publications communales
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-matte-black mb-2">
+                Paramètres de veille
+              </h1>
+              <p className="text-muted-foreground">
+                Configurez vos alertes pour les publications communales
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-sm">
+                {currentPlan === "VEILLE_BASIC" && "Veille Basic"}
+                {currentPlan === "VEILLE_UNLIMITED" && "Veille Premium"}
+                {currentPlan === "FREE" && "Gratuit"}
+              </Badge>
+              <Link href="/dashboard/billing">
+                <Button variant="outline" size="sm">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Gérer l'abonnement
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         <VeilleSettingsForm

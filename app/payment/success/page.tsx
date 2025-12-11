@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, FileText, Home, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { stripe } from "@/lib/stripe";
+import { ConfettiBurst } from "@/components/ui/confetti";
 
 export default async function PaymentSuccessPage({
   searchParams,
@@ -33,6 +34,7 @@ export default async function PaymentSuccessPage({
 
   return (
     <ProtectedLayout>
+      <ConfettiBurst />
       <div className="container mx-auto px-4 py-16 max-w-2xl">
         <HandDrawnCard>
           <HandDrawnCardContent className="p-12 text-center">
