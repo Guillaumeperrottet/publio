@@ -887,10 +887,6 @@ export async function getOrganizationOffers(organizationId: string) {
   const offers = await prisma.offer.findMany({
     where: {
       organizationId,
-      // Ne pas afficher les brouillons dans "Mes offres déposées"
-      status: {
-        not: "DRAFT",
-      },
     },
     include: {
       tender: {

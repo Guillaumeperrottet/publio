@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getOrganizationTenders } from "@/features/tenders/actions";
-import { TendersList } from "@/components/tenders/tenders-list";
+import { TendersTable } from "@/components/tenders/tenders-table";
 
 export default async function DashboardTendersPage() {
   const memberships = await getUserOrganizations();
@@ -23,29 +23,32 @@ export default async function DashboardTendersPage() {
 
   return (
     <ProtectedLayout>
-      <div className="p-8">
+      <div className="p-6 md:p-8 bg-white min-h-full">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-3">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
               <HandDrawnHighlight variant="yellow">
                 Mes appels d&apos;offres
               </HandDrawnHighlight>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-muted-foreground">
               Gérez vos appels d&apos;offres et consultez les offres reçues
             </p>
           </div>
           <Link href="/dashboard/tenders/new">
-            <Button size="lg" className="mt-4 md:mt-0">
-              <Plus className="w-5 h-5 mr-2" />
+            <Button
+              size="lg"
+              className="mt-4 md:mt-0 gap-2 bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black font-semibold border-2 border-matte-black transition-all hover:shadow-md"
+            >
+              <Plus className="w-5 h-5" />
               Créer un appel d&apos;offre
             </Button>
           </Link>
         </div>
 
-        {/* Liste des tenders */}
-        <TendersList tenders={tenders} organizationId={organization.id} />
+        {/* Table des tenders */}
+        <TendersTable tenders={tenders} organizationId={organization.id} />
       </div>
     </ProtectedLayout>
   );

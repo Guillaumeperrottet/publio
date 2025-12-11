@@ -12,9 +12,17 @@ import {
   Send,
   Bookmark,
   Bell,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * Header universel adaptatif (style AutoScout24)
@@ -96,6 +104,9 @@ export async function UniversalHeader() {
                     Recherches
                   </Link>
 
+                  {/* Séparateur */}
+                  <div className="h-6 w-px bg-gray-300 mx-2" />
+
                   <Link
                     href="/dashboard/veille"
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-matte-black hover:bg-sand-light/50 rounded-lg transition-all"
@@ -112,6 +123,78 @@ export async function UniversalHeader() {
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                {/* Menu actions rapides */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-2 border-matte-black hover:bg-artisan-yellow/10"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Actions rapides
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/dashboard/tenders/new"
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-artisan-yellow/20 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-artisan-yellow" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">
+                            Créer un appel d'offre
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Publier un nouvel appel
+                          </p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/tenders"
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-deep-green/20 flex items-center justify-center">
+                          <Send className="w-4 h-4 text-deep-green" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">
+                            Déposer une offre
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Parcourir les appels
+                          </p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/dashboard/saved-searches"
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-olive-soft/20 flex items-center justify-center">
+                          <Bookmark className="w-4 h-4 text-olive-soft" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">
+                            Gérer mes alertes
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Recherches sauvegardées
+                          </p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 {/* Bouton créer appel d'offre */}
                 <Link href="/dashboard/tenders/new" className="hidden md:block">
                   <Button

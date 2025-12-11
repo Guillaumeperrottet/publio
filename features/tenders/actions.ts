@@ -331,7 +331,13 @@ export async function getOrganizationTenders(organizationId: string) {
     include: {
       _count: {
         select: {
-          offers: true,
+          offers: {
+            where: {
+              status: {
+                not: "DRAFT",
+              },
+            },
+          },
         },
       },
     },

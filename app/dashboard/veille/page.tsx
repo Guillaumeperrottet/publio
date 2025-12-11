@@ -68,7 +68,7 @@ export default async function VeillePage() {
               🔔 Veille Communale
             </h1>
             <p className="text-sm text-muted-foreground">
-              Ne ratez plus jamais une mise à l&apos;enquête dans vos communes
+              Gérez vos alertes et suivez les nouvelles publications
             </p>
           </div>
 
