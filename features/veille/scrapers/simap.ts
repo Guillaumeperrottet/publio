@@ -184,14 +184,11 @@ export class SimapScraper {
   /**
    * Mapper le type de projet SIMAP vers notre énumération
    */
-  private mapProjectType(projectType?: string): ScrapedPublication["type"] {
-    if (!projectType) return "AUTRE";
+  private mapProjectType(projectType?: string): PublicationType {
+    if (!projectType) return "APPEL_DOFFRES";
 
     const typeUpper = projectType.toUpperCase();
 
-    if (typeUpper.includes("APPEL") || typeUpper.includes("OFFRE")) {
-      return "APPEL_DOFFRES";
-    }
     if (typeUpper.includes("PERMIS")) {
       return "PERMIS_CONSTRUIRE";
     }
@@ -208,7 +205,8 @@ export class SimapScraper {
       return "OPPOSITION";
     }
 
-    return "AUTRE";
+    // SIMAP = plateforme d'appels d'offres publics
+    return "APPEL_DOFFRES";
   }
 }
 

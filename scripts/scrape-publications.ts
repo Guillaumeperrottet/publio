@@ -1,10 +1,13 @@
 #!/usr/bin/env tsx
 /**
  * Script de scraping des publications communales
- * Exécuté quotidiennement par cron job
+ * Exécuté par cron job (6x/jour pour SIMAP)
  *
  * Usage:
- *   npx tsx scripts/scrape-publications.ts
+ *   npx tsx scripts/scrape-publications.ts [--include-weekly]
+ *
+ * Options:
+ *   --include-weekly : Inclut les sources hebdomadaires (Fribourg FO, etc.)
  */
 
 import { prisma } from "@/lib/db/prisma";
@@ -14,8 +17,9 @@ import {
   filterRecentPublications,
 } from "@/features/veille/scraper";
 import { SimapScraper } from "@/features/veille/scrapers/simap";
+import { FribourgOfficialGazetteScraper } from "@/features/veille/scrapers/fribourg-official";
 
-async function scrapeAndStorePublications() {
+async function scrapeAndStorePublications(includeWeekly = false) {
   console.log("=".repeat(60));
   console.log("📡 SCRAPING DES PUBLICATIONS CANTONALES");
   console.log("=".repeat(60));
@@ -55,7 +59,22 @@ async function scrapeAndStorePublications() {
       `🇨🇭 SIMAP: ${simapPublications.length} publication(s) trouvée(s)`
     );
 
-    // 3. Scraper les autres sources (canton-specific)
+    // 3. Scraper Fribourg (Feuille Officielle PDF) - uniquement si demandé
+    let fribourgPublications: any[] = [];
+    if (includeWeekly && allCantons.includes("FR")) {
+      console.log(`\n📄 Scraping Fribourg FO (hebdomadaire)...`);
+      const fribourgScraper = new FribourgOfficialGazetteScraper();
+      fribourgPublications = await fribourgScraper.scrape();
+      console.log(
+        `📄 Fribourg FO: ${fribourgPublications.length} publication(s) trouvée(s)`
+      );
+    } else if (!includeWeekly) {
+      console.log(
+        `\n⏭️  Fribourg FO ignoré (sources hebdomadaires désactivées)`
+      );
+    }
+
+    // 4. Scraper les autres sources (canton-specific)
     const scraper = new MasterScraper();
     const cantonPublications = await scraper.scrapeAll();
 
@@ -63,8 +82,12 @@ async function scrapeAndStorePublications() {
       `🏛️  Sources cantonales: ${cantonPublications.length} publication(s) trouvée(s)`
     );
 
-    // 4. Combiner toutes les publications
-    const rawPublications = [...simapPublications, ...cantonPublications];
+    // 5. Combiner toutes les publications
+    const rawPublications = [
+      ...simapPublications,
+      ...fribourgPublications,
+      ...cantonPublications,
+    ];
 
     console.log(
       `\n✅ Scraping terminé: ${rawPublications.length} publication(s) brute(s)\n`
@@ -190,7 +213,9 @@ async function scrapeAndStorePublications() {
 }
 
 // Exécuter le script
-scrapeAndStorePublications()
+const includeWeekly = process.argv.includes("--include-weekly");
+
+scrapeAndStorePublications(includeWeekly)
   .then(() => {
     console.log("\n✅ Script terminé avec succès");
     process.exit(0);

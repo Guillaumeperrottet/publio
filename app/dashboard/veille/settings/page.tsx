@@ -98,6 +98,10 @@ export default async function VeilleSettingsPage() {
                   >,
                   emailNotifications: veilleSubscription.emailNotifications,
                   appNotifications: veilleSubscription.appNotifications,
+                  alertFrequency: veilleSubscription.alertFrequency,
+                  alertTypes: veilleSubscription.alertTypes,
+                  alertKeywords: veilleSubscription.alertKeywords,
+                  alertCommunes: veilleSubscription.alertCommunes,
                 }
               : undefined
           }

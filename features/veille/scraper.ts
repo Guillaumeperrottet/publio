@@ -5,6 +5,7 @@
 
 import * as cheerio from "cheerio";
 import type { ScrapedPublication } from "./types";
+import { FribourgOfficialGazetteScraper } from "./scrapers/fribourg-official";
 
 /**
  * Interface pour tous les scrapers
@@ -304,6 +305,21 @@ export class MasterScraper {
         );
       }
     });
+
+    // Ajouter le scraper Feuille Officielle Fribourg (PDF)
+    try {
+      const fribourgOfficialScraper = new FribourgOfficialGazetteScraper();
+      const fribourgPublications = await fribourgOfficialScraper.scrape();
+      allPublications.push(...fribourgPublications);
+      console.log(
+        `[MasterScraper] Feuille Officielle Fribourg (PDF): ${fribourgPublications.length} publication(s)`
+      );
+    } catch (error) {
+      console.error(
+        "[MasterScraper] Feuille Officielle Fribourg: Erreur -",
+        error
+      );
+    }
 
     console.log(
       `[MasterScraper] Total: ${allPublications.length} publication(s) scrapée(s)`

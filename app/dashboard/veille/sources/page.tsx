@@ -18,7 +18,8 @@ const DATA_SOURCES = [
         name: "SIMAP - Plateforme fédérale des marchés publics",
         url: "https://www.simap.ch",
         description:
-          "Plateforme officielle obligatoire pour tous les appels d'offres publics de Suisse (>230'000 CHF). Couvre tous les cantons et communes.",
+          "Plateforme officielle pour tous les appels d'offres publics de Suisse (>230'000 CHF). Scrapage 6x/jour (6h, 9h, 12h, 15h, 18h, 21h).",
+        types: "Appels d'offres",
         status: "active",
         featured: true,
       },
@@ -28,10 +29,13 @@ const DATA_SOURCES = [
     canton: "Fribourg (FR)",
     sources: [
       {
-        name: "Appels d'offres canton de Fribourg",
-        url: "https://www.fr.ch/etat-et-droit/poursuites-et-faillites/appels-doffres",
-        description: "Site officiel du canton pour les appels d'offres publics",
+        name: "Feuille Officielle du canton de Fribourg",
+        url: "https://www.fr.ch/fo",
+        description:
+          "Publication officielle hebdomadaire (PDF). Scrapage automatique chaque jeudi à 7h.",
+        types: "Mises à l'enquête, permis de construire, oppositions",
         status: "active",
+        featured: true,
       },
     ],
   },
@@ -39,9 +43,11 @@ const DATA_SOURCES = [
     canton: "Vaud (VD)",
     sources: [
       {
-        name: "Sources cantonales complémentaires",
-        url: null,
-        description: "Sources en cours d'intégration (couvert par SIMAP)",
+        name: "Feuille des Avis Officiels (FAO)",
+        url: "https://www.vd.ch/fao",
+        description:
+          "Publication officielle cantonale (en cours d'intégration)",
+        types: "Mises à l'enquête, permis, oppositions",
         status: "coming-soon",
       },
     ],
@@ -50,9 +56,11 @@ const DATA_SOURCES = [
     canton: "Genève (GE)",
     sources: [
       {
-        name: "Sources cantonales complémentaires",
-        url: null,
-        description: "Sources en cours d'intégration (couvert par SIMAP)",
+        name: "Feuille d'Avis Officielle (FAO)",
+        url: "https://ge.ch/fao",
+        description:
+          "Publication officielle cantonale (en cours d'intégration)",
+        types: "Mises à l'enquête, permis, oppositions",
         status: "coming-soon",
       },
     ],
@@ -61,9 +69,11 @@ const DATA_SOURCES = [
     canton: "Valais (VS)",
     sources: [
       {
-        name: "À venir",
-        url: null,
-        description: "Sources en cours d'intégration",
+        name: "Feuille Officielle du Valais",
+        url: "https://www.vs.ch/feuille-officielle",
+        description:
+          "Publication officielle cantonale (en cours d'intégration)",
+        types: "Mises à l'enquête, permis, oppositions",
         status: "coming-soon",
       },
     ],
@@ -135,6 +145,11 @@ export default async function VeilleSourcesPage() {
                         <p className="text-sm text-muted-foreground mb-2">
                           {source.description}
                         </p>
+                        {"types" in source && source.types && (
+                          <p className="text-xs text-deep-green/70 mb-2">
+                            📋 Types: {source.types}
+                          </p>
+                        )}
                         {source.url && (
                           <a
                             href={source.url}
@@ -198,12 +213,23 @@ export default async function VeilleSourcesPage() {
         {/* Info technique */}
         <div className="mt-8 p-4 rounded-lg bg-sand-light/50 border">
           <h3 className="font-semibold mb-2 text-sm">ℹ️ Comment ça marche ?</h3>
-          <p className="text-sm text-muted-foreground">
-            Notre système scrape automatiquement ces sites officiels chaque jour
-            à 3h du matin pour collecter les nouvelles publications. Les données
-            sont ensuite filtrées selon vos communes surveillées et vous êtes
-            notifié des nouveautés par email quotidien.
-          </p>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong>SIMAP :</strong> Scrapage automatique 6 fois par jour (6h,
+              9h, 12h, 15h, 18h, 21h) pour capturer les nouveaux appels d'offres
+              dès leur publication.
+            </p>
+            <p>
+              <strong>Feuilles officielles cantonales :</strong> Scrapage
+              hebdomadaire (chaque jeudi à 7h) car ces publications sont mises à
+              jour une fois par semaine.
+            </p>
+            <p>
+              Les données sont filtrées selon vos préférences (cantons, types,
+              mots-clés, communes) et vous recevez des alertes email selon la
+              fréquence choisie (instantané, quotidien ou hebdomadaire).
+            </p>
+          </div>
         </div>
       </div>
     </ProtectedLayout>

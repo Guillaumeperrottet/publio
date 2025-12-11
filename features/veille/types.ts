@@ -45,6 +45,10 @@ export interface VeilleSubscriptionData {
   keywords?: string[];
   emailNotifications?: boolean;
   appNotifications?: boolean;
+  alertFrequency?: string;
+  alertTypes?: string[];
+  alertKeywords?: string[];
+  alertCommunes?: string[];
 }
 
 export interface CantonInfo {

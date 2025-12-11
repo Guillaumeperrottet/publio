@@ -91,17 +91,32 @@ export async function upsertVeilleSubscription(
         keywords: data.keywords || [],
         emailNotifications: data.emailNotifications !== false,
         appNotifications: data.appNotifications !== false,
+        alertFrequency: data.alertFrequency || "DAILY",
+        alertTypes: data.alertTypes || [],
+        alertKeywords: data.alertKeywords || [],
+        alertCommunes: data.alertCommunes || [],
       },
       update: {
         cantons: data.cantons,
         keywords: data.keywords || [],
         emailNotifications: data.emailNotifications !== false,
         appNotifications: data.appNotifications !== false,
+        alertFrequency: data.alertFrequency || "DAILY",
+        alertTypes: data.alertTypes || [],
+        alertKeywords: data.alertKeywords || [],
+        alertCommunes: data.alertCommunes || [],
       },
     });
 
     revalidatePath("/dashboard/veille");
-    return { success: true, subscription };
+
+    // Retourner aussi les cantons pour déclencher le scraping côté client
+    return {
+      success: true,
+      subscription,
+      shouldTriggerScrape: true,
+      cantons: data.cantons,
+    };
   } catch (error) {
     console.error("[upsertVeilleSubscription] Error:", error);
     return {

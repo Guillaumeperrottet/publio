@@ -5,18 +5,28 @@ import {
   deduplicatePublications,
   filterRecentPublications,
 } from "@/features/veille/scraper";
+import { SimapScraper } from "@/features/veille/scrapers/simap";
+import type { Canton } from "@/features/veille/types";
 
 /**
- * Endpoint Cron pour scraper les publications communales
+ * Endpoint Cron pour scraper les publications communales (SIMAP uniquement)
  * Sécurisé par CRON_SECRET
  *
  * Configuration dans vercel.json:
  * {
  *   "crons": [{
  *     "path": "/api/cron/scrape-veille",
- *     "schedule": "0 3 * * *"
+ *     "schedule": "0 4,7,10,13,16,19 * * *"
  *   }]
  * }
+ *
+ * Exécuté 6 fois par jour : 4h, 7h, 10h, 13h, 16h, 19h (UTC)
+ * En Suisse (UTC+2 été / UTC+1 hiver) :
+ * - Été : 6h, 9h, 12h, 15h, 18h, 21h
+ * - Hiver : 5h, 8h, 11h, 14h, 17h, 20h
+ *
+ * Note : Les sources hebdomadaires (Fribourg FO) sont gérées par
+ * /api/cron/scrape-veille-weekly (jeudis 7h UTC)
  */
 export async function GET(request: Request) {
   try {
@@ -39,11 +49,37 @@ export async function GET(request: Request) {
 
     console.log("[Veille Cron] Début du scraping...");
 
-    // 1. Scraper toutes les sources
-    const scraper = new MasterScraper();
-    const rawPublications = await scraper.scrapeAll();
+    // 1. Récupérer tous les cantons actifs (depuis les abonnements)
+    const activeSubscriptions = await prisma.veilleSubscription.findMany({
+      select: { cantons: true },
+    });
 
-    // 2. Déduplicater et filtrer (30 derniers jours)
+    const allCantons = Array.from(
+      new Set(activeSubscriptions.flatMap((sub) => sub.cantons))
+    );
+
+    console.log(`[Veille Cron] Cantons surveillés: ${allCantons.join(", ")}`);
+
+    // 2. Scraper SIMAP (plateforme nationale - source principale)
+    const simapScraper = new SimapScraper();
+    const simapPublications = await simapScraper.scrape(allCantons as Canton[]);
+
+    console.log(
+      `[Veille Cron] SIMAP: ${simapPublications.length} publications`
+    );
+
+    // 3. Scraper les sources cantonales complémentaires
+    const scraper = new MasterScraper();
+    const cantonPublications = await scraper.scrapeAll();
+
+    console.log(
+      `[Veille Cron] Sources cantonales: ${cantonPublications.length} publications`
+    );
+
+    // 4. Combiner toutes les publications
+    const rawPublications = [...simapPublications, ...cantonPublications];
+
+    // 5. Déduplicater et filtrer (30 derniers jours)
     let publications = deduplicatePublications(rawPublications);
     publications = filterRecentPublications(publications, 30);
 
@@ -51,22 +87,55 @@ export async function GET(request: Request) {
       `[Veille Cron] ${publications.length} publication(s) à traiter`
     );
 
-    // 3. Enregistrer en base de données
+    // 6. Enregistrer en base de données
     let created = 0;
+    let updated = 0;
     let skipped = 0;
 
     for (const pub of publications) {
       try {
-        // Vérifier si la publication existe déjà
-        const existing = await prisma.veillePublication.findFirst({
-          where: {
-            url: pub.url,
-            commune: pub.commune,
-          },
-        });
+        // Pour SIMAP, utiliser projectNumber comme identifiant unique
+        const isSIMAP = pub.metadata?.source === "SIMAP";
+        const projectNumber = pub.metadata?.projectNumber;
+
+        let existing = null;
+
+        if (isSIMAP && projectNumber) {
+          // Chercher par projectNumber SIMAP
+          existing = await prisma.veillePublication.findFirst({
+            where: {
+              metadata: {
+                path: ["projectNumber"],
+                equals: projectNumber,
+              },
+            },
+          });
+        } else {
+          // Chercher par URL pour les autres sources
+          existing = await prisma.veillePublication.findFirst({
+            where: {
+              url: pub.url,
+              commune: pub.commune,
+            },
+          });
+        }
 
         if (existing) {
-          skipped++;
+          // Mettre à jour l'URL si elle a changé (important pour SIMAP)
+          if (existing.url !== pub.url) {
+            await prisma.veillePublication.update({
+              where: { id: existing.id },
+              data: {
+                url: pub.url,
+                title: pub.title,
+                description: pub.description || null,
+                metadata: pub.metadata || {},
+              },
+            });
+            updated++;
+          } else {
+            skipped++;
+          }
           continue;
         }
 
@@ -94,7 +163,7 @@ export async function GET(request: Request) {
     }
 
     console.log(
-      `[Veille Cron] Terminé - ${created} créées, ${skipped} ignorées`
+      `[Veille Cron] Terminé - ${created} créées, ${updated} mises à jour, ${skipped} ignorées`
     );
 
     return NextResponse.json({
@@ -102,6 +171,7 @@ export async function GET(request: Request) {
       scraped: rawPublications.length,
       processed: publications.length,
       created,
+      updated,
       skipped,
     });
   } catch (error) {

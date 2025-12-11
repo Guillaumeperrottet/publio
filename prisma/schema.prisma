@@ -586,6 +586,13 @@ model VeilleSubscription {
   emailNotifications Boolean @default(true)
   appNotifications   Boolean @default(true)
 
+  // Configuration des alertes
+  alertFrequency String   @default("DAILY") // INSTANT, DAILY, WEEKLY, DISABLED
+  alertTypes     String[] @default([]) // Types spécifiques ou [] pour tous
+  alertKeywords  String[] @default([]) // Mots-clés pour filtrer les alertes
+  alertCommunes  String[] @default([]) // Communes spécifiques ou [] pour toutes
+  lastAlertSent  DateTime? // Dernière alerte envoyée
+
   // Relations
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
