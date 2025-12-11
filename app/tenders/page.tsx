@@ -66,32 +66,13 @@ export default async function TendersPage({
 
   return (
     <PublicLayout>
-      <div className="bg-white min-h-screen relative overflow-hidden">
-        {/* Formes grises décoratives */}
-        <div className="absolute -left-32 top-40 w-[500px] h-[500px] bg-gray-100 rounded-full opacity-30 pointer-events-none" />
-        <div className="absolute -right-40 bottom-40 w-[600px] h-[600px] bg-gray-100 rounded-full opacity-25 pointer-events-none" />
-
-        {/* Hero Header - Réduit */}
-        <div className="border-b border-gray-100 relative z-10">
-          <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
-            <div className="max-w-3xl">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                Appels d&apos;offres
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Découvrez les projets publics et privés en Suisse romande.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contenu principal */}
-        <div className="container mx-auto px-4 md:px-6 py-6 relative z-10">
-          <TendersCatalogClient
-            initialTenders={tenders}
-            initialFilters={filters}
-          />
-        </div>
+      <div className="bg-white min-h-screen">
+        {/* Contenu principal - Full width sans padding container */}
+        <TendersCatalogClient
+          initialTenders={tenders}
+          initialFilters={filters}
+          isAuthenticated={isAuthenticated}
+        />
       </div>
     </PublicLayout>
   );

@@ -1,19 +1,7 @@
 import Link from "next/link";
-import {
-  HandDrawnCard,
-  HandDrawnCardContent,
-} from "@/components/ui/hand-drawn-card";
-import { HandDrawnBadge } from "@/components/ui/hand-drawn-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Building2,
-  MapPin,
-  Calendar,
-  Euro,
-  FileText,
-  EyeOff,
-} from "lucide-react";
+import { Building2, MapPin, Calendar, Euro, EyeOff } from "lucide-react";
 
 type TenderCardProps = {
   tender: {
@@ -64,121 +52,100 @@ export function TenderCard({ tender }: TenderCardProps) {
   const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
   const isExpired = now > deadline;
   const isUrgent = daysUntilDeadline <= 7 && !isExpired;
+  const isNew =
+    new Date().getTime() - new Date(tender.createdAt).getTime() <
+    7 * 24 * 60 * 60 * 1000; // 7 days
 
   return (
     <Link href={`/tenders/${tender.id}`}>
-      <HandDrawnCard className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-        <HandDrawnCardContent className="p-6">
-          {/* Header avec badges */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2 text-matte-black hover:text-artisan-yellow transition-colors">
-                {tender.title}
-              </h3>
-              <div className="flex flex-wrap gap-2 mb-3">
-                <HandDrawnBadge variant="default">
-                  {marketTypeLabels[tender.marketType] || tender.marketType}
-                </HandDrawnBadge>
-                {isAnonymous && (
-                  <Badge
-                    variant="outline"
-                    className="border-deep-green text-deep-green"
-                  >
-                    <EyeOff className="w-3 h-3 mr-1" />
-                    Offres anonymes
-                  </Badge>
-                )}
-                {isUrgent && (
-                  <Badge variant="destructive" className="animate-pulse">
-                    Urgent
-                  </Badge>
-                )}
-              </div>
-            </div>
+      <div className="bg-white border-2 border-matte-black rounded-lg p-5 hover:shadow-lg hover:border-artisan-yellow transition-all cursor-pointer h-full flex flex-col">
+        {/* Header avec badges */}
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-2 mb-2">
+            {isNew && (
+              <Badge className="bg-artisan-yellow text-matte-black border-2 border-matte-black font-bold">
+                NOUVEAU
+              </Badge>
+            )}
+            {isUrgent && (
+              <Badge variant="destructive" className="font-bold">
+                {daysUntilDeadline}j restants
+              </Badge>
+            )}
+            {isAnonymous && (
+              <Badge
+                variant="outline"
+                className="border-deep-green text-deep-green border-2"
+              >
+                <EyeOff className="w-3 h-3 mr-1" />
+                Anonyme
+              </Badge>
+            )}
           </div>
+          <h3 className="text-lg font-bold text-matte-black hover:text-artisan-yellow transition-colors line-clamp-2">
+            {tender.title}
+          </h3>
+        </div>
 
-          {/* Description */}
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-            {tender.description}
-          </p>
-
-          {/* Informations principales */}
-          <div className="space-y-2 mb-4">
-            {/* Organisation - masquée si anonyme et deadline non passée */}
-            {(!isAnonymous || isExpired) && (
-              <div className="flex items-center gap-2 text-sm">
-                <Building2 className="w-4 h-4 text-olive-soft" />
-                <span className="font-medium">{tender.organization.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {organizationTypeLabels[tender.organization.type]}
-                </Badge>
-              </div>
-            )}
-
-            {/* Message si organisation masquée */}
-            {isAnonymous && !isExpired && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Building2 className="w-4 h-4" />
-                <EyeOff className="w-3 h-3" />
-                <span className="text-xs italic">Organisation masquée</span>
-              </div>
-            )}
-
-            {/* Localisation */}
-            {(tender.city || tender.canton) && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>
-                  {tender.city && tender.canton
-                    ? `${tender.city}, ${tender.canton}`
-                    : tender.city || tender.canton}
-                </span>
-              </div>
-            )}
-
-            {/* Budget */}
-            {tender.budget && (
-              <div className="flex items-center gap-2 text-sm">
-                <Euro className="w-4 h-4 text-artisan-yellow" />
-                <span className="font-semibold text-artisan-yellow">
-                  CHF {tender.budget.toLocaleString("fr-CH")}
-                </span>
-                <span className="text-xs text-muted-foreground">indicatif</span>
-              </div>
-            )}
-
-            {/* Deadline */}
+        {/* Key Info - Compact */}
+        <div className="space-y-2 flex-1">
+          {/* Organisation */}
+          {(!isAnonymous || isExpired) && (
             <div className="flex items-center gap-2 text-sm">
-              <Calendar
-                className={`w-4 h-4 ${
-                  isUrgent ? "text-red-500" : "text-olive-soft"
-                }`}
-              />
-              <span className={isUrgent ? "text-red-500 font-semibold" : ""}>
-                {daysUntilDeadline > 0
-                  ? `${daysUntilDeadline} jour${
-                      daysUntilDeadline > 1 ? "s" : ""
-                    } restant${daysUntilDeadline > 1 ? "s" : ""}`
-                  : "Deadline passée"}
+              <Building2 className="w-4 h-4 text-olive-soft shrink-0" />
+              <span className="font-medium truncate">
+                {tender.organization.name}
               </span>
             </div>
-          </div>
+          )}
 
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t border-sand-light">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <FileText className="w-3 h-3" />
-              <span>
-                {tender._count.offers} offre
-                {tender._count.offers !== 1 ? "s" : ""}
+          {/* Localisation */}
+          {(tender.city || tender.canton) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span className="truncate">
+                {tender.city && tender.canton
+                  ? `${tender.city}, ${tender.canton}`
+                  : tender.city || tender.canton}
               </span>
             </div>
-            <Button size="sm" variant="default">
-              Voir l&apos;offre →
-            </Button>
+          )}
+
+          {/* Budget */}
+          {tender.budget && (
+            <div className="flex items-center gap-2 text-sm">
+              <Euro className="w-4 h-4 text-artisan-yellow shrink-0" />
+              <span className="font-semibold">
+                CHF {tender.budget.toLocaleString("fr-CH")}
+              </span>
+            </div>
+          )}
+
+          {/* Deadline */}
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar
+              className={`w-4 h-4 shrink-0 ${
+                isUrgent ? "text-red-500" : "text-olive-soft"
+              }`}
+            />
+            <span className={isUrgent ? "text-red-500 font-semibold" : ""}>
+              {daysUntilDeadline > 0
+                ? `Échéance: ${daysUntilDeadline}j`
+                : "Deadline passée"}
+            </span>
           </div>
-        </HandDrawnCardContent>
-      </HandDrawnCard>
+        </div>
+
+        {/* Footer CTA */}
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <Button
+            size="sm"
+            className="w-full bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black font-bold border-2 border-matte-black"
+          >
+            Voir le projet →
+          </Button>
+        </div>
+      </div>
     </Link>
   );
 }

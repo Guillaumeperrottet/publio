@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 export function PublioFooter() {
@@ -11,9 +12,13 @@ export function PublioFooter() {
           {/* Logo & Description */}
           <div className="md:col-span-1">
             <Link href="/" className="inline-block mb-4">
-              <h3 className="text-2xl font-bold font-handdrawn text-artisan-yellow">
-                Publio
-              </h3>
+              <Image
+                src="/logo/logo_white_nobackground2.png"
+                alt="Publio"
+                width={120}
+                height={48}
+                className="w-auto h-12"
+              />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
               La plateforme moderne pour vos appels d&apos;offres en Suisse

@@ -52,13 +52,13 @@ export async function UniversalHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Logo + Navigation gauche */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-2 group shrink-0">
               <Image
-                src="/logo/logo_nobackground.png"
+                src="/logo/logo_accueil.png"
                 alt="Publio"
-                width={140}
-                height={56}
-                className="h-32 w-auto transition-transform group-hover:scale-105"
+                width={120}
+                height={48}
+                className="h-6 w-auto transition-transform group-hover:scale-105"
                 priority
               />
             </Link>
@@ -146,7 +146,7 @@ export async function UniversalHeader() {
                         </div>
                         <div>
                           <p className="font-semibold text-sm">
-                            Créer un appel d'offre
+                            Créer un appel d&apos;offre
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Publier un nouvel appel

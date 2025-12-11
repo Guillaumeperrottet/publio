@@ -23,7 +23,7 @@ export function HandDrawnArrow({ className = "" }: { className?: string }) {
         </filter>
       </defs>
       <path
-        d="M10,50 Q80,10 150,50"
+        d="M10,50 Q80,-30 150,50"
         stroke="currentColor"
         strokeWidth="3"
         fill="none"
@@ -31,7 +31,7 @@ export function HandDrawnArrow({ className = "" }: { className?: string }) {
         filter="url(#roughness)"
       />
       <path
-        d="M140,35 L150,50 L140,60"
+        d="M140,28 L150,50 L143,56"
         stroke="currentColor"
         strokeWidth="3"
         fill="none"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,6 +12,23 @@ const caveat = Caveat({
   variable: "--font-handdrawn",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+const moreSugar = localFont({
+  src: [
+    {
+      path: "../public/font/MoreSugar-Thin.woff2",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../public/font/MoreSugar-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-script",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${inter.variable} ${caveat.variable} antialiased`}>
+      <body
+        className={`${inter.variable} ${caveat.variable} ${moreSugar.variable} antialiased`}
+      >
         {children}
       </body>
     </html>

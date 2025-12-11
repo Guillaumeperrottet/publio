@@ -14,7 +14,7 @@ import { fr } from "date-fns/locale";
 type Offer = {
   id: string;
   status: string;
-  amount: number | null;
+  price: number;
   currency: string;
   createdAt: Date;
   tender: {
@@ -131,7 +131,7 @@ export function OffersDashboardCard({
                     <span className="text-muted-foreground">
                       {offer.tender.organization.name}
                     </span>
-                    {offer.amount && (
+                    {offer.price && (
                       <>
                         <span className="text-muted-foreground">•</span>
                         <span className="font-semibold text-deep-green">
@@ -139,7 +139,7 @@ export function OffersDashboardCard({
                             style: "currency",
                             currency: offer.currency,
                             maximumFractionDigits: 0,
-                          }).format(offer.amount)}
+                          }).format(offer.price)}
                         </span>
                       </>
                     )}

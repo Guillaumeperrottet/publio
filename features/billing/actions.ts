@@ -7,6 +7,20 @@
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
+
+// Type pour subscription Stripe avec toutes les propriétés nécessaires
+type StripeSubscriptionExtended = Stripe.Response<Stripe.Subscription> & {
+  current_period_end: number;
+  cancel_at_period_end: boolean;
+  items: {
+    data: Array<{
+      price: {
+        id: string;
+      };
+    }>;
+  };
+};
 
 // ============================================
 // SUBSCRIPTION MANAGEMENT
@@ -42,16 +56,16 @@ export async function getOrganizationSubscription(organizationId: string) {
 
     // Récupérer les détails depuis Stripe
     try {
-      const subscription = await stripe.subscriptions.retrieve(
+      const subscription = (await stripe.subscriptions.retrieve(
         organization.stripeSubscriptionId
-      );
+      )) as StripeSubscriptionExtended;
 
       return {
         plan: organization.stripeSubscriptionPlan || "FREE",
         status: subscription.status,
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        priceId: subscription.items.data[0]?.price.id,
+        priceId: subscription.items?.data?.[0]?.price?.id,
       };
     } catch (error) {
       console.error("Error fetching Stripe subscription:", error);

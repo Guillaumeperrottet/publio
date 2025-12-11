@@ -12,10 +12,7 @@ import {
   getOrganizationVeillePublications,
 } from "@/features/veille/actions";
 import { redirect } from "next/navigation";
-import { QuickStats } from "@/components/dashboard/quick-stats";
 import { DeadlinesTimeline } from "@/components/dashboard/deadlines-timeline";
-import { EnhancedStatsCard } from "@/components/dashboard/enhanced-stats-card";
-import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { SmartActions } from "@/components/dashboard/smart-actions";
 import { OffersReceivedCard } from "@/components/dashboard/offers-received-card";
 import { InsightsCard } from "@/components/dashboard/insights-card";
@@ -23,8 +20,23 @@ import { TodayTasks } from "@/components/dashboard/today-tasks";
 import { VeilleDashboardCard } from "@/components/dashboard/veille-dashboard-card";
 import { TendersDashboardCard } from "@/components/dashboard/tenders-dashboard-card";
 import { OffersDashboardCard } from "@/components/dashboard/offers-dashboard-card";
-import { FileText, Send, Bell } from "lucide-react";
 import { subDays, format } from "date-fns";
+
+type OfferForDashboard = {
+  id: string;
+  status: string;
+  price: number;
+  currency: string;
+  createdAt: Date;
+  tender: {
+    id: string;
+    title: string;
+    deadline: Date;
+    organization: {
+      name: string;
+    };
+  };
+};
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -102,7 +114,7 @@ export default async function DashboardPage() {
   // Taux moyen d'offres reçues
   const publishedTenders = tenders.filter((t) => t.status === "PUBLISHED");
   const totalOffersReceived = publishedTenders.reduce(
-    (sum, t) => sum + (t.offers?.length || 0),
+    (sum, t) => sum + (t._count?.offers || 0),
     0
   );
   const avgOffersPerTender =
@@ -111,7 +123,14 @@ export default async function DashboardPage() {
       : 0;
 
   // Actions intelligentes basées sur le contexte
-  const smartActions = [];
+  const smartActions: Array<{
+    title: string;
+    description: string;
+    href: string;
+    buttonLabel: string;
+    icon: "plus" | "search" | "file" | "bell";
+    variant?: "default" | "outline";
+  }> = [];
 
   // TODO: Implémenter des actions rapides contextuelles pertinentes
 
@@ -294,7 +313,7 @@ export default async function DashboardPage() {
 
               {/* Mes offres */}
               <OffersDashboardCard
-                offers={offers}
+                offers={offers as OfferForDashboard[]}
                 submittedOffers={submittedOffers}
                 draftOffers={draftOffers}
               />

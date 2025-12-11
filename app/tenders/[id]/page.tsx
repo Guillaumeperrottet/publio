@@ -1,22 +1,12 @@
 import PublicLayout from "@/components/layout/public-layout";
 import { getTenderById } from "@/features/tenders/actions";
 import { notFound } from "next/navigation";
-import {
-  HandDrawnCard,
-  HandDrawnCardContent,
-  HandDrawnCardHeader,
-  HandDrawnCardTitle,
-} from "@/components/ui/hand-drawn-card";
-import { HandDrawnBadge } from "@/components/ui/hand-drawn-badge";
-import { HandDrawnHighlight } from "@/components/ui/hand-drawn-highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Building2,
   MapPin,
   Calendar,
-  Euro,
   FileText,
   Clock,
   EyeOff,
@@ -26,10 +16,12 @@ import {
   Target,
   ShieldCheck,
   Award,
-  Users,
   CheckCircle2,
   AlertCircle,
   TrendingUp,
+  Eye,
+  Users,
+  Flame,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow, format } from "date-fns";
@@ -37,6 +29,7 @@ import { fr } from "date-fns/locale";
 import { getSession } from "@/lib/auth/session";
 import { SubmitOfferButton } from "@/components/tenders/submit-offer-button";
 import { hasUserSubmittedOffer } from "@/features/offers/actions";
+import { ShareTenderButton } from "@/components/tenders/share-tender-button";
 
 const marketTypeLabels: Record<string, string> = {
   CONSTRUCTION: "Construction",
@@ -79,8 +72,20 @@ export default async function TenderDetailPage({
   const session = await getSession();
   const isAuthenticated = !!session;
 
-  // Vérifier si l'utilisateur a déjà soumis une offre
-  const { hasSubmitted, offerId } = await hasUserSubmittedOffer(id);
+  // Vérifier si l'utilisateur a déjà soumis une offre (seulement si connecté)
+  let hasSubmitted = false;
+  let offerId: string | undefined = undefined;
+
+  if (isAuthenticated) {
+    try {
+      const offerCheck = await hasUserSubmittedOffer(id);
+      hasSubmitted = offerCheck.hasSubmitted;
+      offerId = offerCheck.offerId || undefined;
+    } catch (error) {
+      // Ignore l'erreur si non authentifié
+      console.error("Error checking user offer:", error);
+    }
+  }
 
   // Vérifier si l'utilisateur fait partie de l'organisation du tender
   const isOwner = session?.user?.id
@@ -98,19 +103,18 @@ export default async function TenderDetailPage({
   );
   const isUrgent = daysUntilDeadline <= 7 && !isExpired;
 
+  // Simuler les vues basé sur l'ID du tender (stable)
+  const viewCount = (parseInt(tender.id.slice(-4), 16) % 400) + 100;
+
   return (
     <PublicLayout>
-      <div className="bg-white min-h-screen relative overflow-hidden">
-        {/* Formes grises décoratives */}
-        <div className="absolute -right-32 top-20 w-[500px] h-[500px] bg-gray-100 rounded-full opacity-30 pointer-events-none" />
-        <div className="absolute -left-40 bottom-40 w-[600px] h-[600px] bg-gray-100 rounded-full opacity-25 pointer-events-none" />
-
-        {/* Breadcrumb */}
-        <div className="border-b border-gray-100 relative z-10">
-          <div className="container mx-auto px-4 md:px-6 py-4">
+      <div className="bg-white min-h-screen">
+        {/* Breadcrumb - Style Amazon */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 md:px-6 py-3">
             <Link
               href="/tenders"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-matte-black transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-deep-green hover:text-artisan-yellow transition-colors font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
               Retour aux appels d&apos;offres
@@ -118,42 +122,98 @@ export default async function TenderDetailPage({
           </div>
         </div>
 
-        <div className="container mx-auto px-4 md:px-6 py-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Contenu principal */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* En-tête */}
-              <HandDrawnCard>
-                <HandDrawnCardContent className="p-8">
+        <div className="container mx-auto px-4 md:px-6 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Contenu principal - 8/12 */}
+            <div className="lg:col-span-8">
+              {/* Card principale fluide - Style Amazon */}
+              <div className="bg-white rounded-lg shadow-sm">
+                {/* Galerie de documents - Style Amazon product images */}
+                {tender.documents && tender.documents.length > 0 && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-artisan-yellow" />
+                      Documents & cahier des charges
+                      <Badge className="bg-artisan-yellow text-matte-black border border-matte-black">
+                        {tender.documents.length}
+                      </Badge>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {tender.documents.map((doc) => (
+                        <a
+                          key={doc.id}
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-artisan-yellow hover:bg-artisan-yellow/5 transition-all group"
+                        >
+                          <div className="p-3 bg-sand-light rounded-lg border border-gray-300 group-hover:bg-artisan-yellow transition-colors">
+                            <FileText className="w-6 h-6 text-matte-black" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate group-hover:text-artisan-yellow transition-colors">
+                              {doc.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(doc.size / 1024 / 1024).toFixed(2)} MB · PDF
+                            </p>
+                          </div>
+                          <Download className="w-5 h-5 text-muted-foreground group-hover:text-artisan-yellow transition-colors shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Header avec titre et badges */}
+                <div className="p-6 border-b border-gray-200">
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <HandDrawnBadge variant="default">
+                    <Badge className="bg-sand-light text-matte-black border border-gray-300 font-semibold">
                       {marketTypeLabels[tender.marketType] || tender.marketType}
-                    </HandDrawnBadge>
+                    </Badge>
                     {isAnonymous && (
-                      <Badge
-                        variant="outline"
-                        className="border-deep-green text-deep-green"
-                      >
+                      <Badge className="bg-deep-green/10 text-deep-green border border-deep-green font-semibold">
                         <EyeOff className="w-3 h-3 mr-1" />
-                        Émetteur anonyme
+                        Mode anonyme
                       </Badge>
                     )}
                     {isUrgent && (
-                      <Badge variant="destructive" className="animate-pulse">
-                        Urgent - {daysUntilDeadline} jour
-                        {daysUntilDeadline > 1 ? "s" : ""} restant
-                        {daysUntilDeadline > 1 ? "s" : ""}
+                      <Badge className="bg-red-500 text-white border border-red-600 font-semibold">
+                        <Flame className="w-3 h-3 mr-1" />
+                        Urgent · {daysUntilDeadline}j
                       </Badge>
                     )}
                     {isExpired && (
-                      <Badge variant="secondary">Deadline passée</Badge>
+                      <Badge
+                        variant="secondary"
+                        className="border border-gray-300 font-semibold"
+                      >
+                        Deadline passée
+                      </Badge>
                     )}
                   </div>
 
-                  <h1 className="text-4xl font-bold mb-4">{tender.title}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+                    {tender.title}
+                  </h1>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                  {/* Social proof - Style Amazon */}
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pb-4 border-b border-gray-200">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="w-4 h-4" />
+                      <span className="font-medium">{viewCount} vues</span>
+                    </div>
+                    <span className="text-gray-300">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-4 h-4" />
+                      <span className="font-medium">
+                        {tender._count?.offers || 0} offre
+                        {(tender._count?.offers || 0) !== 1 ? "s" : ""} soumise
+                        {(tender._count?.offers || 0) !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <span className="text-gray-300">|</span>
+                    <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
                       <span>
                         Publié{" "}
@@ -163,431 +223,406 @@ export default async function TenderDetailPage({
                         })}
                       </span>
                     </div>
-                    <Separator orientation="vertical" className="h-4" />
-                    <div className="flex items-center gap-1">
-                      <FileText className="w-4 h-4" />
-                      <span>
-                        {tender._count?.offers || 0} offre
-                        {(tender._count?.offers || 0) !== 1 ? "s" : ""}
-                      </span>
+                  </div>
+
+                  {/* Prix et deadline - Style prominent */}
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    {tender.budget && (
+                      <div className="p-4 bg-artisan-yellow/10 rounded-lg border border-artisan-yellow">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Budget indicatif
+                        </p>
+                        <p className="text-2xl font-bold text-artisan-yellow">
+                          CHF {tender.budget.toLocaleString("fr-CH")}
+                        </p>
+                      </div>
+                    )}
+                    <div
+                      className={`p-4 rounded-lg border ${
+                        isUrgent
+                          ? "bg-red-50 border-red-300"
+                          : "bg-gray-50 border-gray-300"
+                      }`}
+                    >
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Deadline
+                      </p>
+                      <p
+                        className={`text-lg font-bold ${
+                          isUrgent ? "text-red-600" : "text-matte-black"
+                        }`}
+                      >
+                        {format(deadline, "d MMM yyyy", { locale: fr })}
+                      </p>
+                      {!isExpired && (
+                        <p
+                          className={`text-xs mt-1 font-semibold ${
+                            isUrgent ? "text-red-600" : "text-muted-foreground"
+                          }`}
+                        >
+                          {daysUntilDeadline > 0
+                            ? `${daysUntilDeadline} jour${
+                                daysUntilDeadline > 1 ? "s" : ""
+                              } restant${daysUntilDeadline > 1 ? "s" : ""}`
+                            : "Dernier jour"}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </HandDrawnCardContent>
-              </HandDrawnCard>
+                </div>
 
-              {/* Description */}
-              <HandDrawnCard>
-                <HandDrawnCardHeader>
-                  <HandDrawnCardTitle>
-                    Description du{" "}
-                    <HandDrawnHighlight variant="yellow">
-                      projet
-                    </HandDrawnHighlight>
-                  </HandDrawnCardTitle>
-                </HandDrawnCardHeader>
-                <HandDrawnCardContent className="prose prose-sm max-w-none">
-                  <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                    {tender.description}
-                  </p>
-                </HandDrawnCardContent>
-              </HandDrawnCard>
-
-              {/* Résumé court */}
-              {tender.summary && (
-                <HandDrawnCard className="border-artisan-yellow">
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>Résumé</HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent>
-                    <p className="text-muted-foreground font-medium">
-                      {tender.summary}
+                {/* Description */}
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-2xl font-bold mb-4">
+                    Description du projet
+                  </h2>
+                  <div className="prose prose-sm max-w-none">
+                    <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                      {tender.description}
                     </p>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
 
-              {/* Situation actuelle */}
-              {tender.currentSituation && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>État existant</HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
+                  {/* Résumé court - Si présent */}
+                  {tender.summary && (
+                    <div className="mt-6 p-4 bg-artisan-yellow/10 border-l-4 border-artisan-yellow rounded-r-lg">
+                      <h3 className="font-bold mb-2 text-sm text-matte-black">
+                        📋 Résumé
+                      </h3>
+                      <p className="text-sm text-muted-foreground font-medium">
+                        {tender.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* État existant */}
+                {tender.currentSituation && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4">État existant</h2>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                       {tender.currentSituation}
                     </p>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
 
-              {/* Détails techniques */}
-              {(tender.cfcCodes.length > 0 ||
-                tender.surfaceM2 ||
-                tender.volumeM3 ||
-                tender.constraints.length > 0) && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
-                      <Ruler className="w-5 h-5 inline mr-2" />
-                      Détails techniques
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent className="space-y-4">
-                    {/* Codes CFC */}
-                    {tender.cfcCodes.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">
-                          Codes CFC
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {tender.cfcCodes.map((code) => (
-                            <Badge
-                              key={code}
-                              variant="secondary"
-                              className="font-mono"
-                            >
-                              {code}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                {/* Détails techniques - Style cards compactes */}
+                {(tender.cfcCodes.length > 0 ||
+                  tender.surfaceM2 ||
+                  tender.volumeM3 ||
+                  tender.constraints.length > 0) && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Ruler className="w-5 h-5 text-artisan-yellow" />
+                      Spécifications techniques
+                    </h2>
 
-                    {/* Surface et volume */}
-                    {(tender.surfaceM2 || tender.volumeM3) && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {tender.surfaceM2 && (
-                          <div className="p-4 bg-sand-light rounded-lg">
-                            <p className="text-xs text-muted-foreground mb-1">
-                              Surface
-                            </p>
-                            <p className="text-2xl font-bold">
-                              {tender.surfaceM2.toLocaleString("fr-CH")} m²
-                            </p>
-                          </div>
-                        )}
-                        {tender.volumeM3 && (
-                          <div className="p-4 bg-sand-light rounded-lg">
-                            <p className="text-xs text-muted-foreground mb-1">
-                              Volume
-                            </p>
-                            <p className="text-2xl font-bold">
-                              {tender.volumeM3.toLocaleString("fr-CH")} m³
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Contraintes */}
-                    {tender.constraints.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
-                          Contraintes du chantier
-                        </h4>
-                        <ul className="space-y-1">
-                          {tender.constraints.map((constraint, idx) => (
-                            <li
-                              key={idx}
-                              className="text-sm text-muted-foreground flex items-start gap-2"
-                            >
-                              <span className="text-artisan-yellow mt-0.5">
-                                •
-                              </span>
-                              {constraint}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
-
-              {/* Planning et durée */}
-              {(tender.contractDuration ||
-                tender.contractStartDate ||
-                tender.isRenewable) && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
-                      <Calendar className="w-5 h-5 inline mr-2" />
-                      Planning et durée
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent className="space-y-4">
-                    {tender.contractDuration && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Durée du contrat
-                        </p>
-                        <p className="text-lg font-semibold">
-                          {tender.contractDuration} jour
-                          {tender.contractDuration > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    )}
-                    {tender.contractStartDate && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Date de début souhaitée
-                        </p>
-                        <p className="text-lg font-semibold">
-                          {format(
-                            new Date(tender.contractStartDate),
-                            "d MMMM yyyy",
-                            {
-                              locale: fr,
-                            }
+                    <div className="space-y-4">
+                      {/* Surface et volume - Grid compact */}
+                      {(tender.surfaceM2 || tender.volumeM3) && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {tender.surfaceM2 && (
+                            <div className="p-4 bg-sand-light rounded-lg border border-gray-300">
+                              <p className="text-xs text-muted-foreground mb-1">
+                                Surface
+                              </p>
+                              <p className="text-xl font-bold">
+                                {tender.surfaceM2.toLocaleString("fr-CH")} m²
+                              </p>
+                            </div>
                           )}
-                        </p>
-                      </div>
-                    )}
+                          {tender.volumeM3 && (
+                            <div className="p-4 bg-sand-light rounded-lg border border-gray-300">
+                              <p className="text-xs text-muted-foreground mb-1">
+                                Volume
+                              </p>
+                              <p className="text-xl font-bold">
+                                {tender.volumeM3.toLocaleString("fr-CH")} m³
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Codes CFC */}
+                      {tender.cfcCodes.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">
+                            Codes CFC requis
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            {tender.cfcCodes.map((code) => (
+                              <Badge
+                                key={code}
+                                variant="secondary"
+                                className="font-mono border border-matte-black"
+                              >
+                                {code}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contraintes */}
+                      {tender.constraints.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-artisan-yellow" />
+                            Contraintes du chantier
+                          </h3>
+                          <ul className="space-y-1.5">
+                            {tender.constraints.map((constraint, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-start gap-2 text-sm"
+                              >
+                                <span className="text-artisan-yellow mt-0.5">
+                                  •
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {constraint}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Planning - Compact */}
+                {(tender.contractDuration ||
+                  tender.contractStartDate ||
+                  tender.isRenewable) && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-artisan-yellow" />
+                      Planning & durée
+                    </h2>
+                    <div className="grid grid-cols-2 gap-3">
+                      {tender.contractDuration && (
+                        <div className="p-4 bg-sand-light rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Durée du contrat
+                          </p>
+                          <p className="text-lg font-bold">
+                            {tender.contractDuration} jour
+                            {tender.contractDuration > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      )}
+                      {tender.contractStartDate && (
+                        <div className="p-4 bg-sand-light rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Début souhaité
+                          </p>
+                          <p className="text-lg font-bold">
+                            {format(
+                              new Date(tender.contractStartDate),
+                              "d MMM yyyy",
+                              { locale: fr }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                     {tender.isRenewable && (
-                      <div className="flex items-center gap-2 p-3 bg-deep-green/10 rounded-lg">
-                        <CheckCircle2 className="w-5 h-5 text-deep-green" />
-                        <span className="text-sm font-medium text-deep-green">
+                      <div className="mt-3 flex items-center gap-2 p-3 bg-deep-green/10 border border-deep-green rounded-lg">
+                        <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
+                        <span className="text-sm font-semibold text-deep-green">
                           Contrat reconductible
                         </span>
                       </div>
                     )}
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
 
-              {/* Critère de sélection */}
-              <HandDrawnCard className="border-deep-green">
-                <HandDrawnCardHeader>
-                  <HandDrawnCardTitle>
-                    <Target className="w-5 h-5 inline mr-2" />
+                {/* Critère de sélection - Mise en avant */}
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-artisan-yellow" />
                     Critère de sélection prioritaire
-                  </HandDrawnCardTitle>
-                </HandDrawnCardHeader>
-                <HandDrawnCardContent>
-                  <div className="flex items-center gap-3 p-4 bg-deep-green/10 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-deep-green" />
+                  </h2>
+                  <div className="flex items-center gap-4 p-4 bg-artisan-yellow/10 rounded-lg">
+                    <TrendingUp className="w-8 h-8 text-artisan-yellow shrink-0" />
                     <div>
-                      <p className="font-bold text-deep-green">
+                      <p className="font-bold text-lg text-matte-black">
                         {selectionPriorityLabels[tender.selectionPriority]}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Ce critère est le plus important pour ce projet
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ce critère est le plus important pour l&apos;évaluation
+                        des offres
                       </p>
                     </div>
                   </div>
-                </HandDrawnCardContent>
-              </HandDrawnCard>
+                </div>
 
-              {/* Conditions de participation */}
-              {(tender.participationConditions ||
-                tender.requiredDocuments ||
-                tender.requiresReferences ||
-                tender.requiresInsurance ||
-                tender.minExperience) && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
-                      <ShieldCheck className="w-5 h-5 inline mr-2" />
+                {/* Conditions de participation */}
+                {(tender.participationConditions ||
+                  tender.requiredDocuments ||
+                  tender.requiresReferences ||
+                  tender.requiresInsurance ||
+                  tender.minExperience) && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-artisan-yellow" />
                       Conditions de participation
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent className="space-y-4">
-                    {tender.participationConditions && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">
-                          Conditions générales
-                        </h4>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {tender.participationConditions}
-                        </p>
-                      </div>
-                    )}
+                    </h2>
+                    <div className="space-y-4">
+                      {tender.participationConditions && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">
+                            Conditions générales
+                          </h3>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {tender.participationConditions}
+                          </p>
+                        </div>
+                      )}
 
-                    {tender.requiredDocuments && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">
-                          Documents requis
-                        </h4>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {tender.requiredDocuments}
-                        </p>
-                      </div>
-                    )}
+                      {tender.requiredDocuments && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">
+                            Documents requis
+                          </h3>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {tender.requiredDocuments}
+                          </p>
+                        </div>
+                      )}
 
-                    {/* Exigences */}
-                    {(tender.requiresReferences ||
-                      tender.requiresInsurance ||
-                      tender.minExperience) && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">
-                          Exigences
-                        </h4>
-                        <ul className="space-y-2">
-                          {tender.requiresReferences && (
-                            <li className="flex items-center gap-2 text-sm">
-                              <CheckCircle2 className="w-4 h-4 text-deep-green" />
-                              Références professionnelles requises
-                            </li>
-                          )}
-                          {tender.requiresInsurance && (
-                            <li className="flex items-center gap-2 text-sm">
-                              <CheckCircle2 className="w-4 h-4 text-deep-green" />
-                              Assurance responsabilité civile requise
-                            </li>
-                          )}
-                          {tender.minExperience && (
-                            <li className="flex items-center gap-2 text-sm">
-                              <CheckCircle2 className="w-4 h-4 text-deep-green" />
-                              Expérience minimale : {tender.minExperience} an
-                              {tender.minExperience > 1 ? "s" : ""}
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                      {(tender.requiresReferences ||
+                        tender.requiresInsurance ||
+                        tender.minExperience) && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">
+                            Exigences
+                          </h3>
+                          <ul className="space-y-2">
+                            {tender.requiresReferences && (
+                              <li className="flex items-center gap-2 text-sm">
+                                <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
+                                <span>
+                                  Références professionnelles requises
+                                </span>
+                              </li>
+                            )}
+                            {tender.requiresInsurance && (
+                              <li className="flex items-center gap-2 text-sm">
+                                <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
+                                <span>
+                                  Assurance responsabilité civile requise
+                                </span>
+                              </li>
+                            )}
+                            {tender.minExperience && (
+                              <li className="flex items-center gap-2 text-sm">
+                                <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
+                                <span>
+                                  Expérience minimale : {tender.minExperience}{" "}
+                                  an
+                                  {tender.minExperience > 1 ? "s" : ""}
+                                </span>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-              {/* Conditions contractuelles */}
-              {tender.contractualTerms && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
+                {/* Conditions contractuelles */}
+                {tender.contractualTerms && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4">
                       Conditions contractuelles
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent>
+                    </h2>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {tender.contractualTerms}
                     </p>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
 
-              {/* Lots */}
-              {tender.hasLots && tender.lots && tender.lots.length > 0 && (
-                <HandDrawnCard className="border-artisan-yellow">
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>Lots du marché</HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent className="space-y-4">
-                    {tender.lots.map((lot) => (
-                      <div
-                        key={lot.id}
-                        className="p-4 bg-sand-light rounded-lg space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <Badge className="bg-artisan-yellow text-black">
-                            Lot {lot.number}
-                          </Badge>
-                          {lot.budget && (
-                            <span className="text-sm font-semibold">
-                              CHF {lot.budget.toLocaleString("fr-CH")}
-                            </span>
+                {/* Lots */}
+                {tender.hasLots && tender.lots && tender.lots.length > 0 && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4">Lots du marché</h2>
+                    <div className="space-y-3">
+                      {tender.lots.map((lot) => (
+                        <div
+                          key={lot.id}
+                          className="p-4 bg-sand-light rounded-lg border border-gray-300"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge className="bg-artisan-yellow text-matte-black border border-matte-black font-bold">
+                              Lot {lot.number}
+                            </Badge>
+                            {lot.budget && (
+                              <span className="text-lg font-bold">
+                                CHF {lot.budget.toLocaleString("fr-CH")}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-bold mb-1">{lot.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {lot.description}
+                          </p>
+                        </div>
+                      ))}
+                      {tender.allowPartialOffers && (
+                        <div className="flex items-center gap-2 p-3 bg-deep-green/10 border border-deep-green rounded-lg">
+                          <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
+                          <span className="text-sm font-semibold text-deep-green">
+                            Offres partielles autorisées
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Critères d'évaluation */}
+                {tender.criteria && tender.criteria.length > 0 && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Award className="w-5 h-5 text-artisan-yellow" />
+                      Critères d&apos;évaluation
+                    </h2>
+                    <div className="space-y-3">
+                      {tender.criteria.map((criteria) => (
+                        <div
+                          key={criteria.id}
+                          className="p-4 bg-sand-light rounded-lg border border-gray-300"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-bold">{criteria.name}</h3>
+                            <Badge className="bg-artisan-yellow text-matte-black border border-matte-black px-2 py-0.5">
+                              {criteria.weight}%
+                            </Badge>
+                          </div>
+                          {criteria.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {criteria.description}
+                            </p>
                           )}
                         </div>
-                        <h4 className="font-bold">{lot.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {lot.description}
-                        </p>
-                      </div>
-                    ))}
-                    {tender.allowPartialOffers && (
-                      <div className="flex items-center gap-2 p-3 bg-deep-green/10 rounded-lg">
-                        <CheckCircle2 className="w-5 h-5 text-deep-green" />
-                        <span className="text-sm font-medium text-deep-green">
-                          Offres partielles autorisées
-                        </span>
-                      </div>
-                    )}
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
-
-              {/* Critères d'évaluation */}
-              {tender.criteria && tender.criteria.length > 0 && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
-                      <Award className="w-5 h-5 inline mr-2" />
-                      Critères d&apos;évaluation
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent className="space-y-3">
-                    {tender.criteria.map((criteria) => (
-                      <div
-                        key={criteria.id}
-                        className="p-4 bg-sand-light rounded-lg"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold">{criteria.name}</h4>
-                          <Badge className="bg-artisan-yellow text-black">
-                            {criteria.weight}%
-                          </Badge>
-                        </div>
-                        {criteria.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {criteria.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
-
-              {/* Documents */}
-              {tender.documents && tender.documents.length > 0 && (
-                <HandDrawnCard>
-                  <HandDrawnCardHeader>
-                    <HandDrawnCardTitle>
-                      Documents & cahier des charges
-                    </HandDrawnCardTitle>
-                  </HandDrawnCardHeader>
-                  <HandDrawnCardContent>
-                    <div className="space-y-3">
-                      {tender.documents.map((doc) => (
-                        <a
-                          key={doc.id}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-4 bg-sand-light rounded-lg hover:bg-artisan-yellow/10 transition-colors group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg">
-                              <FileText className="w-5 h-5 text-artisan-yellow" />
-                            </div>
-                            <div>
-                              <p className="font-medium group-hover:text-artisan-yellow transition-colors">
-                                {doc.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {(doc.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                          </div>
-                          <Download className="w-5 h-5 text-muted-foreground group-hover:text-artisan-yellow transition-colors" />
-                        </a>
                       ))}
                     </div>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
 
-              {/* Informations sur l'anonymisation */}
-              {isAnonymous && !isOwner && (
-                <HandDrawnCard className="border-deep-green">
-                  <HandDrawnCardContent className="p-6">
+                {/* Informations sur l'anonymisation */}
+                {isAnonymous && !isOwner && (
+                  <div className="p-6 bg-deep-green/5 rounded-b-lg">
                     <div className="flex gap-4">
-                      <div className="p-3 bg-deep-green/10 rounded-lg">
+                      <div className="p-3 bg-deep-green/10 rounded-lg shrink-0">
                         <EyeOff className="w-6 h-6 text-deep-green" />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-deep-green mb-2">
-                          Appel d&apos;offres anonyme
+                          Appel d&apos;offres en mode anonyme
                         </h3>
                         <p className="text-sm text-muted-foreground mb-3">
                           L&apos;identité de l&apos;organisation émettrice est
@@ -595,176 +630,193 @@ export default async function TenderDetailPage({
                           sélection équitable et éviter les conflits
                           d&apos;intérêts.
                         </p>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          <li>✓ Organisation masquée</li>
-                          <li>✓ Évaluation objective des offres</li>
-                          <li>✓ Révélation automatique après la deadline</li>
+                        <ul className="text-sm space-y-1.5">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-deep-green" />
+                            <span>Organisation masquée</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-deep-green" />
+                            <span>Évaluation objective des offres</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-deep-green" />
+                            <span>Révélation automatique après deadline</span>
+                          </li>
                         </ul>
                       </div>
                     </div>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Message si propriétaire */}
-              {isOwner && (
-                <HandDrawnCard className="border-gray-200">
-                  <HandDrawnCardContent className="p-6 text-center">
-                    <h3 className="text-lg font-bold mb-2">
-                      Votre appel d&apos;offre
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Vous ne pouvez pas soumettre une offre à votre propre
-                      appel d&apos;offre.
-                    </p>
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+            {/* Sidebar - STICKY - 4/12 */}
+            <div className="lg:col-span-4">
+              <div className="lg:sticky lg:top-6 space-y-4">
+                {/* CTA Principal - Toujours en haut et visible */}
+                {!isExpired && !isOwner && (
+                  <div className="bg-white p-6 rounded-lg border-2 border-artisan-yellow shadow-lg">
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-bold mb-2">
+                        Soumettre une offre
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {hasSubmitted
+                          ? "Vous avez déjà soumis une offre"
+                          : "Payez uniquement pour les projets qui vous intéressent"}
+                      </p>
+                    </div>
 
-              {/* CTA Principal */}
-              {!isExpired && !isOwner && (
-                <HandDrawnCard className="border-artisan-yellow border-2">
-                  <HandDrawnCardContent className="p-6 text-center">
-                    <h3 className="text-xl font-bold mb-4">
-                      Intéressé par ce projet ?
-                    </h3>
                     <SubmitOfferButton
                       tenderId={tender.id}
                       isAuthenticated={isAuthenticated}
                       hasSubmitted={hasSubmitted}
                       offerId={offerId}
                     />
-                  </HandDrawnCardContent>
-                </HandDrawnCard>
-              )}
+                  </div>
+                )}
 
-              {/* Informations clés */}
-              <HandDrawnCard>
-                <HandDrawnCardHeader>
-                  <HandDrawnCardTitle>Informations clés</HandDrawnCardTitle>
-                </HandDrawnCardHeader>
-                <HandDrawnCardContent className="space-y-4">
-                  {/* Organisation - masquée si anonyme et deadline non passée */}
-                  {(!isAnonymous || isExpired || isOwner) && (
-                    <>
+                {/* Message si propriétaire */}
+                {isOwner && (
+                  <div className="bg-white p-6 rounded-lg border-2 border-matte-black">
+                    <h3 className="font-bold mb-2 text-center">
+                      Votre appel d&apos;offre
+                    </h3>
+                    <p className="text-sm text-muted-foreground text-center">
+                      Vous ne pouvez pas soumettre une offre à votre propre
+                      appel d&apos;offre.
+                    </p>
+                    <Button
+                      asChild
+                      className="w-full mt-4 bg-deep-green hover:bg-deep-green/90"
+                    >
+                      <Link href={`/dashboard/tenders/${tender.id}`}>
+                        Gérer cet appel d&apos;offre
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
+                {/* Message si expiré */}
+                {isExpired && !isOwner && (
+                  <div className="bg-white p-6 rounded-lg border-2 border-gray-300">
+                    <h3 className="font-bold mb-2 text-center text-muted-foreground">
+                      Deadline passée
+                    </h3>
+                    <p className="text-sm text-muted-foreground text-center">
+                      Cet appel d&apos;offres n&apos;accepte plus de nouvelles
+                      soumissions.
+                    </p>
+                  </div>
+                )}
+
+                {/* Informations clés */}
+                <div className="bg-white p-6 rounded-lg border-2 border-matte-black">
+                  <h3 className="font-bold mb-4">Informations</h3>
+                  <div className="space-y-4">
+                    {/* Organisation */}
+                    {(!isAnonymous || isExpired || isOwner) && (
                       <div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                           <Building2 className="w-4 h-4" />
-                          <span className="font-medium">Organisation</span>
+                          <span>Organisation</span>
                         </div>
-                        <p className="font-semibold ml-6">
+                        <p className="font-semibold">
                           {tender.organization.name}
                         </p>
-                        <Badge
-                          variant="secondary"
-                          className="text-xs ml-6 mt-1"
-                        >
+                        <Badge variant="secondary" className="mt-1 text-xs">
                           {organizationTypeLabels[tender.organization.type]}
                         </Badge>
                       </div>
-                      <Separator />
-                    </>
-                  )}
-
-                  {/* Message si organisation masquée */}
-                  {isAnonymous && !isExpired && !isOwner && (
-                    <>
-                      <div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                          <Building2 className="w-4 h-4" />
-                          <span className="font-medium">Organisation</span>
-                        </div>
-                        <div className="ml-6 flex items-center gap-2 text-muted-foreground">
-                          <EyeOff className="w-4 h-4" />
-                          <span className="text-sm italic">
-                            Masquée jusqu'à la deadline
-                          </span>
-                        </div>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-
-                  {/* Localisation */}
-                  {(tender.city || tender.canton) && (
-                    <>
-                      <div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                          <MapPin className="w-4 h-4" />
-                          <span className="font-medium">Localisation</span>
-                        </div>
-                        <p className="ml-6">
-                          {tender.city && tender.canton
-                            ? `${tender.city}, ${tender.canton}`
-                            : tender.city || tender.canton}
-                        </p>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-
-                  {/* Budget */}
-                  {tender.budget && (
-                    <>
-                      <div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                          <Euro className="w-4 h-4" />
-                          <span className="font-medium">Budget indicatif</span>
-                        </div>
-                        <p className="ml-6 text-2xl font-bold text-artisan-yellow">
-                          CHF {tender.budget.toLocaleString("fr-CH")}
-                        </p>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-
-                  {/* Deadline */}
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <Calendar className="w-4 h-4" />
-                      <span className="font-medium">Deadline</span>
-                    </div>
-                    <p
-                      className={`ml-6 font-semibold ${
-                        isUrgent ? "text-red-500" : ""
-                      }`}
-                    >
-                      {format(deadline, "d MMMM yyyy", { locale: fr })}
-                    </p>
-                    <p className="ml-6 text-sm text-muted-foreground">
-                      {format(deadline, "HH:mm", { locale: fr })}
-                    </p>
-                    {!isExpired && (
-                      <p className="ml-6 text-sm text-muted-foreground mt-1">
-                        {daysUntilDeadline > 0
-                          ? `${daysUntilDeadline} jour${
-                              daysUntilDeadline > 1 ? "s" : ""
-                            } restant${daysUntilDeadline > 1 ? "s" : ""}`
-                          : "Dernier jour"}
-                      </p>
                     )}
-                  </div>
-                </HandDrawnCardContent>
-              </HandDrawnCard>
 
-              {/* Partage */}
-              <HandDrawnCard>
-                <HandDrawnCardHeader>
-                  <HandDrawnCardTitle>Partager</HandDrawnCardTitle>
-                </HandDrawnCardHeader>
-                <HandDrawnCardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Partagez cet appel d&apos;offres avec votre réseau
-                  </p>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Copier le lien
-                  </Button>
-                </HandDrawnCardContent>
-              </HandDrawnCard>
+                    {isAnonymous && !isExpired && !isOwner && (
+                      <div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                          <Building2 className="w-4 h-4" />
+                          <span>Organisation</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <EyeOff className="w-4 h-4" />
+                          <span className="italic">Masquée</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="h-px bg-gray-200" />
+
+                    {/* Localisation */}
+                    {(tender.city || tender.canton) && (
+                      <>
+                        <div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                            <MapPin className="w-4 h-4" />
+                            <span>Localisation</span>
+                          </div>
+                          <p className="font-semibold text-sm">
+                            {tender.city && tender.canton
+                              ? `${tender.city}, ${tender.canton}`
+                              : tender.city || tender.canton}
+                          </p>
+                        </div>
+                        <div className="h-px bg-gray-200" />
+                      </>
+                    )}
+
+                    {/* Type de marché */}
+                    <div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <FileText className="w-4 h-4" />
+                        <span>Type de marché</span>
+                      </div>
+                      <p className="font-semibold text-sm">
+                        {marketTypeLabels[tender.marketType] ||
+                          tender.marketType}
+                      </p>
+                    </div>
+
+                    <div className="h-px bg-gray-200" />
+
+                    {/* Deadline */}
+                    <div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>Deadline de soumission</span>
+                      </div>
+                      <p
+                        className={`font-bold ${
+                          isUrgent ? "text-red-500" : "text-matte-black"
+                        }`}
+                      >
+                        {format(deadline, "d MMMM yyyy · HH:mm", {
+                          locale: fr,
+                        })}
+                      </p>
+                      {!isExpired && (
+                        <p
+                          className={`text-xs mt-1 ${
+                            isUrgent
+                              ? "text-red-500 font-semibold"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {daysUntilDeadline > 0
+                            ? `${daysUntilDeadline} jour${
+                                daysUntilDeadline > 1 ? "s" : ""
+                              } restant${daysUntilDeadline > 1 ? "s" : ""}`
+                            : "Dernier jour !"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Partage */}
+                <div className="bg-white p-4 rounded-lg border-2 border-matte-black">
+                  <ShareTenderButton />
+                </div>
+              </div>
             </div>
           </div>
         </div>

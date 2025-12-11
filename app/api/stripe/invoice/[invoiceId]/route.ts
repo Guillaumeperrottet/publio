@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db/prisma";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { invoiceId: string } }
+  { params }: { params: Promise<{ invoiceId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -18,7 +18,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const stripeInvoiceId = params.invoiceId;
+    const { invoiceId } = await params;
+    const stripeInvoiceId = invoiceId;
 
     if (!stripeInvoiceId) {
       return NextResponse.json(

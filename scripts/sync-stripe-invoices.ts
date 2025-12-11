@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 
 async function syncStripeInvoices() {
   console.log("=".repeat(60));
@@ -67,6 +68,12 @@ async function syncStripeInvoices() {
               ? "PENDING"
               : "FAILED";
 
+          const paymentIntent = (
+            stripeInvoice as Stripe.Invoice & {
+              payment_intent?: string | Stripe.PaymentIntent;
+            }
+          ).payment_intent;
+
           await prisma.invoice.create({
             data: {
               number: stripeInvoice.number || `INV-${Date.now()}`,
@@ -76,7 +83,10 @@ async function syncStripeInvoices() {
               description:
                 stripeInvoice.lines.data[0]?.description || "Abonnement Veille",
               stripeInvoiceId: stripeInvoice.id,
-              stripePaymentIntentId: stripeInvoice.payment_intent as string,
+              stripePaymentIntentId:
+                typeof paymentIntent === "string"
+                  ? paymentIntent
+                  : paymentIntent?.id,
               paidAt: stripeInvoice.status_transitions.paid_at
                 ? new Date(stripeInvoice.status_transitions.paid_at * 1000)
                 : null,

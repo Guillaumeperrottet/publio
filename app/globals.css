@@ -90,6 +90,13 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* Police script (More Sugar) pour titres décoratifs */
+.font-script {
+  font-family: var(--font-script), cursive;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
 /* Typographie hand-drawn pour les titres */
 /* Désactivé temporairement - causait un affichage vertical
 h1,

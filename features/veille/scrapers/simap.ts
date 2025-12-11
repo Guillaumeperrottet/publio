@@ -1,4 +1,4 @@
-import type { ScrapedPublication, Canton } from "../types";
+import type { ScrapedPublication, Canton, PublicationType } from "../types";
 
 /**
  * Interface pour la réponse de l'API SIMAP

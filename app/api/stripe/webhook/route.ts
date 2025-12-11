@@ -191,6 +191,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Créer une facture dans notre base de données
+        const paymentIntent = (
+          invoice as Stripe.Invoice & {
+            payment_intent?: string | Stripe.PaymentIntent;
+          }
+        ).payment_intent;
+
         await prisma.invoice.create({
           data: {
             number: invoice.number || `INV-${Date.now()}`,
@@ -200,7 +206,11 @@ export async function POST(request: NextRequest) {
             description:
               invoice.lines.data[0]?.description || "Abonnement Veille",
             stripeInvoiceId: invoice.id,
-            stripePaymentIntentId: invoice.payment_intent as string,
+            stripePaymentIntentId: paymentIntent
+              ? typeof paymentIntent === "string"
+                ? paymentIntent
+                : paymentIntent.id
+              : null,
             paidAt: invoice.status_transitions.paid_at
               ? new Date(invoice.status_transitions.paid_at * 1000)
               : new Date(),
@@ -236,6 +246,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Créer une facture avec statut FAILED
+        const paymentIntentFailed = (
+          invoice as Stripe.Invoice & {
+            payment_intent?: string | Stripe.PaymentIntent;
+          }
+        ).payment_intent;
+
         await prisma.invoice.create({
           data: {
             number: invoice.number || `INV-FAILED-${Date.now()}`,
@@ -246,7 +262,11 @@ export async function POST(request: NextRequest) {
               invoice.lines.data[0]?.description ||
               "Échec de paiement abonnement",
             stripeInvoiceId: invoice.id,
-            stripePaymentIntentId: invoice.payment_intent as string,
+            stripePaymentIntentId: paymentIntentFailed
+              ? typeof paymentIntentFailed === "string"
+                ? paymentIntentFailed
+                : paymentIntentFailed.id
+              : null,
             organizationId,
           },
         });
