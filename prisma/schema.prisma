@@ -30,6 +30,7 @@ model User {
   createdOrganizations Organization[]       @relation("CreatedOrganizations")
   sentInvitations      InvitationToken[]    @relation("SentInvitations")
   equityLogs           EquityLog[]
+  savedTenders         SavedTender[]
 
   @@map("users")
 }
@@ -302,6 +303,7 @@ model Tender {
   offers      Offer[]
   invitations TenderInvitation[]
   equityLogs  EquityLog[]
+  savedBy     SavedTender[]
 
   // Identité révélée (pour mode anonyme)
   identityRevealed Boolean   @default(false)
@@ -337,6 +339,22 @@ model EquityLog {
   @@index([tenderId, createdAt])
   @@index([userId])
   @@map("equity_logs")
+}
+
+// Tenders sauvegardés par les utilisateurs
+model SavedTender {
+  id        String   @id @default(cuid())
+  userId    String
+  tenderId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenderId])
+  @@index([userId])
+  @@index([tenderId])
+  @@map("saved_tenders")
 }
 
 model TenderDocument {

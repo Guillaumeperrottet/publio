@@ -83,18 +83,65 @@ export async function UniversalHeader() {
                     Tableau de bord
                   </Link>
 
-                  <Link
-                    href="/dashboard/tenders"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-matte-black hover:bg-sand-light/50 rounded-lg transition-all relative"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Mes appels d&apos;offres
-                    {unreadCount > 0 && (
-                      <Badge className="ml-1 h-5 min-w-5 px-1 bg-artisan-yellow text-matte-black border-2 border-matte-black font-bold text-xs">
-                        {unreadCount}
-                      </Badge>
-                    )}
-                  </Link>
+                  {/* Dropdown Appels d'offres */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-matte-black hover:bg-sand-light/50 rounded-lg transition-all relative">
+                      <FileText className="w-4 h-4" />
+                      Appels d&apos;offres
+                      {unreadCount > 0 && (
+                        <Badge className="ml-1 h-5 min-w-5 px-1 bg-artisan-yellow text-matte-black border-2 border-matte-black font-bold text-xs">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                      <svg
+                        className="w-3 h-3 ml-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard/tenders"
+                          className="flex items-center gap-3 cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium text-sm">
+                              Mes appels d&apos;offres
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Mes publications
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard/saved-tenders"
+                          className="flex items-center gap-3 cursor-pointer"
+                        >
+                          <Bookmark className="w-4 h-4 text-artisan-yellow" />
+                          <div>
+                            <p className="font-medium text-sm">
+                              Appels d&apos;offres sauvegardés
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Mes sauvegardes
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Link
                     href="/dashboard/offers"

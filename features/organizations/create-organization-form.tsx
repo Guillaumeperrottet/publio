@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createOrganization } from "./actions";
 import { HandDrawnBadge } from "@/components/ui/hand-drawn-badge";
+import { saveTender } from "@/features/tenders/saved-actions";
+import { toast } from "sonner";
 
 const organizationSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -27,8 +29,10 @@ type OrganizationFormData = z.infer<typeof organizationSchema>;
 
 export default function CreateOrganizationForm({
   redirectUrl,
+  action,
 }: {
   redirectUrl?: string;
+  action?: string;
 }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +65,21 @@ export default function CreateOrganizationForm({
       });
 
       console.log("Organization created:", organization);
+
+      // Si action=save, sauvegarder le tender
+      if (action === "save" && redirectUrl) {
+        const tenderIdMatch = redirectUrl.match(/\/tenders\/([^/?]+)/);
+        if (tenderIdMatch) {
+          const tenderId = tenderIdMatch[1];
+          try {
+            await saveTender(tenderId);
+            toast.success("Appel d'offres sauvegardé");
+          } catch (err) {
+            console.error("Error saving tender:", err);
+            toast.error("Erreur lors de la sauvegarde");
+          }
+        }
+      }
 
       // Forcer le refresh et rediriger vers la destination ou dashboard
       router.refresh();

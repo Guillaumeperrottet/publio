@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, MapPin, Calendar, Euro, EyeOff } from "lucide-react";
+import { BookmarkTenderButton } from "./bookmark-tender-button";
 
 type TenderCardProps = {
   tender: {
@@ -26,6 +27,8 @@ type TenderCardProps = {
       offers: number;
     };
   };
+  isSaved?: boolean;
+  isAuthenticated?: boolean;
 };
 
 const marketTypeLabels: Record<string, string> = {
@@ -45,7 +48,11 @@ const organizationTypeLabels: Record<string, string> = {
   PRIVE: "Privé",
 };
 
-export function TenderCard({ tender }: TenderCardProps) {
+export function TenderCard({
+  tender,
+  isSaved = false,
+  isAuthenticated = false,
+}: TenderCardProps) {
   const isAnonymous = tender.mode === "ANONYMOUS";
   const now = new Date().getTime();
   const deadline = new Date(tender.deadline).getTime();
@@ -58,9 +65,19 @@ export function TenderCard({ tender }: TenderCardProps) {
 
   return (
     <Link href={`/tenders/${tender.id}`}>
-      <div className="bg-white border-2 border-matte-black rounded-lg p-5 hover:shadow-lg hover:border-artisan-yellow transition-all cursor-pointer h-full flex flex-col">
+      <div className="bg-white border-2 border-matte-black rounded-lg p-5 hover:shadow-lg hover:border-artisan-yellow transition-all cursor-pointer h-full flex flex-col relative">
+        {/* Bookmark button - top right */}
+        <div className="absolute top-3 right-3 z-10">
+          <BookmarkTenderButton
+            tenderId={tender.id}
+            isSaved={isSaved}
+            isAuthenticated={isAuthenticated}
+          />
+        </div>
+
         {/* Header avec badges */}
-        <div className="mb-3">
+        <div className="mb-3 pr-10">
+          {/* pr-10 pour laisser l'espace au bookmark */}
           <div className="flex flex-wrap gap-2 mb-2">
             {isNew && (
               <Badge className="bg-artisan-yellow text-matte-black border-2 border-matte-black font-bold">

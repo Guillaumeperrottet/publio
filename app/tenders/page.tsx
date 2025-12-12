@@ -1,5 +1,6 @@
 import PublicLayout from "@/components/layout/public-layout";
 import { getPublicTenders } from "@/features/tenders/actions";
+import { getSavedTenderIds } from "@/features/tenders/saved-actions";
 import { TendersCatalogClient } from "./client";
 import {
   MarketType,
@@ -35,6 +36,9 @@ export default async function TendersPage({
   // Vérifier si l'utilisateur est connecté
   const session = await getSession();
   const isAuthenticated = !!session;
+
+  // Récupérer les IDs des tenders sauvegardés si authentifié
+  const savedTenderIds = isAuthenticated ? await getSavedTenderIds() : [];
 
   // Convertir les paramètres URL en filtres
   const filters = {
@@ -72,6 +76,7 @@ export default async function TendersPage({
           initialTenders={tenders}
           initialFilters={filters}
           isAuthenticated={isAuthenticated}
+          savedTenderIds={savedTenderIds}
         />
       </div>
     </PublicLayout>

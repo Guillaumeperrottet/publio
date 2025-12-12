@@ -68,6 +68,7 @@ type TendersCatalogClientProps = {
   initialTenders: Tender[];
   initialFilters: TenderFilters;
   isAuthenticated: boolean;
+  savedTenderIds?: string[];
 };
 
 const cantons = [
@@ -103,6 +104,7 @@ export function TendersCatalogClient({
   initialTenders,
   initialFilters,
   isAuthenticated,
+  savedTenderIds = [],
 }: TendersCatalogClientProps) {
   const router = useRouter();
   const [localFilters, setLocalFilters] =
@@ -382,6 +384,19 @@ export function TendersCatalogClient({
                 >
                   Urgent
                 </Button>
+                {isAuthenticated && savedTenderIds.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-2 border-matte-black hover:bg-artisan-yellow hover:text-matte-black"
+                    asChild
+                  >
+                    <a href="/dashboard/saved-tenders">
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      Sauvegardés ({savedTenderIds.length})
+                    </a>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -409,7 +424,12 @@ export function TendersCatalogClient({
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-8">
               {initialTenders.map((tender) => (
-                <TenderCard key={tender.id} tender={tender} />
+                <TenderCard
+                  key={tender.id}
+                  tender={tender}
+                  isSaved={savedTenderIds.includes(tender.id)}
+                  isAuthenticated={isAuthenticated}
+                />
               ))}
             </div>
           )}

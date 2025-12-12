@@ -16,7 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function SignUpForm({ redirectUrl }: { redirectUrl?: string }) {
+export default function SignUpForm({
+  redirectUrl,
+  action,
+}: {
+  redirectUrl?: string;
+  action?: string;
+}) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +87,10 @@ export default function SignUpForm({ redirectUrl }: { redirectUrl?: string }) {
       if (invitationToken) {
         router.push(`/invitation/${invitationToken}`);
       } else if (redirectUrl) {
-        router.push(`/onboarding?redirect=${encodeURIComponent(redirectUrl)}`);
+        const onboardingUrl = `/onboarding?redirect=${encodeURIComponent(
+          redirectUrl
+        )}${action ? `&action=${action}` : ""}`;
+        router.push(onboardingUrl);
       } else {
         router.push("/onboarding");
       }

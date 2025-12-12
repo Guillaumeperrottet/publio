@@ -14,12 +14,13 @@ import { HandDrawnHighlight } from "@/components/ui/hand-drawn-highlight";
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string }>;
+  searchParams: Promise<{ redirect?: string; action?: string }>;
 }) {
   await getCurrentUser();
 
   const params = await searchParams;
   const redirectUrl = params.redirect;
+  const action = params.action;
 
   // Vérifier si l'utilisateur a déjà une organisation
   const memberships = await getUserOrganizations();
@@ -61,7 +62,7 @@ export default async function OnboardingPage({
             </HandDrawnCardDescription>
           </HandDrawnCardHeader>
           <HandDrawnCardContent>
-            <CreateOrganizationForm redirectUrl={redirectUrl} />
+            <CreateOrganizationForm redirectUrl={redirectUrl} action={action} />
           </HandDrawnCardContent>
         </HandDrawnCard>
 
