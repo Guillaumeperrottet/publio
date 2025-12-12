@@ -18,7 +18,9 @@ import {
   sendDeadlinePassedEmail,
   sendTenderAwardedWinnerEmail,
   sendTenderAwardedLosersEmail,
+  sendTenderAwardedEmitterEmail,
 } from "@/lib/email/tender-emails";
+import { createEquityLog } from "@/features/equity-log/actions";
 
 /**
  * Créer un nouvel appel d'offres
@@ -60,6 +62,19 @@ export async function createTender(data: {
     },
   });
 
+  // Log de création
+  await createEquityLog({
+    tenderId: tender.id,
+    userId: user.id,
+    action: "TENDER_CREATED",
+    description: `Appel d'offres créé : "${tender.title}"`,
+    metadata: {
+      marketType: tender.marketType,
+      visibility: tender.visibility,
+      mode: tender.mode,
+    },
+  });
+
   return tender;
 }
 
@@ -86,6 +101,9 @@ export async function getPublicTenders(filters?: {
   const where: any = {
     visibility: TenderVisibility.PUBLIC,
     status: TenderStatus.PUBLISHED,
+    deadline: {
+      gte: new Date(), // Ne pas afficher les tenders expirés
+    },
   };
 
   // Filtres de recherche
@@ -302,6 +320,18 @@ export async function publishTender(tenderId: string) {
       // Ne pas bloquer la publication si l'email échoue
     }
   }
+
+  // Log de publication
+  await createEquityLog({
+    tenderId: updatedTender.id,
+    userId: user.id,
+    action: "TENDER_PUBLISHED",
+    description: `Appel d'offres publié : "${updatedTender.title}"`,
+    metadata: {
+      publishedAt: updatedTender.publishedAt,
+      deadline: updatedTender.deadline,
+    },
+  });
 
   return updatedTender;
 }
@@ -605,12 +635,20 @@ export async function closeTender(tenderId: string) {
     // Optionnel : vérifier que la deadline est passée
     // (mais on permet de clôturer avant si besoin)
 
-    // Mettre à jour le tender
+    // Mettre à jour le tender et révéler l'identité si anonyme
+    const updateData: any = {
+      status: TenderStatus.CLOSED,
+    };
+
+    // Si le tender est en mode anonyme, révéler l'identité après clôture
+    if (tender.mode === TenderMode.ANONYMOUS && !tender.identityRevealed) {
+      updateData.identityRevealed = true;
+      updateData.revealedAt = new Date();
+    }
+
     const updatedTender = await prisma.tender.update({
       where: { id: tenderId },
-      data: {
-        status: TenderStatus.CLOSED,
-      },
+      data: updateData,
       include: {
         organization: {
           include: {
@@ -650,6 +688,18 @@ export async function closeTender(tenderId: string) {
         }
       }
     }
+
+    // Log de clôture
+    await createEquityLog({
+      tenderId: updatedTender.id,
+      userId: user.id,
+      action: "TENDER_CLOSED",
+      description: `Appel d'offres clôturé avec ${tender._count.offers} offre(s) reçue(s)`,
+      metadata: {
+        offersCount: tender._count.offers,
+        identityRevealed: updatedTender.identityRevealed,
+      },
+    });
 
     return { success: true, tender: updatedTender };
   } catch (error) {
@@ -721,44 +771,53 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       return { error: "Offre gagnante introuvable" };
     }
 
-    // Vérifier que l'offre est acceptée ou soumise
+    // Vérifier que l'offre est soumise ou pré-sélectionnée
     if (
-      winningOffer.status !== "ACCEPTED" &&
-      winningOffer.status !== "SUBMITTED"
+      winningOffer.status !== "SUBMITTED" &&
+      winningOffer.status !== "SHORTLISTED"
     ) {
       return {
-        error: "L'offre doit être acceptée ou soumise pour être attribuée",
+        error:
+          "L'offre doit être soumise ou pré-sélectionnée pour être attribuée",
       };
     }
 
     // Transaction : mettre à jour tender + offre gagnante + rejeter les autres
     await prisma.$transaction(async (tx) => {
-      // 1. Mettre à jour le tender
+      // 1. Mettre à jour le tender et révéler l'identité si anonyme
+      const tenderUpdateData: any = {
+        status: TenderStatus.AWARDED,
+      };
+
+      // Si le tender est en mode anonyme, révéler l'identité après attribution
+      if (tender.mode === TenderMode.ANONYMOUS && !tender.identityRevealed) {
+        tenderUpdateData.identityRevealed = true;
+        tenderUpdateData.revealedAt = new Date();
+      }
+
       await tx.tender.update({
         where: { id: tenderId },
+        data: tenderUpdateData,
+      });
+
+      // 2. Marquer l'offre gagnante comme AWARDED
+      await tx.offer.update({
+        where: { id: winningOfferId },
         data: {
-          status: TenderStatus.AWARDED,
+          status: OfferStatus.AWARDED,
         },
       });
 
-      // 2. Accepter l'offre gagnante si pas déjà fait
-      if (winningOffer.status !== "ACCEPTED") {
-        await tx.offer.update({
-          where: { id: winningOfferId },
-          data: {
-            status: OfferStatus.ACCEPTED,
-          },
-        });
-      }
-
-      // 3. Rejeter automatiquement toutes les autres offres soumises
+      // 3. Rejeter automatiquement toutes les autres offres (SUBMITTED + SHORTLISTED)
       await tx.offer.updateMany({
         where: {
           tenderId,
           id: {
             not: winningOfferId,
           },
-          status: "SUBMITTED",
+          status: {
+            in: ["SUBMITTED", "SHORTLISTED"],
+          },
         },
         data: {
           status: OfferStatus.REJECTED,
@@ -770,7 +829,20 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
     const finalTender = await prisma.tender.findUnique({
       where: { id: tenderId },
       include: {
-        organization: true,
+        organization: {
+          include: {
+            members: {
+              where: {
+                role: {
+                  in: ["OWNER", "ADMIN"],
+                },
+              },
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
         offers: {
           include: {
             organization: {
@@ -793,7 +865,7 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
     });
 
     if (finalTender) {
-      // Email au gagnant
+      // Email au gagnant avec les coordonnées de l'émetteur
       const winner = finalTender.offers.find((o) => o.id === winningOfferId);
       if (winner) {
         const winnerEmails = winner.organization.members
@@ -809,9 +881,47 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
               offerPrice: winner.price,
               offerCurrency: winner.currency,
               organizationName: finalTender.organization.name,
+              organizationEmail:
+                (finalTender.organization as any).email || undefined,
+              organizationPhone:
+                (finalTender.organization as any).phone || undefined,
+              organizationAddress:
+                (finalTender.organization as any).address || undefined,
+              organizationCity:
+                (finalTender.organization as any).city || undefined,
+              organizationCanton:
+                (finalTender.organization as any).canton || undefined,
             });
           } catch (error) {
             console.error("Error sending winner email:", error);
+          }
+        }
+      }
+
+      // Email à l'émetteur avec les coordonnées du gagnant
+      if (winner) {
+        const emitterEmails = finalTender.organization.members
+          .filter((m) => m.role === "OWNER" || m.role === "ADMIN")
+          .map((m) => m.user.email)
+          .filter((email): email is string => !!email);
+
+        if (emitterEmails.length > 0) {
+          try {
+            await sendTenderAwardedEmitterEmail({
+              to: emitterEmails,
+              tenderTitle: finalTender.title,
+              tenderId: finalTender.id,
+              offerPrice: winner.price,
+              offerCurrency: winner.currency,
+              winnerOrganizationName: winner.organization.name,
+              winnerEmail: (winner.organization as any).email || undefined,
+              winnerPhone: (winner.organization as any).phone || undefined,
+              winnerAddress: (winner.organization as any).address || undefined,
+              winnerCity: (winner.organization as any).city || undefined,
+              winnerCanton: (winner.organization as any).canton || undefined,
+            });
+          } catch (error) {
+            console.error("Error sending emitter email:", error);
           }
         }
       }
@@ -839,9 +949,129 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       }
     }
 
+    // Log d'attribution
+    const winner = finalTender?.offers.find((o) => o.id === winningOfferId);
+    if (winner) {
+      await createEquityLog({
+        tenderId,
+        userId: user.id,
+        action: "TENDER_AWARDED",
+        description: `Marché attribué à "${
+          winner.organization.name
+        }" pour ${new Intl.NumberFormat("fr-CH", {
+          style: "currency",
+          currency: winner.currency,
+        }).format(winner.price)}`,
+        metadata: {
+          winnerId: winningOfferId,
+          winnerOrganization: winner.organization.name,
+          price: winner.price,
+          currency: winner.currency,
+        },
+      });
+
+      // Log des offres rejetées (groupé)
+      const losersCount = finalTender.offers.filter(
+        (o) => o.status === "REJECTED"
+      ).length;
+      if (losersCount > 0) {
+        await createEquityLog({
+          tenderId,
+          userId: user.id,
+          action: "OFFER_REJECTED",
+          description: `${losersCount} ${
+            losersCount === 1 ? "offre rejetée" : "offres rejetées"
+          } automatiquement`,
+          metadata: {
+            rejectedCount: losersCount,
+            winnerId: winningOfferId,
+          },
+        });
+      }
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error awarding tender:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Révéler manuellement l'identité de l'organisation émettrice (mode anonyme)
+ * Accessible uniquement aux OWNER et ADMIN après la deadline
+ */
+export async function revealTenderIdentity(tenderId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer le tender
+    const tender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                userId: user.id,
+                role: {
+                  in: ["OWNER", "ADMIN"],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tender) {
+      return { error: "Appel d'offres introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits
+    if (!tender.organization.members.length) {
+      return {
+        error:
+          "Vous n'avez pas les droits pour révéler l'identité de cet appel d'offres",
+      };
+    }
+
+    // Vérifier que le tender est en mode anonyme
+    if (tender.mode !== TenderMode.ANONYMOUS) {
+      return {
+        error: "Cet appel d'offres n'est pas en mode anonyme",
+      };
+    }
+
+    // Vérifier que l'identité n'a pas déjà été révélée
+    if (tender.identityRevealed) {
+      return {
+        error: "L'identité a déjà été révélée",
+      };
+    }
+
+    // Vérifier que la deadline est passée
+    if (new Date() < tender.deadline) {
+      return {
+        error:
+          "L'identité ne peut être révélée qu'après la deadline de l'appel d'offres",
+      };
+    }
+
+    // Révéler l'identité
+    const updatedTender = await prisma.tender.update({
+      where: { id: tenderId },
+      data: {
+        identityRevealed: true,
+        revealedAt: new Date(),
+      },
+    });
+
+    return { success: true, tender: updatedTender };
+  } catch (error) {
+    console.error("Error revealing tender identity:", error);
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };

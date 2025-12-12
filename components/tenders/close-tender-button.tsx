@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Lock, Loader2 } from "lucide-react";
@@ -33,15 +35,16 @@ export function CloseTenderButton({
       const result = await closeTender(tenderId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
+      toast.success("Appel d'offres clôturé avec succès");
       router.refresh();
       setShowDialog(false);
     } catch (error) {
       console.error("Error closing tender:", error);
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsClosing(false);
     }

@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import {
   Dialog,
@@ -57,9 +59,10 @@ export function SaveSearchButton({
     if (result.success) {
       setOpen(false);
       setName("");
+      toast.success("Recherche sauvegardée avec succès");
       router.refresh();
     } else {
-      alert(result.error || "Erreur lors de la sauvegarde");
+      toast.error(result.error || "Erreur lors de la sauvegarde");
     }
   };
 

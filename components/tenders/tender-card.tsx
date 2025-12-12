@@ -54,7 +54,7 @@ export function TenderCard({ tender }: TenderCardProps) {
   const isUrgent = daysUntilDeadline <= 7 && !isExpired;
   const isNew =
     new Date().getTime() - new Date(tender.createdAt).getTime() <
-    7 * 24 * 60 * 60 * 1000; // 7 days
+    1 * 24 * 60 * 60 * 1000; // 1 jour
 
   return (
     <Link href={`/tenders/${tender.id}`}>

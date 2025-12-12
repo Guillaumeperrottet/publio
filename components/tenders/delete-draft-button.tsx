@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -31,11 +33,12 @@ export function DeleteDraftButton({
     try {
       setIsDeleting(true);
       await deleteDraftTender(tenderId);
+      toast.success("Brouillon supprimé");
       setIsOpen(false);
       router.refresh();
     } catch (error) {
       console.error("Error deleting draft:", error);
-      alert("Erreur lors de la suppression du brouillon");
+      toast.error("Erreur lors de la suppression du brouillon");
       setIsDeleting(false);
     }
   };

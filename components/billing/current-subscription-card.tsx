@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import {
   HandDrawnCard,
@@ -93,7 +95,7 @@ export function CurrentSubscriptionCard({
       }
     } catch (error) {
       console.error("Error opening portal:", error);
-      alert(
+      toast.error(
         "Erreur lors de l'ouverture du portail de gestion. Veuillez réessayer."
       );
     } finally {

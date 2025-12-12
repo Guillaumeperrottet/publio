@@ -414,6 +414,11 @@ export async function sendTenderAwardedWinnerEmail(params: {
   offerPrice: number;
   offerCurrency: string;
   organizationName: string;
+  organizationEmail?: string;
+  organizationPhone?: string;
+  organizationAddress?: string;
+  organizationCity?: string;
+  organizationCanton?: string;
 }) {
   const tenderUrl = `${APP_URL}/tenders/${params.tenderId}`;
 
@@ -446,15 +451,40 @@ export async function sendTenderAwardedWinnerEmail(params: {
       }</strong> a officiellement attribué le marché à votre organisation.
     </p>
 
-    <p style="margin: 0 0 25px; color: #6B705C; font-size: 14px;">
-      <strong>Prochaines étapes :</strong>
-    </p>
-
-    <ul style="margin: 0 0 25px; padding-left: 20px; color: #6B705C; font-size: 14px;">
-      <li>Le donneur d'ordre vous contactera prochainement pour finaliser les détails</li>
-      <li>Préparez les documents contractuels nécessaires</li>
-      <li>Organisez le démarrage du projet selon le calendrier convenu</li>
-    </ul>
+    <div style="background-color: #F0F9FF; border: 2px solid #1B4332; padding: 20px; margin: 25px 0; border-radius: 8px;">
+      <p style="margin: 0 0 15px; color: #1B4332; font-size: 16px; font-weight: 600;">
+        📞 Coordonnées du donneur d'ordre :
+      </p>
+      <div style="color: #0D0D0D; font-size: 14px; line-height: 1.8;">
+        <p style="margin: 0 0 8px;"><strong>Organisation :</strong> ${
+          params.organizationName
+        }</p>
+        ${
+          params.organizationEmail
+            ? `<p style="margin: 0 0 8px;"><strong>Email :</strong> <a href="mailto:${params.organizationEmail}" style="color: #DEAE00; text-decoration: none;">${params.organizationEmail}</a></p>`
+            : ""
+        }
+        ${
+          params.organizationPhone
+            ? `<p style="margin: 0 0 8px;"><strong>Téléphone :</strong> <a href="tel:${params.organizationPhone}" style="color: #DEAE00; text-decoration: none;">${params.organizationPhone}</a></p>`
+            : ""
+        }
+        ${
+          params.organizationAddress
+            ? `<p style="margin: 0 0 8px;"><strong>Adresse :</strong> ${params.organizationAddress}</p>`
+            : ""
+        }
+        ${
+          params.organizationCity || params.organizationCanton
+            ? `<p style="margin: 0;"><strong>Localité :</strong> ${
+                params.organizationCity || ""
+              }${
+                params.organizationCity && params.organizationCanton ? ", " : ""
+              }${params.organizationCanton || ""}</p>`
+            : ""
+        }
+      </div>
+    </div>
 
     ${generateButtonHtml("Voir les détails", tenderUrl)}
 
@@ -493,22 +523,15 @@ export async function sendTenderAwardedLosersEmail(params: {
       }"</strong> a été attribué à une autre organisation.
     </p>
 
-    <div style="background-color: #F0EDE3; border-left: 4px solid #6B705C; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
-      <p style="margin: 0; color: #6B705C; font-size: 14px;">
-        Merci d'avoir participé à cet appel d'offres. Votre offre a été évaluée avec attention.
-      </p>
-    </div>
-
-    <p style="margin: 25px 0 15px; color: #6B705C; font-size: 14px;">
-      Nous vous encourageons à continuer à soumissionner sur d'autres appels d'offres. 
-      De nouvelles opportunités sont publiées régulièrement sur Publio.
+    <p style="margin: 0 0 25px; color: #6B705C; font-size: 14px;">
+      Nous vous remercions pour votre participation et vous encourageons à consulter nos autres opportunités.
     </p>
 
     ${generateButtonHtml("Parcourir les appels d'offres", tendersUrl)}
 
     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #F0EDE3;">
-      <p style="margin: 0; color: #6B705C; font-size: 13px;">
-        💡 Continuez à développer votre activité avec Publio. Votre prochaine opportunité vous attend !
+      <p style="margin: 0; color: #6B705C; font-size: 13px; text-align: center;">
+        💼 Merci pour votre intérêt et à bientôt sur Publio
       </p>
     </div>
   `;
@@ -516,6 +539,114 @@ export async function sendTenderAwardedLosersEmail(params: {
   return sendEmail({
     to: params.to,
     subject: `Marché attribué - "${params.tenderTitle}"`,
+    html: generateEmailLayout(content),
+  });
+}
+
+/**
+ * Email de notification à l'émetteur avec les coordonnées du gagnant
+ */
+export async function sendTenderAwardedEmitterEmail(params: {
+  to: string | string[];
+  tenderTitle: string;
+  tenderId: string;
+  offerPrice: number;
+  offerCurrency: string;
+  winnerOrganizationName: string;
+  winnerEmail?: string;
+  winnerPhone?: string;
+  winnerAddress?: string;
+  winnerCity?: string;
+  winnerCanton?: string;
+}) {
+  const tenderUrl = `${APP_URL}/dashboard/tenders/${params.tenderId}`;
+
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #1B4332; font-size: 28px; font-weight: 700; text-align: center;">
+      ✅ Marché attribué avec succès
+    </h2>
+    
+    <p style="margin: 0 0 15px; color: #0D0D0D; font-size: 18px; text-align: center;">
+      Vous avez attribué le marché pour <strong style="color: #DEAE00;">"${
+        params.tenderTitle
+      }"</strong>
+    </p>
+
+    <div style="background-color: #F0F9FF; border: 2px solid #1B4332; padding: 20px; margin: 30px 0; border-radius: 8px; text-align: center;">
+      <p style="margin: 0 0 10px; color: #1B4332; font-size: 16px; font-weight: 600;">
+        💰 Montant attribué
+      </p>
+      <p style="margin: 0; color: #1B4332; font-size: 24px; font-weight: 700;">
+        ${new Intl.NumberFormat("fr-CH", {
+          style: "currency",
+          currency: params.offerCurrency,
+        }).format(params.offerPrice)}
+      </p>
+    </div>
+
+    <p style="margin: 25px 0 15px; color: #0D0D0D; font-size: 16px;">
+      Le marché a été attribué à <strong>${
+        params.winnerOrganizationName
+      }</strong>.
+    </p>
+
+    <div style="background-color: #FFFBEB; border: 2px solid #DEAE00; padding: 20px; margin: 25px 0; border-radius: 8px;">
+      <p style="margin: 0 0 15px; color: #92400E; font-size: 16px; font-weight: 600;">
+        📞 Coordonnées du prestataire retenu :
+      </p>
+      <div style="color: #0D0D0D; font-size: 14px; line-height: 1.8;">
+        <p style="margin: 0 0 8px;"><strong>Organisation :</strong> ${
+          params.winnerOrganizationName
+        }</p>
+        ${
+          params.winnerEmail
+            ? `<p style="margin: 0 0 8px;"><strong>Email :</strong> <a href="mailto:${params.winnerEmail}" style="color: #DEAE00; text-decoration: none;">${params.winnerEmail}</a></p>`
+            : ""
+        }
+        ${
+          params.winnerPhone
+            ? `<p style="margin: 0 0 8px;"><strong>Téléphone :</strong> <a href="tel:${params.winnerPhone}" style="color: #DEAE00; text-decoration: none;">${params.winnerPhone}</a></p>`
+            : ""
+        }
+        ${
+          params.winnerAddress
+            ? `<p style="margin: 0 0 8px;"><strong>Adresse :</strong> ${params.winnerAddress}</p>`
+            : ""
+        }
+        ${
+          params.winnerCity || params.winnerCanton
+            ? `<p style="margin: 0;"><strong>Localité :</strong> ${
+                params.winnerCity || ""
+              }${params.winnerCity && params.winnerCanton ? ", " : ""}${
+                params.winnerCanton || ""
+              }</p>`
+            : ""
+        }
+      </div>
+    </div>
+
+    <p style="margin: 25px 0 15px; color: #6B705C; font-size: 14px;">
+      <strong>Prochaines étapes :</strong>
+    </p>
+
+    <ul style="margin: 0 0 25px; padding-left: 20px; color: #6B705C; font-size: 14px;">
+      <li>Contactez le prestataire pour finaliser les détails contractuels</li>
+      <li>Établissez le calendrier de réalisation du projet</li>
+      <li>Préparez les documents administratifs nécessaires</li>
+    </ul>
+
+    ${generateButtonHtml("Voir le détail de l'offre", tenderUrl)}
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #F0EDE3;">
+      <p style="margin: 0; color: #6B705C; font-size: 13px; text-align: center;">
+        💼 Les deux parties ont reçu les coordonnées pour faciliter la prise de contact
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: params.to,
+    subject: `✅ Marché attribué - "${params.tenderTitle}"`,
     html: generateEmailLayout(content),
   });
 }

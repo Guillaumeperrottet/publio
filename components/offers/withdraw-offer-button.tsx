@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { XCircle, Loader2 } from "lucide-react";
@@ -43,7 +45,7 @@ export function WithdrawOfferButton({
       const result = await withdrawOffer(offerId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -51,7 +53,7 @@ export function WithdrawOfferButton({
       setShowDialog(false);
     } catch (error) {
       console.error("Error withdrawing offer:", error);
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsWithdrawing(false);
     }

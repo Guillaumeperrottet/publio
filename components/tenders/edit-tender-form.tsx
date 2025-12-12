@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -249,7 +251,7 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
       router.refresh();
     } catch (error) {
       console.error("Error updating tender:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Une erreur est survenue lors de la sauvegarde"
@@ -261,7 +263,9 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
 
   const handlePublish = async () => {
     if (!validation.isValid) {
-      alert("Veuillez remplir tous les champs obligatoires avant de publier.");
+      toast.error(
+        "Veuillez remplir tous les champs obligatoires avant de publier."
+      );
       return;
     }
 
@@ -309,7 +313,7 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
       window.location.href = url;
     } catch (error) {
       console.error("Error publishing tender:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Une erreur est survenue lors de la publication"

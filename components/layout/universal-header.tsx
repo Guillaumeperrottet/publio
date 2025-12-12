@@ -35,13 +35,21 @@ export async function UniversalHeader() {
   let user = null;
   let organization = null;
   let unreadCount = 0;
+  let userRole = null;
 
   if (isAuthenticated) {
     user = await getCurrentUser();
     const memberships = await getUserOrganizations();
-    organization = memberships[0]?.organization;
+    const currentMembership = memberships.organizations?.[0];
+    organization = currentMembership?.organization;
 
-    if (organization) {
+    if (currentMembership && organization) {
+      // Trouver le rôle de l'utilisateur dans cette organisation
+      const userMember = currentMembership.members?.find(
+        (m) => m.userId === user.id
+      );
+      userRole = userMember?.role || null;
+
       unreadCount = await getUnreadOffersCount(organization.id);
     }
   }
@@ -214,6 +222,7 @@ export async function UniversalHeader() {
                     image: user?.image || undefined,
                   }}
                   organization={organization}
+                  userRole={userRole}
                 />
               </>
             ) : (

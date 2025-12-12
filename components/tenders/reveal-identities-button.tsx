@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EyeOff, Loader2 } from "lucide-react";
-import { revealOfferIdentities } from "@/features/offers/actions";
+import { revealTenderIdentity } from "@/features/tenders/actions";
 import { useRouter } from "next/navigation";
 
 export function RevealIdentitiesButton({ tenderId }: { tenderId: string }) {
@@ -13,7 +14,7 @@ export function RevealIdentitiesButton({ tenderId }: { tenderId: string }) {
   const handleReveal = async () => {
     if (
       !confirm(
-        "Êtes-vous sûr de vouloir révéler les identités ? Cette action est irréversible."
+        "Êtes-vous sûr de vouloir révéler votre identité ? Cette action est irréversible et tous les soumissionnaires verront qui vous êtes."
       )
     ) {
       return;
@@ -21,18 +22,19 @@ export function RevealIdentitiesButton({ tenderId }: { tenderId: string }) {
 
     setIsRevealing(true);
     try {
-      const result = await revealOfferIdentities(tenderId);
+      const result = await revealTenderIdentity(tenderId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
-      // Rafraîchir la page pour voir les identités révélées
+      toast.success("Identité révélée avec succès");
+      // Rafraîchir la page pour voir l'identité révélée
       router.refresh();
     } catch (error) {
-      console.error("Error revealing identities:", error);
-      alert("Une erreur est survenue");
+      console.error("Error revealing identity:", error);
+      toast.error("Une erreur est survenue");
     } finally {
       setIsRevealing(false);
     }
@@ -44,6 +46,7 @@ export function RevealIdentitiesButton({ tenderId }: { tenderId: string }) {
       disabled={isRevealing}
       variant="outline"
       size="sm"
+      className="bg-artisan-yellow/10 hover:bg-artisan-yellow/20 border-artisan-yellow"
     >
       {isRevealing ? (
         <>
@@ -53,7 +56,7 @@ export function RevealIdentitiesButton({ tenderId }: { tenderId: string }) {
       ) : (
         <>
           <EyeOff className="w-4 h-4 mr-2" />
-          Révéler les identités
+          Révéler mon identité
         </>
       )}
     </Button>

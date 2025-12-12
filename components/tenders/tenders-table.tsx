@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -748,7 +750,7 @@ export function TendersTable({ tenders }: TendersTableProps) {
                         className="w-full"
                         onClick={() => {
                           // TODO: Implémenter la fonctionnalité de clôture
-                          alert("Fonctionnalité de clôture à venir");
+                          toast.error("Fonctionnalité de clôture à venir");
                         }}
                       >
                         <Lock className="w-4 h-4 mr-2" />
@@ -762,7 +764,9 @@ export function TendersTable({ tenders }: TendersTableProps) {
                             className="w-full"
                             onClick={() => {
                               // TODO: Implémenter l'attribution
-                              alert("Fonctionnalité d'attribution à venir");
+                              toast.error(
+                                "Fonctionnalité d'attribution à venir"
+                              );
                             }}
                           >
                             <Award className="w-4 h-4 mr-2" />
@@ -777,7 +781,7 @@ export function TendersTable({ tenders }: TendersTableProps) {
                     className="w-full"
                     onClick={() => {
                       // TODO: Implémenter l'export PDF
-                      alert("Export PDF à venir");
+                      toast.error("Export PDF à venir");
                     }}
                   >
                     <Download className="w-4 h-4 mr-2" />

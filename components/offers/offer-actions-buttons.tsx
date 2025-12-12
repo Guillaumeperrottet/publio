@@ -1,4 +1,12 @@
+/**
+ * @deprecated Ce composant est deprecated. Utilisez le nouveau workflow avec :
+ * - ShortlistOfferButton (pour pré-sélectionner)
+ * - UnshortlistOfferButton (pour retirer de la liste)
+ * - AwardTenderButton (pour attribuer le marché)
+ */
 "use client";
+
+import { toast } from "sonner";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +54,7 @@ export function OfferActionsButtons({
       const result = await acceptOffer(offerId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -54,7 +62,7 @@ export function OfferActionsButtons({
       setShowAcceptDialog(false);
     } catch (error) {
       console.error("Error accepting offer:", error);
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsAccepting(false);
     }
@@ -66,7 +74,7 @@ export function OfferActionsButtons({
       const result = await rejectOffer(offerId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -74,7 +82,7 @@ export function OfferActionsButtons({
       setShowRejectDialog(false);
     } catch (error) {
       console.error("Error rejecting offer:", error);
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsRejecting(false);
     }

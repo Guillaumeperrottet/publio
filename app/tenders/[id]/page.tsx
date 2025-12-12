@@ -683,14 +683,11 @@ export default async function TenderDetailPage({
                     <h3 className="font-bold mb-2 text-center">
                       Votre appel d&apos;offre
                     </h3>
-                    <p className="text-sm text-muted-foreground text-center">
+                    <p className="text-sm text-muted-foreground text-center mb-4">
                       Vous ne pouvez pas soumettre une offre à votre propre
                       appel d&apos;offre.
                     </p>
-                    <Button
-                      asChild
-                      className="w-full mt-4 bg-deep-green hover:bg-deep-green/90"
-                    >
+                    <Button asChild variant="outline" className="w-full">
                       <Link href={`/dashboard/tenders/${tender.id}`}>
                         Gérer cet appel d&apos;offre
                       </Link>

@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -136,6 +137,12 @@ export default async function TenderDetailDashboardPage({
               </div>
             </div>
             <div className="flex gap-2">
+              <Link href={`/dashboard/tenders/${tender.id}/equity-log`}>
+                <Button variant="outline" size="sm">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Journal d&apos;équité
+                </Button>
+              </Link>
               {canRevealIdentities && (
                 <RevealIdentitiesButton tenderId={tender.id} />
               )}
@@ -252,7 +259,9 @@ export default async function TenderDetailDashboardPage({
               tenderId={tender.id}
               tenderStatus={tender.status}
               isAnonymous={tender.mode === "ANONYMOUS"}
-              identityRevealed={tender.identityRevealed}
+              identityRevealed={
+                tender.mode === "CLASSIC" ? true : tender.identityRevealed
+              }
               canAwardTender={canAwardTender}
             />
           </HandDrawnCardContent>

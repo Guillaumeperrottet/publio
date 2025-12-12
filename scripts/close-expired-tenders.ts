@@ -113,11 +113,21 @@ async function closeExpiredTenders() {
         `   🔒 Fermeture automatique (${daysSinceDeadline} jours écoulés)`
       );
 
+      // Préparer les données de mise à jour
+      const updateData: any = {
+        status: "CLOSED",
+      };
+
+      // Si le tender est en mode anonyme, révéler l'identité
+      if (tender.mode === "ANONYMOUS" && !tender.identityRevealed) {
+        updateData.identityRevealed = true;
+        updateData.revealedAt = new Date();
+        console.log(`   🔓 Révélation de l'identité (mode anonyme)`);
+      }
+
       await prisma.tender.update({
         where: { id: tender.id },
-        data: {
-          status: "CLOSED",
-        },
+        data: updateData,
       });
 
       // TODO: Envoyer email de notification de fermeture auto

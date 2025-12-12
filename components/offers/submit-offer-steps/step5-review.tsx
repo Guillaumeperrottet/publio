@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { OfferFormData } from "../submit-offer-stepper";
 import { Button } from "@/components/ui/button";
@@ -136,7 +138,7 @@ export function OfferStep5({
       }
     } catch (error) {
       console.error("Submit error:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Erreur lors de la soumission de l'offre"

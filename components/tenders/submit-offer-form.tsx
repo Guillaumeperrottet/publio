@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -191,7 +193,7 @@ export function SubmitOfferForm({
       }
     } catch (error) {
       console.error("Submit error:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Erreur lors de la soumission de l'offre"

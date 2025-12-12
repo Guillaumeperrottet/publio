@@ -18,6 +18,7 @@ import {
   LogOut,
   ChevronDown,
   CreditCard,
+  Shield,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
@@ -33,9 +34,10 @@ interface UserMenuProps {
     name: string;
     type: string;
   } | null;
+  userRole?: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | null;
 }
 
-export function UserMenu({ user, organization }: UserMenuProps) {
+export function UserMenu({ user, organization, userRole }: UserMenuProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,6 +54,8 @@ export function UserMenu({ user, organization }: UserMenuProps) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const isOwnerOrAdmin = userRole === "OWNER" || userRole === "ADMIN";
 
   return (
     <DropdownMenu>
@@ -149,6 +153,19 @@ export function UserMenu({ user, organization }: UserMenuProps) {
                 <span>Membres de l&apos;équipe</span>
               </Link>
             </DropdownMenuItem>
+
+            {/* Journaux d'équité - uniquement pour OWNER et ADMIN */}
+            {isOwnerOrAdmin && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/dashboard/equity-logs"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Journaux d&apos;équité</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuSeparator />
           </>

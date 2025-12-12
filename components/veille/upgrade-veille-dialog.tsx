@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,7 +105,7 @@ export function UpgradeVeilleDialog({
       }
     } catch (error) {
       console.error("Error upgrading:", error);
-      alert(
+      toast.error(
         "Une erreur est survenue lors de la création de l'abonnement. Veuillez réessayer."
       );
     } finally {

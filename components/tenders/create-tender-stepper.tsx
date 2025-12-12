@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -230,7 +232,7 @@ export function CreateTenderStepper({
       }
     } catch (error) {
       console.error("Error creating tender:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Une erreur est survenue lors de la création de l'appel d'offres"
@@ -322,7 +324,7 @@ export function CreateTenderStepper({
       router.push(`/dashboard/tenders/${result.tenderId}/edit`);
     } catch (error) {
       console.error("Error saving draft:", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Une erreur est survenue lors de la sauvegarde du brouillon"

@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { HandDrawnBadge } from "@/components/ui/hand-drawn-badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Euro, FileText, Eye, Download, Edit } from "lucide-react";
@@ -144,7 +146,7 @@ export function TenderActionsPanel({
               className="w-full"
               onClick={() => {
                 // TODO: Implémenter l'export PDF
-                alert("Export PDF à venir");
+                toast.error("Export PDF à venir");
               }}
             >
               <Download className="w-4 h-4 mr-2" />

@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Award, Loader2 } from "lucide-react";
@@ -39,15 +41,16 @@ export function AwardTenderButton({
       const result = await awardTender(tenderId, offerId);
 
       if (result.error) {
-        alert(result.error);
+        toast.error(result.error);
         return;
       }
 
+      toast.success("Marché attribué avec succès");
       router.refresh();
       setShowDialog(false);
     } catch (error) {
       console.error("Error awarding tender:", error);
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsAwarding(false);
     }

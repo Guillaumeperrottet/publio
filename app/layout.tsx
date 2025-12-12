@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
         className={`${inter.variable} ${caveat.variable} ${moreSugar.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

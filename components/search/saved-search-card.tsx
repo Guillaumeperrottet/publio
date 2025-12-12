@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import {
   HandDrawnCard,
@@ -35,9 +37,10 @@ export function SavedSearchCard({ search }: SavedSearchCardProps) {
     const result = await deleteSavedSearch(search.id);
 
     if (result.success) {
+      toast.success("Recherche supprimée");
       router.refresh();
     } else {
-      alert(result.error || "Erreur lors de la suppression");
+      toast.error(result.error || "Erreur lors de la suppression");
       setLoading(false);
     }
   };
@@ -47,9 +50,12 @@ export function SavedSearchCard({ search }: SavedSearchCardProps) {
     const result = await toggleSearchAlerts(search.id, !search.alertsEnabled);
 
     if (result.success) {
+      toast.success(
+        !search.alertsEnabled ? "Alertes activées" : "Alertes désactivées"
+      );
       router.refresh();
     } else {
-      alert(result.error || "Erreur lors de la modification");
+      toast.error(result.error || "Erreur lors de la modification");
     }
     setLoading(false);
   };

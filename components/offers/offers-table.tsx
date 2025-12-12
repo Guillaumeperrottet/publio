@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -22,11 +21,16 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronUp,
+  Star,
+  StickyNote,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { OfferActionsButtons } from "@/components/offers/offer-actions-buttons";
+import { ShortlistOfferButton } from "@/components/offers/shortlist-offer-button";
+import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-button";
+import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
+import { OfferInternalNote } from "@/components/offers/offer-internal-note";
 
 interface Offer {
   id: string;
@@ -38,6 +42,7 @@ interface Offer {
   submittedAt: Date | null;
   status: string;
   anonymousId: string | null;
+  internalNote: string | null;
   organization: {
     name: string;
     city: string | null;
@@ -55,10 +60,15 @@ interface OffersTableProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "En attente", color: "bg-gray-100 text-gray-700" },
-  ACCEPTED: { label: "Acceptée", color: "bg-green-100 text-green-700" },
-  REJECTED: { label: "Refusée", color: "bg-red-100 text-red-700" },
-  AWARDED: { label: "Attribuée", color: "bg-purple-100 text-purple-700" },
+  SUBMITTED: { label: "Soumise", color: "bg-blue-100 text-blue-700" },
+  SHORTLISTED: {
+    label: "À étudier",
+    color: "bg-artisan-yellow/20 text-yellow-800",
+  },
+  REJECTED: { label: "Non retenue", color: "bg-red-100 text-red-700" },
+  AWARDED: { label: "Marché attribué", color: "bg-green-100 text-green-700" },
+  WITHDRAWN: { label: "Retirée", color: "bg-gray-100 text-gray-700" },
+  ACCEPTED: { label: "Acceptée", color: "bg-green-100 text-green-700" }, // Deprecated
 };
 
 export function OffersTable({
@@ -71,8 +81,18 @@ export function OffersTable({
   const [sortBy, setSortBy] = useState<"price" | "date">("price");
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
 
-  // Trier les offres
+  // Compter les offres pré-sélectionnées
+  const shortlistedCount = offers.filter(
+    (offer) => offer.status === "SHORTLISTED"
+  ).length;
+
+  // Trier les offres : SHORTLISTED en haut, puis par prix ou date
   const sortedOffers = [...offers].sort((a, b) => {
+    // D'abord, mettre les SHORTLISTED en haut
+    if (a.status === "SHORTLISTED" && b.status !== "SHORTLISTED") return -1;
+    if (a.status !== "SHORTLISTED" && b.status === "SHORTLISTED") return 1;
+
+    // Ensuite, trier par prix ou date
     if (sortBy === "price") {
       return a.price - b.price;
     }
@@ -98,10 +118,18 @@ export function OffersTable({
     <div className="space-y-4">
       {/* Contrôles de tri */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {offers.length} offre{offers.length > 1 ? "s" : ""} reçue
-          {offers.length > 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            {offers.length} offre{offers.length > 1 ? "s" : ""} reçue
+            {offers.length > 1 ? "s" : ""}
+          </p>
+          {shortlistedCount > 0 && (
+            <Badge className="bg-artisan-yellow text-matte-black flex items-center gap-1">
+              <Star className="w-3 h-3 fill-matte-black" />
+              {shortlistedCount} à étudier
+            </Badge>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button
             variant={sortBy === "price" ? "default" : "outline"}
@@ -152,10 +180,17 @@ export function OffersTable({
                       }
                       className={`grid grid-cols-12 gap-4 p-4 hover:bg-sand-light/30 cursor-pointer transition-colors ${
                         isSelected ? "bg-white" : ""
+                      } ${
+                        offer.status === "SHORTLISTED"
+                          ? "bg-artisan-yellow/5 border-l-4 border-artisan-yellow"
+                          : ""
                       }`}
                     >
                       {/* Soumissionnaire avec chevron */}
                       <div className="col-span-4 flex items-center gap-2 min-w-0">
+                        {offer.status === "SHORTLISTED" && (
+                          <Star className="w-4 h-4 text-artisan-yellow shrink-0 fill-artisan-yellow" />
+                        )}
                         {isSelected ? (
                           <ChevronUp className="w-4 h-4 text-artisan-yellow shrink-0" />
                         ) : (
@@ -242,45 +277,27 @@ export function OffersTable({
                                 Voir le détail
                               </Link>
                             </DropdownMenuItem>
-                            {identityRevealed && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <OfferActionsButtons
-                                    offerId={offer.id}
-                                    offerStatus={offer.status}
-                                    organizationName={offer.organization.name}
-                                    price={offer.price}
-                                    currency={offer.currency}
-                                  />
-                                </div>
-                                {offer.status === "ACCEPTED" &&
-                                  canAwardTender && (
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      <AwardTenderButton
-                                        tenderId={tenderId}
-                                        offerId={offer.id}
-                                        organizationName={
-                                          offer.organization.name
-                                        }
-                                        price={offer.price}
-                                        currency={offer.currency}
-                                      />
-                                    </div>
-                                  )}
-                              </>
-                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </div>
 
-                    {/* Détails expandable - cliquable pour navigation */}
+                    {/* Détails expandable */}
                     {isSelected && (
-                      <Link
-                        href={`/dashboard/tenders/${tenderId}/offers/${offer.id}`}
-                        className="block p-6 bg-white border-t-2 border-gray-200 hover:bg-sand-light/20 transition-colors"
-                      >
+                      <div className="p-6 bg-white border-t-2 border-gray-200">
+                        {/* Note interne si présente */}
+                        {offer.internalNote && (
+                          <div className="mb-6 p-4 bg-deep-green/5 border-l-4 border-deep-green rounded-r">
+                            <h4 className="font-semibold mb-2 flex items-center gap-2 text-deep-green">
+                              <StickyNote className="w-4 h-4" />
+                              Note interne
+                            </h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {offer.internalNote}
+                            </p>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Description */}
                           {offer.description && (
@@ -321,11 +338,83 @@ export function OffersTable({
                             </div>
                           )}
                         </div>
-                        <div className="mt-4 text-sm text-artisan-yellow font-medium flex items-center gap-2">
+
+                        {/* Actions sur l'offre */}
+                        {identityRevealed && (
+                          <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                            <h4 className="font-semibold mb-3 text-sm">
+                              Actions
+                            </h4>
+                            <div
+                              className="flex flex-wrap gap-3"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Note interne (toujours disponible) */}
+                              <OfferInternalNote
+                                offerId={offer.id}
+                                initialNote={offer.internalNote}
+                                organizationName={offer.organization.name}
+                              />
+
+                              {/* Offre SUBMITTED */}
+                              {offer.status === "SUBMITTED" && (
+                                <>
+                                  <ShortlistOfferButton
+                                    offerId={offer.id}
+                                    organizationName={offer.organization.name}
+                                  />
+                                  <RejectOfferButton
+                                    offerId={offer.id}
+                                    organizationName={offer.organization.name}
+                                    price={offer.price}
+                                    currency={offer.currency}
+                                  />
+                                  {canAwardTender && (
+                                    <AwardTenderButton
+                                      tenderId={tenderId}
+                                      offerId={offer.id}
+                                      organizationName={offer.organization.name}
+                                      price={offer.price}
+                                      currency={offer.currency}
+                                    />
+                                  )}
+                                </>
+                              )}
+
+                              {/* Offre SHORTLISTED */}
+                              {offer.status === "SHORTLISTED" && (
+                                <>
+                                  <UnshortlistOfferButton offerId={offer.id} />
+                                  <RejectOfferButton
+                                    offerId={offer.id}
+                                    organizationName={offer.organization.name}
+                                    price={offer.price}
+                                    currency={offer.currency}
+                                  />
+                                  {canAwardTender && (
+                                    <AwardTenderButton
+                                      tenderId={tenderId}
+                                      offerId={offer.id}
+                                      organizationName={offer.organization.name}
+                                      price={offer.price}
+                                      currency={offer.currency}
+                                    />
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Lien vers les détails */}
+                        <Link
+                          href={`/dashboard/tenders/${tenderId}/offers/${offer.id}`}
+                          className="mt-4 text-sm text-artisan-yellow font-medium flex items-center gap-2 hover:underline"
+                        >
                           <Eye className="w-4 h-4" />
                           Cliquer pour voir tous les détails
-                        </div>
-                      </Link>
+                        </Link>
+                      </div>
                     )}
                   </div>
                 );

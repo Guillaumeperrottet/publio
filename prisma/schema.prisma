@@ -29,6 +29,7 @@ model User {
   memberships          OrganizationMember[]
   createdOrganizations Organization[]       @relation("CreatedOrganizations")
   sentInvitations      InvitationToken[]    @relation("SentInvitations")
+  equityLogs           EquityLog[]
 
   @@map("users")
 }
@@ -206,6 +207,22 @@ enum SelectionPriority {
   ECO_FRIENDLY // Matériaux écologiques/durables
 }
 
+enum EquityLogAction {
+  TENDER_CREATED // Appel d'offres créé
+  TENDER_PUBLISHED // Appel d'offres publié
+  TENDER_UPDATED // Appel d'offres modifié
+  TENDER_CLOSED // Appel d'offres clôturé
+  TENDER_AWARDED // Marché attribué
+  TENDER_CANCELLED // Appel d'offres annulé
+  OFFER_RECEIVED // Offre reçue
+  OFFER_SHORTLISTED // Offre pré-sélectionnée
+  OFFER_REJECTED // Offre rejetée
+  OFFER_AWARDED // Offre retenue
+  IDENTITY_REVEALED // Identité révélée (mode anonyme)
+  DEADLINE_EXTENDED // Deadline prolongée
+  INVITATION_SENT // Invitation envoyée
+}
+
 model Tender {
   id          String  @id @default(cuid())
   title       String
@@ -219,18 +236,18 @@ model Tender {
   marketType MarketType
   cfcCodes   String[] // Codes de Frais de Construction (CFC) - Multi-sélection
   budget     Float? // Budget indicatif en CHF
-  currency   String   @default("CHF")
-  showBudget Boolean  @default(true) // Afficher le budget publiquement
+  currency   String     @default("CHF")
+  showBudget Boolean    @default(true) // Afficher le budget publiquement
 
   // Quantités et mesures (optionnelles)
-  surfaceM2 Float?  // Surface en m²
-  volumeM3  Float?  // Volume en m³
+  surfaceM2 Float? // Surface en m²
+  volumeM3  Float? // Volume en m³
 
   // Contraintes spécifiques du chantier (texte libre, personnalisables)
   constraints String[] @default([]) // Ex: ["Accès difficile", "Site occupé", "Horaires limités"]
 
   // Durée et planning (optionnels)
-  contractDuration  Int?      // Durée en jours
+  contractDuration  Int? // Durée en jours
   contractStartDate DateTime? // Date de début souhaitée
   isRenewable       Boolean   @default(false) // Contrat reconductible
 
@@ -284,6 +301,7 @@ model Tender {
   // Relations
   offers      Offer[]
   invitations TenderInvitation[]
+  equityLogs  EquityLog[]
 
   // Identité révélée (pour mode anonyme)
   identityRevealed Boolean   @default(false)
@@ -292,6 +310,33 @@ model Tender {
   @@index([status, visibility, deadline])
   @@index([organizationId])
   @@map("tenders")
+}
+
+// Journal d'équité pour traçabilité institutionnelle
+model EquityLog {
+  id String @id @default(cuid())
+
+  // Type d'événement
+  action      EquityLogAction
+  description String // Description détaillée de l'action
+
+  // Contexte
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  // Acteur
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Métadonnées optionnelles
+  metadata Json? // Données supplémentaires (ex: offerId, ancien/nouveau statut, etc.)
+
+  // Horodatage
+  createdAt DateTime @default(now())
+
+  @@index([tenderId, createdAt])
+  @@index([userId])
+  @@map("equity_logs")
 }
 
 model TenderDocument {
@@ -359,43 +404,45 @@ model TenderCriteria {
 enum OfferStatus {
   DRAFT // Brouillon
   SUBMITTED // Soumise
+  SHORTLISTED // À étudier (liste restreinte / repère interne)
   WITHDRAWN // Retirée
-  ACCEPTED // Acceptée
+  ACCEPTED // Acceptée (deprecated - utilisez SHORTLISTED)
   REJECTED // Rejetée
+  AWARDED // Marché attribué (gagnante)
 }
 
 model Offer {
   id String @id @default(cuid())
 
   // Informations générales de l'offre
-  offerNumber   String? // Référence interne
-  validityDays  Int     @default(60) // Validité de l'offre en jours
+  offerNumber    String? // Référence interne
+  validityDays   Int     @default(60) // Validité de l'offre en jours
   projectSummary String // Résumé de compréhension du projet
 
   // Prix
-  price        Float  // Prix total TTC
-  currency     String @default("CHF")
-  priceType    String @default("GLOBAL") // "GLOBAL" ou "DETAILED"
-  totalHT      Float? // Total HT (si détaillé)
-  totalTVA     Float? // Total TVA (si détaillé)
-  tvaRate      Float  @default(7.7) // Taux de TVA par défaut
+  price     Float // Prix total TTC
+  currency  String @default("CHF")
+  priceType String @default("GLOBAL") // "GLOBAL" ou "DETAILED"
+  totalHT   Float? // Total HT (si détaillé)
+  totalTVA  Float? // Total TVA (si détaillé)
+  tvaRate   Float  @default(7.7) // Taux de TVA par défaut
 
   // Description et méthodologie (gardé pour compatibilité)
-  description String  // Méthode / Description
+  description String // Méthode / Description
   methodology String? // Méthodologie détaillée
   timeline    String? // Délai d'exécution (texte libre)
 
   // Délais détaillés
-  startDate     DateTime? // Date de début possible
-  durationDays  Int? // Durée estimée en jours
-  constraints   String? // Contraintes/dépendances
+  startDate    DateTime? // Date de début possible
+  durationDays Int? // Durée estimée en jours
+  constraints  String? // Contraintes/dépendances
 
   // Conditions de paiement (JSON flexible)
   paymentTerms Json? // Structure: { deposit: 30, intermediate: 40, final: 30, netDays: 30 }
 
   // Garanties et assurances
-  warrantyYears   Int? // Garantie travaux en années
-  insuranceAmount Float? // Montant RC professionnelle
+  warrantyYears        Int? // Garantie travaux en années
+  insuranceAmount      Float? // Montant RC professionnelle
   manufacturerWarranty String? // Garantie fabricant
 
   // Références
@@ -403,6 +450,9 @@ model Offer {
 
   // Statut
   status OfferStatus @default(DRAFT)
+
+  // Repères internes (notes privées de l'émetteur)
+  internalNote String? // Note interne privée pour l'organisation émettrice
 
   // Dates
   submittedAt DateTime?
@@ -422,11 +472,11 @@ model Offer {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  documents   OfferDocument[]
-  lineItems   OfferLineItem[] // Lignes de prix détaillées
-  inclusions  OfferInclusion[] // Prestations incluses
-  exclusions  OfferExclusion[] // Prestations non incluses
-  materials   OfferMaterial[] // Matériaux proposés
+  documents  OfferDocument[]
+  lineItems  OfferLineItem[] // Lignes de prix détaillées
+  inclusions OfferInclusion[] // Prestations incluses
+  exclusions OfferExclusion[] // Prestations non incluses
+  materials  OfferMaterial[] // Matériaux proposés
 
   // Anonymisation (pour mode anonyme)
   anonymousId  String? @unique // ID anonyme type "Entreprise #0482"
@@ -439,14 +489,14 @@ model Offer {
 
 // Lignes de prix détaillées (postes)
 model OfferLineItem {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   position    Int // Ordre d'affichage
   description String // Description du poste
   quantity    Float? // Quantité
   unit        String? // Unité (m², pièces, heures...)
   priceHT     Float // Prix HT
-  tvaRate     Float  @default(7.7) // Taux de TVA
-  
+  tvaRate     Float   @default(7.7) // Taux de TVA
+
   // Relations
   offerId String
   offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
@@ -459,7 +509,7 @@ model OfferInclusion {
   id          String @id @default(cuid())
   position    Int // Ordre d'affichage
   description String // Description de la prestation
-  
+
   // Relations
   offerId String
   offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
@@ -472,7 +522,7 @@ model OfferExclusion {
   id          String @id @default(cuid())
   position    Int // Ordre d'affichage
   description String // Description de ce qui est exclu
-  
+
   // Relations
   offerId String
   offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
@@ -482,14 +532,14 @@ model OfferExclusion {
 
 // Matériaux proposés
 model OfferMaterial {
-  id               String  @id @default(cuid())
-  position         Int // Ordre d'affichage
-  name             String // Nom du matériau/équipement
-  brand            String? // Marque
-  model            String? // Modèle
-  range            String? // Gamme
+  id                   String  @id @default(cuid())
+  position             Int // Ordre d'affichage
+  name                 String // Nom du matériau/équipement
+  brand                String? // Marque
+  model                String? // Modèle
+  range                String? // Gamme
   manufacturerWarranty String? // Garantie fabricant
-  
+
   // Relations
   offerId String
   offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
@@ -587,10 +637,10 @@ model VeilleSubscription {
   appNotifications   Boolean @default(true)
 
   // Configuration des alertes
-  alertFrequency String   @default("DAILY") // INSTANT, DAILY, WEEKLY, DISABLED
-  alertTypes     String[] @default([]) // Types spécifiques ou [] pour tous
-  alertKeywords  String[] @default([]) // Mots-clés pour filtrer les alertes
-  alertCommunes  String[] @default([]) // Communes spécifiques ou [] pour toutes
+  alertFrequency String    @default("DAILY") // INSTANT, DAILY, WEEKLY, DISABLED
+  alertTypes     String[]  @default([]) // Types spécifiques ou [] pour tous
+  alertKeywords  String[]  @default([]) // Mots-clés pour filtrer les alertes
+  alertCommunes  String[]  @default([]) // Communes spécifiques ou [] pour toutes
   lastAlertSent  DateTime? // Dernière alerte envoyée
 
   // Relations

@@ -31,6 +31,11 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ShortlistOfferButton } from "@/components/offers/shortlist-offer-button";
+import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-button";
+import { RejectOfferButton } from "@/components/offers/reject-offer-button";
+import { AwardTenderButton } from "@/components/tenders/award-tender-button";
+import { OfferInternalNote } from "@/components/offers/offer-internal-note";
 
 export default async function OfferDetailPage({
   params,
@@ -69,6 +74,13 @@ export default async function OfferDetailPage({
     tender.mode === "ANONYMOUS" &&
     !tender.identityRevealed &&
     offer.isAnonymized;
+
+  const identityRevealed =
+    tender.mode === "CLASSIC" ? true : tender.identityRevealed;
+
+  const canAwardTender =
+    (tender.status === "CLOSED" || tender.status === "PUBLISHED") &&
+    offer.tenderId === tender.id;
 
   return (
     <ProtectedLayout>
@@ -132,11 +144,102 @@ export default async function OfferDetailPage({
               </p>
             </div>
           )}
+
+          {/* Actions sur l'offre */}
+          {identityRevealed && (
+            <div className="mt-6 p-4 bg-white border-2 border-matte-black rounded-lg">
+              <h3 className="text-sm font-semibold mb-3">Actions</h3>
+              <div className="flex flex-wrap gap-3">
+                {/* Note interne (toujours disponible) */}
+                <OfferInternalNote
+                  offerId={offer.id}
+                  initialNote={offer.internalNote}
+                  organizationName={offer.organization.name}
+                />
+
+                {/* Offre SUBMITTED : Pré-sélectionner ou Rejeter */}
+                {offer.status === "SUBMITTED" && (
+                  <>
+                    <ShortlistOfferButton
+                      offerId={offer.id}
+                      organizationName={offer.organization.name}
+                    />
+                    <RejectOfferButton
+                      offerId={offer.id}
+                      organizationName={offer.organization.name}
+                      price={offer.price}
+                      currency={tender.currency}
+                    />
+                    {canAwardTender && (
+                      <AwardTenderButton
+                        tenderId={tender.id}
+                        offerId={offer.id}
+                        organizationName={offer.organization.name}
+                        price={offer.price}
+                        currency={tender.currency}
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* Offre SHORTLISTED : Retirer ou Rejeter */}
+                {offer.status === "SHORTLISTED" && (
+                  <>
+                    <UnshortlistOfferButton offerId={offer.id} />
+                    <RejectOfferButton
+                      offerId={offer.id}
+                      organizationName={offer.organization.name}
+                      price={offer.price}
+                      currency={tender.currency}
+                    />
+                    {canAwardTender && (
+                      <AwardTenderButton
+                        tenderId={tender.id}
+                        offerId={offer.id}
+                        organizationName={offer.organization.name}
+                        price={offer.price}
+                        currency={tender.currency}
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* Offre AWARDED : Statut final */}
+                {offer.status === "AWARDED" && (
+                  <div className="text-sm text-green-700 font-medium flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Marché attribué à cette offre
+                  </div>
+                )}
+
+                {/* Offre REJECTED : Statut final */}
+                {offer.status === "REJECTED" && (
+                  <div className="text-sm text-red-700 font-medium flex items-center gap-2">
+                    <XCircle className="w-4 h-4" />
+                    Offre non retenue
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Note interne si présente */}
+            {offer.internalNote && (
+              <div className="p-6 bg-deep-green/5 border-l-4 border-deep-green rounded-r">
+                <h3 className="font-semibold mb-3 flex items-center gap-2 text-deep-green text-xl font-handdrawn">
+                  <FileText className="w-5 h-5" />
+                  Note interne
+                </h3>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {offer.internalNote}
+                </p>
+              </div>
+            )}
+
             {/* Informations générales */}
             <HandDrawnCard>
               <HandDrawnCardHeader>

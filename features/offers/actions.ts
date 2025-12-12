@@ -755,7 +755,14 @@ export async function getTenderOffers(tenderId: string) {
   const offers = await prisma.offer.findMany({
     where: {
       tenderId: tenderId,
-      status: "SUBMITTED", // Seulement les offres payées
+      status: {
+        in: [
+          OfferStatus.SUBMITTED,
+          OfferStatus.SHORTLISTED,
+          OfferStatus.REJECTED,
+          OfferStatus.AWARDED,
+        ], // Toutes les offres soumises et traitées
+      },
     },
     include: {
       organization: true,
@@ -1346,9 +1353,12 @@ export async function rejectOffer(offerId: string) {
       return { error: "Vous n'avez pas les droits pour rejeter cette offre" };
     }
 
-    // Vérifier que l'offre est bien soumise
-    if (offer.status !== "SUBMITTED") {
-      return { error: "Seules les offres soumises peuvent être rejetées" };
+    // Vérifier que l'offre est soumise ou pré-sélectionnée
+    if (offer.status !== "SUBMITTED" && offer.status !== "SHORTLISTED") {
+      return {
+        error:
+          "Seules les offres soumises ou pré-sélectionnées peuvent être rejetées",
+      };
     }
 
     // Mettre à jour l'offre
@@ -1397,6 +1407,222 @@ export async function rejectOffer(offerId: string) {
     return { success: true, offer: updatedOffer };
   } catch (error) {
     console.error("Error rejecting offer:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Pré-sélectionner une offre (mettre en liste restreinte)
+ * Accessible uniquement aux OWNER et ADMIN de l'organisation émettrice
+ */
+export async function shortlistOffer(offerId: string) {
+  console.log("🔵 shortlistOffer called with offerId:", offerId);
+  try {
+    const user = await getCurrentUser();
+    console.log("🔵 Current user:", user.id, user.email);
+
+    // Récupérer l'offre avec son tender
+    const offer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        tender: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: {
+                    userId: user.id,
+                    role: {
+                      in: ["OWNER", "ADMIN"], // Seulement OWNER et ADMIN
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log("🔵 Offer found:", offer?.id, "status:", offer?.status);
+    console.log(
+      "🔵 Members with rights:",
+      offer?.tender.organization.members.length
+    );
+
+    if (!offer) {
+      console.log("🔴 Error: Offre introuvable");
+      return { error: "Offre introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
+    if (!offer.tender.organization.members.length) {
+      console.log("🔴 Error: Pas de droits");
+      return {
+        error: "Vous n'avez pas les droits pour pré-sélectionner cette offre",
+      };
+    }
+
+    // Vérifier que l'offre est bien soumise
+    if (offer.status !== "SUBMITTED") {
+      console.log("🔴 Error: Statut invalide:", offer.status);
+      return {
+        error: "Seules les offres soumises peuvent être pré-sélectionnées",
+      };
+    }
+
+    console.log("🟢 Updating offer to SHORTLISTED...");
+    // Mettre à jour l'offre
+    const updatedOffer = await prisma.offer.update({
+      where: { id: offerId },
+      data: {
+        status: OfferStatus.SHORTLISTED,
+      },
+      include: {
+        organization: true,
+      },
+    });
+
+    console.log(
+      "🟢 Offer updated successfully:",
+      updatedOffer.id,
+      updatedOffer.status
+    );
+    return { success: true, offer: updatedOffer };
+  } catch (error) {
+    console.error("🔴 Error shortlisting offer:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Retirer une offre de la liste restreinte (remettre en SUBMITTED)
+ * Accessible uniquement aux OWNER et ADMIN de l'organisation émettrice
+ */
+export async function unshortlistOffer(offerId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer l'offre avec son tender
+    const offer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        tender: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: {
+                    userId: user.id,
+                    role: {
+                      in: ["OWNER", "ADMIN"], // Seulement OWNER et ADMIN
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offer) {
+      return { error: "Offre introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
+    if (!offer.tender.organization.members.length) {
+      return {
+        error:
+          "Vous n'avez pas les droits pour retirer cette offre de la liste",
+      };
+    }
+
+    // Vérifier que l'offre est bien pré-sélectionnée
+    if (offer.status !== "SHORTLISTED") {
+      return {
+        error:
+          "Seules les offres pré-sélectionnées peuvent être retirées de la liste",
+      };
+    }
+
+    // Mettre à jour l'offre
+    const updatedOffer = await prisma.offer.update({
+      where: { id: offerId },
+      data: {
+        status: OfferStatus.SUBMITTED,
+      },
+    });
+
+    return { success: true, offer: updatedOffer };
+  } catch (error) {
+    console.error("Error unshortlisting offer:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Ajouter ou modifier une note interne sur une offre
+ * Accessible uniquement aux OWNER et ADMIN de l'organisation émettrice
+ */
+export async function updateOfferInternalNote(
+  offerId: string,
+  note: string | null
+) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer l'offre avec son tender
+    const offer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        tender: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: {
+                    userId: user.id,
+                    role: {
+                      in: ["OWNER", "ADMIN"], // Seulement OWNER et ADMIN
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offer) {
+      return { error: "Offre introuvable" };
+    }
+
+    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
+    if (!offer.tender.organization.members.length) {
+      return {
+        error: "Vous n'avez pas les droits pour ajouter une note à cette offre",
+      };
+    }
+
+    // Mettre à jour la note interne
+    const updatedOffer = await prisma.offer.update({
+      where: { id: offerId },
+      data: {
+        internalNote: note,
+      },
+    });
+
+    return { success: true, offer: updatedOffer };
+  } catch (error) {
+    console.error("Error updating internal note:", error);
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };

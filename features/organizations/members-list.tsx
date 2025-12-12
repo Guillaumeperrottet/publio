@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HandDrawnBadge } from "@/components/ui/hand-drawn-badge";
@@ -89,10 +91,11 @@ export default function MembersList({
         memberId,
         newRole as "OWNER" | "ADMIN" | "EDITOR" | "VIEWER"
       );
+      toast.success("Rôle modifié avec succès");
       router.refresh();
     } catch (error) {
       console.error("Error updating role:", error);
-      alert("Erreur lors de la modification du rôle");
+      toast.error("Erreur lors de la modification du rôle");
     } finally {
       setLoadingMemberId(null);
     }
@@ -106,10 +109,11 @@ export default function MembersList({
     try {
       setLoadingMemberId(memberId);
       await removeMember(organizationId, memberId);
+      toast.success("Membre retiré avec succès");
       router.refresh();
     } catch (error) {
       console.error("Error removing member:", error);
-      alert("Erreur lors de la suppression du membre");
+      toast.error("Erreur lors de la suppression du membre");
     } finally {
       setLoadingMemberId(null);
     }

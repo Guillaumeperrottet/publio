@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import {
   HandDrawnCard,
   HandDrawnCardContent,
@@ -67,7 +69,7 @@ const STATUS_CONFIG: Record<
 export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
   const handleDownload = async (stripeInvoiceId: string | null) => {
     if (!stripeInvoiceId) {
-      alert("PDF non disponible pour cette facture");
+      toast.error("PDF non disponible pour cette facture");
       return;
     }
 
@@ -81,7 +83,7 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
       }
     } catch (error) {
       console.error("Error downloading invoice:", error);
-      alert("Erreur lors du téléchargement de la facture");
+      toast.error("Erreur lors du téléchargement de la facture");
     }
   };
 
