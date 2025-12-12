@@ -213,7 +213,6 @@ export async function saveDraftOffer(data: {
         manufacturerWarranty: data.formData.manufacturerWarranty,
         references: data.formData.references,
         status: OfferStatus.DRAFT,
-        isAnonymized: tender.mode === "ANONYMOUS",
       },
     });
 
@@ -381,7 +380,6 @@ export async function submitOffer(data: {
         references: data.formData.references,
         status: OfferStatus.SUBMITTED,
         submittedAt: new Date(),
-        isAnonymized: tender.mode === "ANONYMOUS",
       },
     });
 
@@ -484,8 +482,7 @@ export async function submitOffer(data: {
             tenderId: tender.id,
             offerPrice: offer.price,
             offerCurrency: offer.currency,
-            isAnonymous: tender.mode === "ANONYMOUS",
-            organizationName: submitterOrg?.name,
+            organizationName: submitterOrg?.name || "Organisation inconnue",
             totalOffersCount,
           });
         } catch (error) {
@@ -642,7 +639,6 @@ export async function createOffer(data: {
         timeline: data.timeline,
         references: data.references,
         status: OfferStatus.SUBMITTED,
-        isAnonymized: tender.mode === "ANONYMOUS",
         submittedAt: new Date(),
       },
     });
@@ -719,7 +715,6 @@ export async function createOfferLegacy(data: {
       projectSummary: data.description?.substring(0, 500) || "Offre soumise", // Fallback
       status: OfferStatus.SUBMITTED,
       submittedAt: new Date(),
-      isAnonymized: tender.mode === "ANONYMOUS",
     },
   });
 
@@ -773,21 +768,8 @@ export async function getTenderOffers(tenderId: string) {
     },
   });
 
-  // Si le tender est en mode anonyme et non révélé, masquer les identités
-  if (tender.mode === "ANONYMOUS" && !tender.identityRevealed) {
-    return offers.map((offer) => ({
-      ...offer,
-      organization: {
-        ...offer.organization,
-        name: offer.anonymousId || `Entreprise #${offer.id.slice(-4)}`,
-        logo: null,
-        website: null,
-        phone: null,
-        address: null,
-      },
-    }));
-  }
-
+  // Les offres montrent toujours l'identité du soumissionnaire
+  // Seul l'émetteur du tender est anonyme (jusqu'à révélation)
   return offers;
 }
 
@@ -847,29 +829,7 @@ export async function getOfferDetail(offerId: string) {
     throw new Error("Unauthorized");
   }
 
-  // Si le tender est en mode anonyme et non révélé, masquer l'identité
-  if (
-    offer.tender.mode === "ANONYMOUS" &&
-    !offer.tender.identityRevealed &&
-    offer.isAnonymized
-  ) {
-    return {
-      ...offer,
-      organization: {
-        ...offer.organization,
-        name: offer.anonymousId || `Entreprise #${offer.id.slice(-4)}`,
-        logo: null,
-        website: null,
-        phone: null,
-        email: null,
-        address: null,
-        city: null,
-        canton: null,
-        postalCode: null,
-      },
-    };
-  }
-
+  // Les offres montrent toujours l'identité du soumissionnaire
   return offer;
 }
 
@@ -930,14 +890,6 @@ export async function confirmOfferPayment(
     throw new Error("Offer not found");
   }
 
-  // Générer un ID anonyme si le tender est en mode anonyme
-  let anonymousId = null;
-  if (offer.tender.mode === "ANONYMOUS") {
-    // Générer un numéro aléatoire pour l'anonymat
-    const randomNum = Math.floor(Math.random() * 9000) + 1000;
-    anonymousId = `Entreprise #${randomNum}`;
-  }
-
   // Mettre à jour l'offre
   const updatedOffer = await prisma.offer.update({
     where: { id: offerId },
@@ -947,7 +899,6 @@ export async function confirmOfferPayment(
       stripePaymentId,
       paidAt: new Date(),
       submittedAt: new Date(),
-      anonymousId,
     },
   });
 

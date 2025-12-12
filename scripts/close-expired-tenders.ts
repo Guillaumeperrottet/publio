@@ -89,7 +89,6 @@ async function closeExpiredTenders() {
                 tenderTitle: tender.title,
                 tenderId: tender.id,
                 offersCount: tender._count.offers,
-                isAnonymous: tender.mode === "ANONYMOUS",
               });
               console.log(`   ✅ Email de rappel envoyé`);
             } catch (error) {

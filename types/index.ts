@@ -149,8 +149,6 @@ export type OfferWithDetails = {
   updatedAt: Date;
   paymentStatus: string;
   paidAt?: Date | null;
-  anonymousId?: string | null;
-  isAnonymized: boolean;
   organization: {
     id: string;
     name: string;
@@ -182,8 +180,6 @@ export type OfferCard = {
   currency: string;
   submittedAt?: Date | null;
   status: OfferStatus;
-  anonymousId?: string | null;
-  isAnonymized: boolean;
   organization: {
     id: string;
     name: string;

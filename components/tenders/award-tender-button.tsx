@@ -22,6 +22,7 @@ interface AwardTenderButtonProps {
   organizationName: string;
   price: number;
   currency: string;
+  tenderStatus?: string;
 }
 
 export function AwardTenderButton({
@@ -30,6 +31,7 @@ export function AwardTenderButton({
   organizationName,
   price,
   currency,
+  tenderStatus = "PUBLISHED",
 }: AwardTenderButtonProps) {
   const router = useRouter();
   const [isAwarding, setIsAwarding] = useState(false);
@@ -107,6 +109,11 @@ export function AwardTenderButton({
                   • Toutes les autres offres seront automatiquement rejetées
                 </li>
                 <li>• Le marché sera marqué comme attribué</li>
+                {tenderStatus === "PUBLISHED" && (
+                  <li>
+                    • L&apos;appel d&apos;offres sera automatiquement clôturé
+                  </li>
+                )}
                 <li>• Les soumissionnaires seront notifiés</li>
               </ul>
             </div>

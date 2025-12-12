@@ -34,7 +34,7 @@ interface UserMenuProps {
     name: string;
     type: string;
   } | null;
-  userRole?: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | null;
+  userRole?: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | "VIEWER" | null;
 }
 
 export function UserMenu({ user, organization, userRole }: UserMenuProps) {

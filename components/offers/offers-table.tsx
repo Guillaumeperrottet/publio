@@ -41,7 +41,6 @@ interface Offer {
   timeline: string | null;
   submittedAt: Date | null;
   status: string;
-  anonymousId: string | null;
   internalNote: string | null;
   organization: {
     name: string;
@@ -54,8 +53,6 @@ interface OffersTableProps {
   offers: Offer[];
   tenderId: string;
   tenderStatus: string;
-  isAnonymous: boolean;
-  identityRevealed: boolean;
   canAwardTender: boolean;
 }
 
@@ -74,8 +71,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 export function OffersTable({
   offers,
   tenderId,
-  isAnonymous,
-  identityRevealed,
+  tenderStatus,
   canAwardTender,
 }: OffersTableProps) {
   const [sortBy, setSortBy] = useState<"price" | "date">("price");
@@ -169,7 +165,6 @@ export function OffersTable({
             <div className="divide-y-2 divide-gray-200">
               {sortedOffers.map((offer, index) => {
                 const isSelected = selectedOffer === offer.id;
-                const showIdentity = !isAnonymous || identityRevealed;
 
                 return (
                   <div key={offer.id}>
@@ -199,12 +194,9 @@ export function OffersTable({
                         <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">
-                            {showIdentity
-                              ? offer.organization.name
-                              : offer.anonymousId || `Offre #${index + 1}`}
+                            {offer.organization.name}
                           </p>
-                          {showIdentity &&
-                            offer.organization.city &&
+                          {offer.organization.city &&
                             offer.organization.canton && (
                               <p className="text-xs text-muted-foreground truncate">
                                 {offer.organization.city},{" "}
@@ -339,72 +331,68 @@ export function OffersTable({
                           )}
                         </div>
 
-                        {/* Actions sur l'offre */}
-                        {identityRevealed && (
-                          <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                            <h4 className="font-semibold mb-3 text-sm">
-                              Actions
-                            </h4>
-                            <div
-                              className="flex flex-wrap gap-3"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {/* Note interne (toujours disponible) */}
-                              <OfferInternalNote
-                                offerId={offer.id}
-                                initialNote={offer.internalNote}
-                                organizationName={offer.organization.name}
-                              />
+                        {/* Actions sur l'offre - Toujours visibles */}
+                        <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                          <h4 className="font-semibold mb-3 text-sm">
+                            Actions
+                          </h4>
+                          <div
+                            className="flex flex-wrap gap-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* Note interne (toujours disponible) */}
+                            <OfferInternalNote
+                              offerId={offer.id}
+                              initialNote={offer.internalNote}
+                              organizationName={offer.organization.name}
+                            />
 
-                              {/* Offre SUBMITTED */}
-                              {offer.status === "SUBMITTED" && (
-                                <>
-                                  <ShortlistOfferButton
-                                    offerId={offer.id}
-                                    organizationName={offer.organization.name}
-                                  />
-                                  <RejectOfferButton
-                                    offerId={offer.id}
-                                    organizationName={offer.organization.name}
-                                    price={offer.price}
-                                    currency={offer.currency}
-                                  />
-                                  {canAwardTender && (
-                                    <AwardTenderButton
-                                      tenderId={tenderId}
-                                      offerId={offer.id}
-                                      organizationName={offer.organization.name}
-                                      price={offer.price}
-                                      currency={offer.currency}
-                                    />
-                                  )}
-                                </>
-                              )}
+                            {/* Offre SUBMITTED */}
+                            {offer.status === "SUBMITTED" && (
+                              <>
+                                <ShortlistOfferButton
+                                  offerId={offer.id}
+                                  organizationName={offer.organization.name}
+                                />
+                                <RejectOfferButton
+                                  offerId={offer.id}
+                                  organizationName={offer.organization.name}
+                                  price={offer.price}
+                                  currency={offer.currency}
+                                />
+                                <AwardTenderButton
+                                  tenderId={tenderId}
+                                  offerId={offer.id}
+                                  organizationName={offer.organization.name}
+                                  price={offer.price}
+                                  currency={offer.currency}
+                                  tenderStatus={tenderStatus}
+                                />
+                              </>
+                            )}
 
-                              {/* Offre SHORTLISTED */}
-                              {offer.status === "SHORTLISTED" && (
-                                <>
-                                  <UnshortlistOfferButton offerId={offer.id} />
-                                  <RejectOfferButton
-                                    offerId={offer.id}
-                                    organizationName={offer.organization.name}
-                                    price={offer.price}
-                                    currency={offer.currency}
-                                  />
-                                  {canAwardTender && (
-                                    <AwardTenderButton
-                                      tenderId={tenderId}
-                                      offerId={offer.id}
-                                      organizationName={offer.organization.name}
-                                      price={offer.price}
-                                      currency={offer.currency}
-                                    />
-                                  )}
-                                </>
-                              )}
-                            </div>
+                            {/* Offre SHORTLISTED */}
+                            {offer.status === "SHORTLISTED" && (
+                              <>
+                                <UnshortlistOfferButton offerId={offer.id} />
+                                <RejectOfferButton
+                                  offerId={offer.id}
+                                  organizationName={offer.organization.name}
+                                  price={offer.price}
+                                  currency={offer.currency}
+                                />
+                                <AwardTenderButton
+                                  tenderId={tenderId}
+                                  offerId={offer.id}
+                                  organizationName={offer.organization.name}
+                                  price={offer.price}
+                                  currency={offer.currency}
+                                  tenderStatus={tenderStatus}
+                                />
+                              </>
+                            )}
                           </div>
-                        )}
+                        </div>
 
                         {/* Lien vers les détails */}
                         <Link
@@ -426,7 +414,6 @@ export function OffersTable({
           <div className="md:hidden space-y-3">
             {sortedOffers.map((offer, index) => {
               const isSelected = selectedOffer === offer.id;
-              const showIdentity = !isAnonymous || identityRevealed;
 
               return (
                 <div key={offer.id}>
@@ -450,12 +437,9 @@ export function OffersTable({
                         <Building2 className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate mb-1">
-                            {showIdentity
-                              ? offer.organization.name
-                              : offer.anonymousId || `Offre #${index + 1}`}
+                            {offer.organization.name}
                           </h3>
-                          {showIdentity &&
-                            offer.organization.city &&
+                          {offer.organization.city &&
                             offer.organization.canton && (
                               <p className="text-xs text-muted-foreground">
                                 {offer.organization.city},{" "}

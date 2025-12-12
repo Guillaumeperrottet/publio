@@ -87,8 +87,7 @@ export async function sendNewOfferReceivedEmail(params: {
   tenderId: string;
   offerPrice: number;
   offerCurrency: string;
-  isAnonymous: boolean;
-  organizationName?: string;
+  organizationName: string;
   totalOffersCount: number;
 }) {
   const tenderUrl = `${APP_URL}/dashboard/tenders/${params.tenderId}`;
@@ -103,14 +102,10 @@ export async function sendNewOfferReceivedEmail(params: {
       <strong style="color: #DEAE00;">"${params.tenderTitle}"</strong>.
     </p>
 
-    <div style="background-color: #F0EDE3; border-left: 4px solid #DEAE00; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
-      <p style="margin: 0 0 8px; color: #1B4332; font-size: 14px; font-weight: 600;">Détails de l'offre :</p>
+        <div style="background-color: #F0EDE3; border-left: 4px solid #DEAE00; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px; color: #1B4332; font-size: 14px; font-weight: 600;">Étails de l'offre :</p>
       <ul style="margin: 8px 0 0; padding-left: 20px; color: #6B705C; font-size: 14px;">
-        <li>Soumissionnaire : <strong>${
-          params.isAnonymous
-            ? "Identité masquée (mode anonyme)"
-            : params.organizationName
-        }</strong></li>
+        <li>Soumissionnaire : <strong>${params.organizationName}</strong></li>
         <li>Montant : <strong style="color: #DEAE00;">${new Intl.NumberFormat(
           "fr-CH",
           {
@@ -123,19 +118,6 @@ export async function sendNewOfferReceivedEmail(params: {
         }</strong></li>
       </ul>
     </div>
-
-    ${
-      params.isAnonymous
-        ? `
-    <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
-      <p style="margin: 0; color: #92400E; font-size: 13px;">
-        🔒 <strong>Mode anonyme actif :</strong> L'identité du soumissionnaire reste masquée jusqu'à la deadline. 
-        Vous pourrez révéler les identités une fois la date limite passée.
-      </p>
-    </div>
-    `
-        : ""
-    }
 
     ${generateButtonHtml("Consulter les offres", tenderUrl)}
 
@@ -161,7 +143,6 @@ export async function sendDeadlinePassedEmail(params: {
   tenderTitle: string;
   tenderId: string;
   offersCount: number;
-  isAnonymous: boolean;
 }) {
   const tenderUrl = `${APP_URL}/dashboard/tenders/${params.tenderId}`;
 
@@ -190,11 +171,6 @@ export async function sendDeadlinePassedEmail(params: {
     </p>
 
     <ul style="margin: 0 0 25px; padding-left: 20px; color: #6B705C; font-size: 14px;">
-      ${
-        params.isAnonymous
-          ? "<li>Révéler les identités des soumissionnaires</li>"
-          : ""
-      }
       <li>Consulter et évaluer les offres reçues</li>
       <li>Clôturer l'appel d'offres</li>
       <li>Accepter/rejeter les offres</li>

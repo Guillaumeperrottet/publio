@@ -12,7 +12,6 @@ import {
   SelectionPriority,
   OfferStatus,
 } from "@prisma/client";
-import { createTenderPaymentSession } from "@/lib/stripe";
 import {
   sendTenderPublishedEmail,
   sendDeadlinePassedEmail,
@@ -98,7 +97,8 @@ export async function getPublicTenders(filters?: {
   isRenewable?: boolean;
   cfcCodes?: string[];
 }) {
-  const where: any = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: Record<string, any> = {
     visibility: TenderVisibility.PUBLIC,
     status: TenderStatus.PUBLISHED,
     deadline: {
@@ -490,7 +490,7 @@ export async function updateDraftTender(data: {
       requiresInsurance: data.requiresInsurance,
       minExperience: data.minExperience ? parseInt(data.minExperience) : null,
       contractualTerms: data.contractualTerms,
-      procedure: data.procedure as any,
+      procedure: data.procedure as TenderProcedure,
       visibility: data.visibility as TenderVisibility,
       mode: data.mode as TenderMode,
     },
@@ -636,7 +636,11 @@ export async function closeTender(tenderId: string) {
     // (mais on permet de clôturer avant si besoin)
 
     // Mettre à jour le tender et révéler l'identité si anonyme
-    const updateData: any = {
+    const updateData: {
+      status: TenderStatus;
+      identityRevealed?: boolean;
+      revealedAt?: Date;
+    } = {
       status: TenderStatus.CLOSED,
     };
 
@@ -680,7 +684,6 @@ export async function closeTender(tenderId: string) {
             tenderTitle: updatedTender.title,
             tenderId: updatedTender.id,
             offersCount: tender._count.offers,
-            isAnonymous: updatedTender.mode === "ANONYMOUS",
           });
         } catch (error) {
           console.error("Error sending closure email:", error);
@@ -785,7 +788,11 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
     // Transaction : mettre à jour tender + offre gagnante + rejeter les autres
     await prisma.$transaction(async (tx) => {
       // 1. Mettre à jour le tender et révéler l'identité si anonyme
-      const tenderUpdateData: any = {
+      const tenderUpdateData: {
+        status: TenderStatus;
+        identityRevealed?: boolean;
+        revealedAt?: Date;
+      } = {
         status: TenderStatus.AWARDED,
       };
 
@@ -881,16 +888,12 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
               offerPrice: winner.price,
               offerCurrency: winner.currency,
               organizationName: finalTender.organization.name,
-              organizationEmail:
-                (finalTender.organization as any).email || undefined,
-              organizationPhone:
-                (finalTender.organization as any).phone || undefined,
+              organizationEmail: finalTender.organization.email || undefined,
+              organizationPhone: finalTender.organization.phone || undefined,
               organizationAddress:
-                (finalTender.organization as any).address || undefined,
-              organizationCity:
-                (finalTender.organization as any).city || undefined,
-              organizationCanton:
-                (finalTender.organization as any).canton || undefined,
+                finalTender.organization.address || undefined,
+              organizationCity: finalTender.organization.city || undefined,
+              organizationCanton: finalTender.organization.canton || undefined,
             });
           } catch (error) {
             console.error("Error sending winner email:", error);
@@ -914,11 +917,10 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
               offerPrice: winner.price,
               offerCurrency: winner.currency,
               winnerOrganizationName: winner.organization.name,
-              winnerEmail: (winner.organization as any).email || undefined,
-              winnerPhone: (winner.organization as any).phone || undefined,
-              winnerAddress: (winner.organization as any).address || undefined,
-              winnerCity: (winner.organization as any).city || undefined,
-              winnerCanton: (winner.organization as any).canton || undefined,
+              winnerEmail: winner.organization.email || undefined,
+              winnerPhone: winner.organization.phone || undefined,
+              winnerCity: winner.organization.city || undefined,
+              winnerCanton: winner.organization.canton || undefined,
             });
           } catch (error) {
             console.error("Error sending emitter email:", error);
@@ -971,10 +973,9 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       });
 
       // Log des offres rejetées (groupé)
-      const losersCount = finalTender.offers.filter(
-        (o) => o.status === "REJECTED"
-      ).length;
-      if (losersCount > 0) {
+      const losersCount =
+        finalTender?.offers.filter((o) => o.status === "REJECTED").length || 0;
+      if (losersCount > 0 && finalTender) {
         await createEquityLog({
           tenderId,
           userId: user.id,

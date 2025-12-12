@@ -1,5 +1,30 @@
 # ✅ Implémentation des Repères Internes et Révélation d'Anonymat
 
+## ⚠️ IMPORTANT : Concept d'anonymat dans Publio
+
+**Seul l'émetteur du tender est anonyme, PAS les offres !**
+
+🔐 **Mode anonyme :**
+
+- L'identité de l'**organisation émettrice** est masquée jusqu'à la clôture
+- Les **soumissionnaires** sont TOUJOURS visibles (nom, ville, canton)
+- Objectif : réduire les biais liés à la notoriété de l'émetteur
+- Après clôture : l'émetteur est révélé automatiquement
+
+✅ **Ce qui est visible :**
+
+- Les offres montrent clairement QUI soumet (organisation, localisation)
+- L'émetteur peut évaluer les offres en connaissance de cause
+- Transparence totale sur les soumissionnaires
+
+❌ **Ce qui est masqué :**
+
+- L'identité de l'organisation émettrice (jusqu'à révélation)
+- Logo, nom, ville, canton de l'émetteur
+- Révélé automatiquement : à la clôture, à l'attribution, ou après 7 jours
+
+---
+
 ## 📋 Résumé des changements
 
 ### 1. 🏷️ Repères internes pour marquer les offres

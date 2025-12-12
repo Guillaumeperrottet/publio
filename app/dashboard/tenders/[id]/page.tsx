@@ -88,8 +88,8 @@ export default async function TenderDetailDashboardPage({
   const isExpired = now > deadline;
   const canRevealIdentities =
     tender.mode === "ANONYMOUS" && isExpired && !tender.identityRevealed;
-  const canCloseTender =
-    isExpired && tender.status === "PUBLISHED" && offers.length > 0;
+  // Permettre de clôturer à tout moment si le tender est publié (pas besoin d'attendre la deadline)
+  const canCloseTender = tender.status === "PUBLISHED" && offers.length > 0;
   const canAwardTender =
     (tender.status === "CLOSED" || tender.status === "PUBLISHED") &&
     offers.length > 0;
@@ -258,10 +258,6 @@ export default async function TenderDetailDashboardPage({
               offers={offers}
               tenderId={tender.id}
               tenderStatus={tender.status}
-              isAnonymous={tender.mode === "ANONYMOUS"}
-              identityRevealed={
-                tender.mode === "CLASSIC" ? true : tender.identityRevealed
-              }
               canAwardTender={canAwardTender}
             />
           </HandDrawnCardContent>

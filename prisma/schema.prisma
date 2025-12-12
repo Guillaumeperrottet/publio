@@ -109,6 +109,7 @@ model Organization {
   type        OrganizationType
   description String?
   logo        String?
+  email       String? // Email de contact de l'organisation
   website     String?
   address     String?
   city        String?
@@ -495,10 +496,6 @@ model Offer {
   inclusions OfferInclusion[] // Prestations incluses
   exclusions OfferExclusion[] // Prestations non incluses
   materials  OfferMaterial[] // Matériaux proposés
-
-  // Anonymisation (pour mode anonyme)
-  anonymousId  String? @unique // ID anonyme type "Entreprise #0482"
-  isAnonymized Boolean @default(false)
 
   @@index([tenderId])
   @@index([organizationId])

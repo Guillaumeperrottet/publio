@@ -13,6 +13,7 @@ import {
   Bookmark,
   Bell,
   Zap,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,23 +33,24 @@ export async function UniversalHeader() {
   const session = await getSession();
   const isAuthenticated = !!session;
 
-  let user = null;
-  let organization = null;
+  let user: Awaited<ReturnType<typeof getCurrentUser>> | null = null;
+  let organization:
+    | Awaited<ReturnType<typeof getUserOrganizations>>[0]["organization"]
+    | null = null;
   let unreadCount = 0;
-  let userRole = null;
+  let userRole: "OWNER" | "ADMIN" | "EDITOR" | "MEMBER" | null = null;
 
   if (isAuthenticated) {
     user = await getCurrentUser();
     const memberships = await getUserOrganizations();
-    const currentMembership = memberships.organizations?.[0];
+    const currentMembership = memberships[0];
     organization = currentMembership?.organization;
 
     if (currentMembership && organization) {
-      // Trouver le rôle de l'utilisateur dans cette organisation
-      const userMember = currentMembership.members?.find(
-        (m) => m.userId === user.id
-      );
-      userRole = userMember?.role || null;
+      // Le rôle vient du membership, pas de l'organization
+      // Convertir VIEWER en MEMBER pour compatibilité avec UserMenu
+      const role = currentMembership?.role;
+      userRole = role === "VIEWER" ? "MEMBER" : role || null;
 
       unreadCount = await getUnreadOffersCount(organization.id);
     }
@@ -108,6 +110,22 @@ export async function UniversalHeader() {
                       </svg>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/tenders"
+                          className="flex items-center gap-3 cursor-pointer"
+                        >
+                          <Search className="w-4 h-4 text-deep-green" />
+                          <div>
+                            <p className="font-medium text-sm">
+                              Tous les appels d&apos;offres
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Parcourir les projets
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link
                           href="/dashboard/tenders"

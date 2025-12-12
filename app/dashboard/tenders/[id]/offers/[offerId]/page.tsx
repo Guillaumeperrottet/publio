@@ -70,11 +70,8 @@ export default async function OfferDetailPage({
     notFound();
   }
 
-  const isAnonymous =
-    tender.mode === "ANONYMOUS" &&
-    !tender.identityRevealed &&
-    offer.isAnonymized;
-
+  // Les offres montrent toujours l'identité du soumissionnaire
+  // Seul l'émetteur du tender peut être anonyme
   const identityRevealed =
     tender.mode === "CLASSIC" ? true : tender.identityRevealed;
 
@@ -110,7 +107,7 @@ export default async function OfferDetailPage({
                   <Building2 className="w-4 h-4" />
                   <span className="font-medium">{offer.organization.name}</span>
                 </div>
-                {!isAnonymous && offer.organization.city && (
+                {offer.organization.city && (
                   <span>
                     {offer.organization.city}
                     {offer.organization.canton &&
@@ -134,16 +131,6 @@ export default async function OfferDetailPage({
               </div>
             </div>
           </div>
-
-          {isAnonymous && (
-            <div className="mt-4 bg-sand-light p-4 rounded-lg border-2 border-artisan-yellow">
-              <p className="text-sm text-muted-foreground">
-                🔒 <strong>Mode anonyme :</strong> L&apos;identité complète de
-                l&apos;entreprise sera révélée après la date limite de
-                l&apos;appel d&apos;offres.
-              </p>
-            </div>
-          )}
 
           {/* Actions sur l'offre */}
           {identityRevealed && (
@@ -761,64 +748,60 @@ export default async function OfferDetailPage({
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Informations soumetteur (si révélé) */}
-            {!isAnonymous && (
-              <HandDrawnCard>
-                <HandDrawnCardHeader>
-                  <HandDrawnCardTitle className="font-handdrawn text-xl">
-                    Entreprise
-                  </HandDrawnCardTitle>
-                </HandDrawnCardHeader>
-                <HandDrawnCardContent className="space-y-3">
-                  <div>
-                    <div className="font-semibold">
-                      {offer.organization.name}
+            {/* Informations soumetteur */}
+            <HandDrawnCard>
+              <HandDrawnCardHeader>
+                <HandDrawnCardTitle className="font-handdrawn text-xl">
+                  Entreprise
+                </HandDrawnCardTitle>
+              </HandDrawnCardHeader>
+              <HandDrawnCardContent className="space-y-3">
+                <div>
+                  <div className="font-semibold">{offer.organization.name}</div>
+                  {offer.organization.city && offer.organization.canton && (
+                    <div className="text-sm text-muted-foreground">
+                      {offer.organization.city}, {offer.organization.canton}
                     </div>
-                    {offer.organization.city && offer.organization.canton && (
-                      <div className="text-sm text-muted-foreground">
-                        {offer.organization.city}, {offer.organization.canton}
-                      </div>
-                    )}
-                  </div>
-
-                  {offer.organization.phone && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">
-                          Téléphone
-                        </div>
-                        <a
-                          href={`tel:${offer.organization.phone}`}
-                          className="text-sm text-artisan-yellow hover:underline"
-                        >
-                          {offer.organization.phone}
-                        </a>
-                      </div>
-                    </>
                   )}
+                </div>
 
-                  {offer.organization.website && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1">
-                          Site web
-                        </div>
-                        <a
-                          href={offer.organization.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-artisan-yellow hover:underline"
-                        >
-                          Visiter le site
-                        </a>
+                {offer.organization.phone && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Téléphone
                       </div>
-                    </>
-                  )}
-                </HandDrawnCardContent>
-              </HandDrawnCard>
-            )}
+                      <a
+                        href={`tel:${offer.organization.phone}`}
+                        className="text-sm text-artisan-yellow hover:underline"
+                      >
+                        {offer.organization.phone}
+                      </a>
+                    </div>
+                  </>
+                )}
+
+                {offer.organization.website && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Site web
+                      </div>
+                      <a
+                        href={offer.organization.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-artisan-yellow hover:underline"
+                      >
+                        Visiter le site
+                      </a>
+                    </div>
+                  </>
+                )}
+              </HandDrawnCardContent>
+            </HandDrawnCard>
 
             {/* Métadonnées */}
             <HandDrawnCard>

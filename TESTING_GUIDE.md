@@ -104,7 +104,7 @@ npm run dev
 
 - Le webhook reçoit l'événement `checkout.session.completed`
 - L'offre passe de DRAFT à SUBMITTED
-- Un ID anonyme est généré (ex: "Entreprise #5382")
+- L'identité du soumissionnaire est visible (nom, ville, canton)
 
 **Vérifier dans les logs :**
 
@@ -119,19 +119,20 @@ Offer [id] payment confirmed
 2. Aller dans `/dashboard/tenders`
 3. Cliquer sur l'appel d'offres créé
 4. Voir la liste des offres reçues
-5. **Vérifier l'anonymisation :**
-   - Nom affiché : "Entreprise #5382" (pas le vrai nom)
+5. **Vérifier la transparence :**
+   - Nom réel de l'organisation soumissionnaire visible
+   - Ville et canton affichés
    - Prix et contenu visibles
    - Documents accessibles
 
-### Étape 7 : Révéler les identités
+### Étape 7 : Révéler l'identité de l'émetteur (si mode anonyme)
 
 1. Attendre que la deadline soit passée (ou modifier manuellement dans la DB pour tester)
-2. Sur la page de l'appel d'offres, cliquer sur **"Révéler les identités"**
+2. Sur la page de l'appel d'offres, cliquer sur **"Révéler mon identité"**
 3. Confirmer l'action
 4. **Vérifier :**
-   - Les vrais noms d'organisations apparaissent
-   - Les informations complètes sont visibles
+   - L'identité de l'émetteur est révélée
+   - Les offres restent inchangées (déjà visibles)
 
 ### Étape 8 : Consulter ses offres (Organisation B)
 
@@ -156,16 +157,17 @@ Offer [id] payment confirmed
 
 - [ ] Le webhook reçoit l'événement
 - [ ] L'offre passe à SUBMITTED
-- [ ] Un ID anonyme est généré
+- [ ] Le nom réel de l'organisation est visible
 - [ ] paymentStatus = PAID
 
-### Anonymisation
+### Transparence des offres
 
-- [ ] Les noms sont masqués avant révélation
+- [ ] Les noms d'organisations sont toujours visibles
 - [ ] Les prix et contenus sont visibles
 - [ ] Les documents sont accessibles
+- [ ] La localisation (ville, canton) est affichée
 
-### Révélation d'identité
+### Révélation d'identité de l'émetteur
 
 - [ ] Le bouton apparaît après la deadline
 - [ ] La confirmation fonctionne
