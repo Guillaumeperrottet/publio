@@ -10,7 +10,13 @@ export default async function NewTenderPage() {
     redirect("/onboarding");
   }
 
-  const currentOrganization = memberships[0].organization;
+  const currentMembership = memberships[0];
+  const currentOrganization = currentMembership.organization;
+
+  // Vérifier que l'utilisateur a les droits de créer un tender
+  if (!["OWNER", "ADMIN", "EDITOR"].includes(currentMembership.role)) {
+    redirect("/dashboard/tenders");
+  }
 
   return (
     <ProtectedLayout>

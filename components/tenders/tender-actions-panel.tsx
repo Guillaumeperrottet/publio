@@ -115,13 +115,39 @@ export function TenderActionsPanel({
               />
             )}
 
+            {/* Voir les offres */}
+            {tender.status === "PUBLISHED" && (
+              <Link
+                href={`/dashboard/tenders/${tender.id}`}
+                className="block cursor-pointer"
+              >
+                <Button variant="outline" className="w-full cursor-pointer">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Voir les offres ({offersCount})
+                </Button>
+              </Link>
+            )}
+
+            {/* Journal d'équité - Pour tenders clôturés ou attribués */}
+            {(tender.status === "CLOSED" || tender.status === "AWARDED") && (
+              <Link
+                href={`/dashboard/tenders/${tender.id}/equity-log`}
+                className="block cursor-pointer"
+              >
+                <Button variant="outline" className="w-full cursor-pointer">
+                  <Download className="w-4 h-4 mr-2" />
+                  Journal d&apos;équité
+                </Button>
+              </Link>
+            )}
+
             {/* Voir page publique */}
             <Link
               href={`/tenders/${tender.id}`}
               target="_blank"
-              className="block"
+              className="block cursor-pointer"
             >
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full cursor-pointer">
                 <Eye className="w-4 h-4 mr-2" />
                 Page publique
               </Button>
@@ -131,27 +157,14 @@ export function TenderActionsPanel({
             {tender.status === "DRAFT" && (
               <Link
                 href={`/dashboard/tenders/${tender.id}/edit`}
-                className="block"
+                className="block cursor-pointer"
               >
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full cursor-pointer">
                   <Edit className="w-4 h-4 mr-2" />
                   Éditer le brouillon
                 </Button>
               </Link>
             )}
-
-            {/* Exporter en PDF */}
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                // TODO: Implémenter l'export PDF
-                toast.error("Export PDF à venir");
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exporter en PDF
-            </Button>
           </div>
 
           {/* Info complémentaire */}

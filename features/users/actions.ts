@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
+import { compare, hash } from "bcryptjs";
 
 /**
  * Récupérer le profil de l'utilisateur connecté
@@ -71,16 +72,25 @@ export async function changePassword(data: {
   });
 
   if (!account || !account.password) {
-    throw new Error("No password account found");
+    throw new Error("Aucun compte avec mot de passe trouvé");
   }
 
-  // Vérifier le mot de passe actuel avec Better Auth
-  // TODO: Implémenter la vérification du mot de passe avec Better Auth
-  // Pour l'instant, on suppose que c'est bon
+  // Vérifier le mot de passe actuel avec bcrypt (utilisé par Better Auth)
+  const isPasswordValid = await compare(data.currentPassword, account.password);
 
-  // Hasher le nouveau mot de passe
-  // TODO: Utiliser le système de hash de Better Auth
-  const hashedPassword = data.newPassword; // À remplacer par le hash réel
+  if (!isPasswordValid) {
+    throw new Error("Le mot de passe actuel est incorrect");
+  }
+
+  // Valider le nouveau mot de passe
+  if (data.newPassword.length < 8) {
+    throw new Error(
+      "Le nouveau mot de passe doit contenir au moins 8 caractères"
+    );
+  }
+
+  // Hasher le nouveau mot de passe avec bcrypt (même méthode que Better Auth)
+  const hashedPassword = await hash(data.newPassword, 10);
 
   // Mettre à jour le mot de passe
   await prisma.account.update({
@@ -89,6 +99,8 @@ export async function changePassword(data: {
       password: hashedPassword,
     },
   });
+
+  revalidatePath("/dashboard/profile");
 
   return { success: true };
 }

@@ -193,6 +193,78 @@ export async function sendDeadlinePassedEmail(params: {
   });
 }
 
+/**
+ * Email de notification de fermeture automatique du tender
+ */
+export async function sendTenderAutoClosedEmail(params: {
+  to: string | string[];
+  tenderTitle: string;
+  tenderId: string;
+  offersCount: number;
+  daysSinceDeadline: number;
+}) {
+  const tenderUrl = `${APP_URL}/dashboard/tenders/${params.tenderId}`;
+
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #0D0D0D; font-size: 24px; font-weight: 600;">
+      🔒 Appel d'offres clôturé automatiquement
+    </h2>
+    
+    <p style="margin: 0 0 15px; color: #0D0D0D; font-size: 16px;">
+      Votre appel d'offres <strong style="color: #DEAE00;">"${
+        params.tenderTitle
+      }"</strong> 
+      a été automatiquement clôturé après ${
+        params.daysSinceDeadline
+      } jours depuis la deadline.
+    </p>
+
+    <div style="background-color: #FFF3CD; border-left: 4px solid #FFC107; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px; color: #856404; font-size: 14px; font-weight: 600;">⚠️ Action requise</p>
+      <p style="margin: 8px 0 0; color: #856404; font-size: 14px;">
+        Vous devez maintenant examiner les offres reçues et attribuer le marché au soumissionnaire sélectionné.
+      </p>
+    </div>
+
+    <div style="background-color: #F0EDE3; border-left: 4px solid #DEAE00; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px; color: #1B4332; font-size: 14px; font-weight: 600;">Récapitulatif :</p>
+      <ul style="margin: 8px 0 0; padding-left: 20px; color: #6B705C; font-size: 14px;">
+        <li>Offres reçues : <strong>${params.offersCount}</strong></li>
+        <li>Statut : <strong style="color: #1B4332;">Clôturé</strong></li>
+        <li>Identité révélée : <strong>Oui</strong> (si mode anonyme)</li>
+      </ul>
+    </div>
+
+    <p style="margin: 25px 0 15px; color: #6B705C; font-size: 14px;">
+      <strong>Prochaines étapes :</strong>
+    </p>
+
+    <ol style="margin: 0 0 25px; padding-left: 20px; color: #6B705C; font-size: 14px;">
+      <li style="margin-bottom: 8px;"><strong>Examinez toutes les offres</strong> - Comparez les prix, délais, références et qualifications</li>
+      <li style="margin-bottom: 8px;"><strong>Sélectionnez le gagnant</strong> - Mettez l'offre retenue en "À étudier"</li>
+      <li style="margin-bottom: 8px;"><strong>Attribuez le marché</strong> - Cliquez sur "Attribuer le marché" pour finaliser</li>
+      <li><strong>Journal d'équité</strong> - Exportez le journal pour vos archives</li>
+    </ol>
+
+    ${generateButtonHtml("Voir les offres et attribuer", tenderUrl)}
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #F0EDE3;">
+      <p style="margin: 0 0 10px; color: #6B705C; font-size: 13px;">
+        💡 <strong>Rappel :</strong> Le processus d'attribution est enregistré dans le journal d'équité pour garantir la transparence.
+      </p>
+      <p style="margin: 0; color: #6B705C; font-size: 13px;">
+        📄 Vous pouvez exporter le journal d'équité en PDF depuis la page du tender.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: params.to,
+    subject: `🔒 Action requise - "${params.tenderTitle}" clôturé automatiquement`,
+    html: generateEmailLayout(content),
+  });
+}
+
 // ============================================
 // EMAILS POUR LE SOUMISSIONNAIRE
 // ============================================
@@ -623,6 +695,140 @@ export async function sendTenderAwardedEmitterEmail(params: {
   return sendEmail({
     to: params.to,
     subject: `✅ Marché attribué - "${params.tenderTitle}"`,
+    html: generateEmailLayout(content),
+  });
+}
+
+// ============================================
+// EMAIL RETRAIT D'OFFRE
+// ============================================
+
+/**
+ * Email de confirmation de retrait d'offre
+ */
+export async function sendOfferWithdrawnEmail(params: {
+  to: string | string[];
+  tenderTitle: string;
+  tenderId: string;
+  organizationName: string;
+}) {
+  const tenderUrl = `${APP_URL}/tenders/${params.tenderId}`;
+  const dashboardUrl = `${APP_URL}/dashboard/offers`;
+
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #0D0D0D; font-size: 24px; font-weight: 600;">
+      Offre retirée avec succès
+    </h2>
+    
+    <p style="margin: 0 0 15px; color: #0D0D0D; font-size: 16px;">
+      Bonjour,
+    </p>
+    
+    <p style="margin: 0 0 25px; color: #0D0D0D; font-size: 16px;">
+      Votre offre pour l'appel d'offres <strong style="color: #DEAE00;">"${
+        params.tenderTitle
+      }"</strong> a bien été retirée.
+    </p>
+
+    <div style="background-color: #F0EDE3; border-left: 4px solid #6B705C; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px; color: #1B4332; font-size: 14px; font-weight: 600;">
+        ℹ️ Informations importantes
+      </p>
+      <ul style="margin: 0; padding-left: 20px; color: #6B705C; font-size: 14px;">
+        <li>Votre offre a été retirée de la liste des candidatures</li>
+        <li>L'organisation émettrice ne peut plus consulter votre dossier</li>
+        <li>Vous pouvez soumettre une nouvelle offre avant la deadline si vous le souhaitez</li>
+      </ul>
+    </div>
+
+    ${generateButtonHtml("Voir l'appel d'offres", tenderUrl)}
+
+    <p style="margin: 25px 0 0; text-align: center;">
+      <a href="${dashboardUrl}" style="color: #DEAE00; text-decoration: none; font-size: 14px;">
+        → Voir mes autres offres
+      </a>
+    </p>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #F0EDE3;">
+      <p style="margin: 0; color: #6B705C; font-size: 13px; text-align: center;">
+        💡 Vous pouvez encore participer à cet appel d'offres en soumettant une nouvelle offre
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: params.to,
+    subject: `Offre retirée - "${params.tenderTitle}"`,
+    html: generateEmailLayout(content),
+  });
+}
+
+// ============================================
+// EMAIL ANNULATION DE TENDER
+// ============================================
+
+/**
+ * Email d'annulation de tender envoyé aux soumissionnaires
+ */
+export async function sendTenderCancelledEmail(params: {
+  to: string | string[];
+  tenderTitle: string;
+  tenderId: string;
+  organizationName: string;
+}) {
+  const dashboardUrl = `${APP_URL}/dashboard/offers`;
+  const catalogUrl = `${APP_URL}/tenders`;
+
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #0D0D0D; font-size: 24px; font-weight: 600;">
+      ❌ Appel d'offres annulé
+    </h2>
+    
+    <p style="margin: 0 0 15px; color: #0D0D0D; font-size: 16px;">
+      Bonjour,
+    </p>
+    
+    <p style="margin: 0 0 25px; color: #0D0D0D; font-size: 16px;">
+      Nous vous informons que l'appel d'offres <strong style="color: #DEAE00;">"${
+        params.tenderTitle
+      }"</strong> 
+      publié par <strong>${params.organizationName}</strong> a été annulé.
+    </p>
+
+    <div style="background-color: #FEF3E2; border-left: 4px solid #DEAE00; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+      <p style="margin: 0 0 8px; color: #1B4332; font-size: 14px; font-weight: 600;">
+        📋 Que se passe-t-il maintenant ?
+      </p>
+      <ul style="margin: 0; padding-left: 20px; color: #6B705C; font-size: 14px;">
+        <li>Votre offre ne sera pas évaluée</li>
+        <li>Aucune autre action n'est requise de votre part</li>
+        <li>L'appel d'offres n'apparaîtra plus dans le catalogue</li>
+      </ul>
+    </div>
+
+    <p style="margin: 0 0 25px; color: #6B705C; font-size: 14px;">
+      Nous comprenons que cette situation puisse être décevante. N'hésitez pas à consulter les autres 
+      opportunités disponibles sur Publio.
+    </p>
+
+    ${generateButtonHtml("Découvrir d'autres appels d'offres", catalogUrl)}
+
+    <p style="margin: 25px 0 0; text-align: center;">
+      <a href="${dashboardUrl}" style="color: #DEAE00; text-decoration: none; font-size: 14px;">
+        → Voir mes offres actives
+      </a>
+    </p>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #F0EDE3;">
+      <p style="margin: 0; color: #6B705C; font-size: 13px; text-align: center;">
+        💼 Merci pour votre intérêt. Nous espérons vous retrouver sur un prochain projet !
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: params.to,
+    subject: `Annulation - "${params.tenderTitle}"`,
     html: generateEmailLayout(content),
   });
 }

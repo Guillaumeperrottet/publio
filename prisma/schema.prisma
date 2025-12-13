@@ -31,6 +31,7 @@ model User {
   sentInvitations      InvitationToken[]    @relation("SentInvitations")
   equityLogs           EquityLog[]
   savedTenders         SavedTender[]
+  offerComments        OfferComment[]       @relation("OfferCommentAuthor")
 
   @@map("users")
 }
@@ -470,9 +471,6 @@ model Offer {
   // Statut
   status OfferStatus @default(DRAFT)
 
-  // Repères internes (notes privées de l'émetteur)
-  internalNote String? // Note interne privée pour l'organisation émettrice
-
   // Dates
   submittedAt DateTime?
   viewedAt    DateTime? // Date de première consultation par l'émetteur
@@ -496,10 +494,30 @@ model Offer {
   inclusions OfferInclusion[] // Prestations incluses
   exclusions OfferExclusion[] // Prestations non incluses
   materials  OfferMaterial[] // Matériaux proposés
+  comments   OfferComment[] // Commentaires internes de l'équipe
 
   @@index([tenderId])
   @@index([organizationId])
   @@map("offers")
+}
+
+// Commentaires internes sur les offres (système de discussion d'équipe)
+model OfferComment {
+  id        String   @id @default(cuid())
+  offerId   String
+  offer     Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  content   String   // Contenu du commentaire
+  
+  authorId  String
+  author    User     @relation("OfferCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([offerId])
+  @@index([authorId])
+  @@map("offer_comments")
 }
 
 // Lignes de prix détaillées (postes)

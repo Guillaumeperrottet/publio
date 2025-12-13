@@ -24,6 +24,12 @@ export default async function VeilleSettingsPage() {
 
   const currentMembership = memberships[0];
   const organization = currentMembership.organization;
+  const userRole = currentMembership.role;
+
+  // Vérifier que l'utilisateur a les droits de modifier la veille
+  if (!["OWNER", "ADMIN", "EDITOR"].includes(userRole)) {
+    redirect("/dashboard/veille");
+  }
 
   // Vérifier les capacités
   const { canActivate, currentPlan, maxCantons } = await canActivateVeille(

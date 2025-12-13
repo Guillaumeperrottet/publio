@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface UserMenuProps {
   user: {
@@ -46,6 +47,27 @@ export function UserMenu({ user, organization, userRole }: UserMenuProps) {
     await signOut();
     router.push("/");
     router.refresh();
+  };
+
+  const handleBillingClick = (e: React.MouseEvent) => {
+    const isOwnerOrAdmin = userRole === "OWNER" || userRole === "ADMIN";
+
+    if (!isOwnerOrAdmin) {
+      e.preventDefault();
+
+      // Son d'erreur
+      const audio = new Audio("/sounds/notification.mp3");
+      audio.volume = 0.5;
+      audio.play().catch(() => {
+        // Ignore les erreurs si le son ne peut pas être joué
+      });
+
+      toast.error("Accès refusé", {
+        description:
+          "Seuls les propriétaires et administrateurs peuvent accéder à la facturation.",
+        duration: 4000,
+      });
+    }
   };
 
   const initials = user.name
@@ -115,7 +137,7 @@ export function UserMenu({ user, organization, userRole }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={handleBillingClick}>
           <Link
             href="/dashboard/billing"
             className="flex items-center gap-2 cursor-pointer"

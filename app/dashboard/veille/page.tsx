@@ -23,7 +23,6 @@ import { PublicationsListClient } from "@/components/veille/publications-list-cl
 export default async function VeillePage() {
   await getCurrentUser();
 
-  // Vérifier que l'utilisateur a une organisation
   const memberships = await getUserOrganizations();
 
   if (memberships.length === 0) {
@@ -32,6 +31,10 @@ export default async function VeillePage() {
 
   const currentMembership = memberships[0];
   const organization = currentMembership.organization;
+  const userRole = currentMembership.role;
+
+  // Vérifier si l'utilisateur peut modifier la veille
+  const canManageVeille = ["OWNER", "ADMIN", "EDITOR"].includes(userRole);
 
   // Vérifier si l'organisation peut activer la veille
   const { canActivate, currentPlan, maxCantons } = await canActivateVeille(
@@ -72,7 +75,7 @@ export default async function VeillePage() {
             </p>
           </div>
 
-          {hasActiveSubscription && (
+          {hasActiveSubscription && canManageVeille && (
             <Link href="/dashboard/veille/settings">
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
@@ -140,7 +143,7 @@ export default async function VeillePage() {
 
                 {!canActivate ? (
                   <UpgradeVeilleDialog organizationId={organization.id} />
-                ) : (
+                ) : canManageVeille ? (
                   <Link href="/dashboard/veille/settings">
                     <Button
                       variant="default"
@@ -151,7 +154,7 @@ export default async function VeillePage() {
                       Configurer
                     </Button>
                   </Link>
-                )}
+                ) : null}
               </div>
             </HandDrawnCardContent>
           </HandDrawnCard>
@@ -209,15 +212,17 @@ export default async function VeillePage() {
                 alertes automatiques dès qu&apos;une nouvelle mise à
                 l&apos;enquête est publiée.
               </p>
-              <Link href="/dashboard/veille/settings">
-                <Button
-                  variant="default"
-                  className="bg-artisan-yellow text-matte-black hover:bg-artisan-yellow/90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Commencer
-                </Button>
-              </Link>
+              {canManageVeille && (
+                <Link href="/dashboard/veille/settings">
+                  <Button
+                    variant="default"
+                    className="bg-artisan-yellow text-matte-black hover:bg-artisan-yellow/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Commencer
+                  </Button>
+                </Link>
+              )}
             </HandDrawnCardContent>
           </HandDrawnCard>
         )}

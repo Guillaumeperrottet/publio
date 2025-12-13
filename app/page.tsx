@@ -75,7 +75,7 @@ export default function Home() {
               >
                 <Link href="/tenders">
                   <Search className="mr-2 w-5 h-5" />
-                  Trouver des projets
+                  Chercher des projets
                 </Link>
               </Button>
               <Button
@@ -86,7 +86,7 @@ export default function Home() {
               >
                 <Link href="/auth/signup?callbackUrl=/dashboard/tenders/new">
                   <FileText className="mr-2 w-5 h-5" />
-                  Publier un appel d&apos;offres
+                  Publier un appel d&apos;offre
                 </Link>
               </Button>
             </div>
@@ -103,7 +103,9 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <div />
-                <span className="font-semibold">✓ Équitable & transparent</span>
+                <span className="font-semibold">
+                  ✓ Mise en relation équitable & transparent
+                </span>
               </div>
             </div>
           </div>
@@ -151,8 +153,8 @@ export default function Home() {
                 </span>
               </h3>
               <p className="text-muted-foreground leading-relaxed">
-                Plus de 850 projets actifs. Filtrez par métier, canton et
-                budget. Nouveaux appels d&apos;offres chaque jour.
+                Restez proactif. Filtrez par métier, canton et budget. Nouveaux
+                appels d&apos;offres chaque jour.
               </p>
               <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm text-deep-green">
@@ -239,7 +241,7 @@ export default function Home() {
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              🔔 Ne ratez plus jamais une{" "}
+              Ne ratez plus jamais une{" "}
               <span className="relative inline-block font-script text-5xl md:text-6xl text-artisan-yellow">
                 opportunité
               </span>
@@ -312,11 +314,11 @@ export default function Home() {
               <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-deep-green rounded-full" />
-                  <span>Basic : 5 communes</span>
+                  <span>Basic : 1 canton</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-deep-green rounded-full" />
-                  <span>Premium : communes illimitées (CHF 10.-)</span>
+                  <span>Premium : cantons illimités (CHF 10.-)</span>
                 </div>
               </div>
 
@@ -510,8 +512,8 @@ export default function Home() {
               ?
             </h2>
             <p className="text-xl md:text-2xl mb-10 text-muted-foreground leading-relaxed">
-              Rejoignez plus de 1&apos;200 professionnels qui font confiance à
-              Publio pour développer leur activité.
+              Rejoignez les professionnels qui font confiance à Publio pour
+              développer leur activité.
             </p>
             <Button
               asChild

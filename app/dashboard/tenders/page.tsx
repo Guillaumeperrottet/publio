@@ -17,6 +17,10 @@ export default async function DashboardTendersPage() {
 
   const currentMembership = memberships[0];
   const organization = currentMembership.organization;
+  const userRole = currentMembership.role;
+
+  // Vérifier si l'utilisateur peut créer des tenders
+  const canCreateTender = ["OWNER", "ADMIN", "EDITOR"].includes(userRole);
 
   // Récupérer les appels d'offres de l'organisation
   const tenders = await getOrganizationTenders(organization.id);
@@ -36,15 +40,17 @@ export default async function DashboardTendersPage() {
               Gérez vos appels d&apos;offres et consultez les offres reçues
             </p>
           </div>
-          <Link href="/dashboard/tenders/new">
-            <Button
-              size="lg"
-              className="mt-4 md:mt-0 gap-2 bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black font-semibold border-2 border-matte-black transition-all hover:shadow-md"
-            >
-              <Plus className="w-5 h-5" />
-              Créer un appel d&apos;offre
-            </Button>
-          </Link>
+          {canCreateTender && (
+            <Link href="/dashboard/tenders/new">
+              <Button
+                size="lg"
+                className="mt-4 md:mt-0 gap-2 bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black font-semibold border-2 border-matte-black transition-all hover:shadow-md"
+              >
+                <Plus className="w-5 h-5" />
+                Créer un appel d&apos;offre
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Table des tenders */}

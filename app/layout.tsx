@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import "./nprogress.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -48,7 +50,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${caveat.variable} ${moreSugar.variable} antialiased`}
       >
-        {children}
+        <ProgressBarProvider>{children}</ProgressBarProvider>
         <Toaster />
       </body>
     </html>

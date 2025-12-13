@@ -3,6 +3,7 @@ import { getUserOrganizations } from "@/features/organizations/actions";
 import { redirect, notFound } from "next/navigation";
 import { getTenderById } from "@/features/tenders/actions";
 import { getTenderOffers } from "@/features/offers/actions";
+import { getCurrentUser } from "@/lib/auth/session";
 import { MarkOffersViewed } from "@/components/offers/mark-offers-viewed";
 import {
   HandDrawnCard,
@@ -56,9 +57,14 @@ export default async function TenderDetailDashboardPage({
 }) {
   const { id } = await params;
   const memberships = await getUserOrganizations();
+  const user = await getCurrentUser();
 
   if (memberships.length === 0) {
     redirect("/onboarding");
+  }
+
+  if (!user) {
+    redirect("/auth/signin");
   }
 
   const currentMembership = memberships[0];
@@ -259,6 +265,7 @@ export default async function TenderDetailDashboardPage({
               tenderId={tender.id}
               tenderStatus={tender.status}
               canAwardTender={canAwardTender}
+              currentUserId={user.id}
             />
           </HandDrawnCardContent>
         </HandDrawnCard>

@@ -28,6 +28,7 @@ type TendersDashboardCardProps = {
   activeTenders: number;
   draftTenders: number;
   urgentCount: number;
+  userRole?: "OWNER" | "ADMIN" | "EDITOR" | "VIEWER";
 };
 
 export function TendersDashboardCard({
@@ -35,6 +36,7 @@ export function TendersDashboardCard({
   activeTenders,
   draftTenders,
   urgentCount,
+  userRole,
 }: TendersDashboardCardProps) {
   // Prendre les 3 appels les plus récents (publiés ou urgents)
   const now = new Date();
@@ -51,6 +53,8 @@ export function TendersDashboardCard({
     .slice(0, 3);
 
   if (tenders.length === 0) {
+    const canCreate = ["OWNER", "ADMIN", "EDITOR"].includes(userRole || "");
+
     return (
       <HandDrawnCard>
         <HandDrawnCardHeader>
@@ -63,14 +67,18 @@ export function TendersDashboardCard({
               Aucun appel d&apos;offre
             </p>
             <p className="text-xs text-muted-foreground mb-4">
-              Créez votre premier appel d&apos;offre
+              {canCreate
+                ? "Créez votre premier appel d'offre"
+                : "Votre organisation n'a pas encore d'appel d'offre"}
             </p>
-            <Link href="/dashboard/tenders/new">
-              <Button size="sm" className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Créer un appel
-              </Button>
-            </Link>
+            {canCreate && (
+              <Link href="/dashboard/tenders/new">
+                <Button size="sm" className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer un appel
+                </Button>
+              </Link>
+            )}
           </div>
         </HandDrawnCardContent>
       </HandDrawnCard>

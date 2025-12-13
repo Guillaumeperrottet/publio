@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getUserOrganizations } from "@/features/organizations/actions";
 import { getOfferDetail } from "@/features/offers/actions";
 import { getTenderById } from "@/features/tenders/actions";
+import { getCurrentUser } from "@/lib/auth/session";
 import {
   HandDrawnCard,
   HandDrawnCardContent,
@@ -35,7 +36,7 @@ import { ShortlistOfferButton } from "@/components/offers/shortlist-offer-button
 import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-button";
 import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
-import { OfferInternalNote } from "@/components/offers/offer-internal-note";
+import { OfferComments } from "@/components/offers/offer-comments";
 
 export default async function OfferDetailPage({
   params,
@@ -44,6 +45,7 @@ export default async function OfferDetailPage({
 }) {
   const { id, offerId } = await params;
 
+  const user = await getCurrentUser();
   const memberships = await getUserOrganizations();
   if (memberships.length === 0) {
     redirect("/onboarding");
@@ -137,11 +139,12 @@ export default async function OfferDetailPage({
             <div className="mt-6 p-4 bg-white border-2 border-matte-black rounded-lg">
               <h3 className="text-sm font-semibold mb-3">Actions</h3>
               <div className="flex flex-wrap gap-3">
-                {/* Note interne (toujours disponible) */}
-                <OfferInternalNote
+                {/* Commentaires internes */}
+                <OfferComments
                   offerId={offer.id}
-                  initialNote={offer.internalNote}
                   organizationName={offer.organization.name}
+                  currentUserId={user.id}
+                  commentsCount={offer._count?.comments || 0}
                 />
 
                 {/* Offre SUBMITTED : Pré-sélectionner ou Rejeter */}
@@ -214,19 +217,6 @@ export default async function OfferDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Note interne si présente */}
-            {offer.internalNote && (
-              <div className="p-6 bg-deep-green/5 border-l-4 border-deep-green rounded-r">
-                <h3 className="font-semibold mb-3 flex items-center gap-2 text-deep-green text-xl font-handdrawn">
-                  <FileText className="w-5 h-5" />
-                  Note interne
-                </h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {offer.internalNote}
-                </p>
-              </div>
-            )}
-
             {/* Informations générales */}
             <HandDrawnCard>
               <HandDrawnCardHeader>

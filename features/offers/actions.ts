@@ -9,6 +9,7 @@ import {
   sendNewOfferReceivedEmail,
   sendOfferAcceptedEmail,
   sendOfferRejectedEmail,
+  sendOfferWithdrawnEmail,
 } from "@/lib/email/tender-emails";
 
 // Type pour le formulaire d'offre
@@ -762,6 +763,11 @@ export async function getTenderOffers(tenderId: string) {
     include: {
       organization: true,
       documents: true,
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
     },
     orderBy: {
       submittedAt: "desc",
@@ -815,6 +821,11 @@ export async function getOfferDetail(offerId: string) {
       materials: {
         orderBy: {
           position: "asc",
+        },
+      },
+      _count: {
+        select: {
+          comments: true,
         },
       },
     },
@@ -1519,17 +1530,14 @@ export async function unshortlistOffer(offerId: string) {
 }
 
 /**
- * Ajouter ou modifier une note interne sur une offre
- * Accessible uniquement aux OWNER et ADMIN de l'organisation émettrice
+ * Ajouter un commentaire sur une offre
+ * Accessible à tous les membres de l'organisation émettrice
  */
-export async function updateOfferInternalNote(
-  offerId: string,
-  note: string | null
-) {
+export async function addOfferComment(offerId: string, content: string) {
   try {
     const user = await getCurrentUser();
 
-    // Récupérer l'offre avec son tender
+    // Vérifier que l'utilisateur a accès à l'offre
     const offer = await prisma.offer.findUnique({
       where: { id: offerId },
       include: {
@@ -1540,9 +1548,6 @@ export async function updateOfferInternalNote(
                 members: {
                   where: {
                     userId: user.id,
-                    role: {
-                      in: ["OWNER", "ADMIN"], // Seulement OWNER et ADMIN
-                    },
                   },
                 },
               },
@@ -1556,28 +1561,177 @@ export async function updateOfferInternalNote(
       return { error: "Offre introuvable" };
     }
 
-    // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
     if (!offer.tender.organization.members.length) {
       return {
-        error: "Vous n'avez pas les droits pour ajouter une note à cette offre",
+        error: "Vous n'avez pas les droits pour commenter cette offre",
       };
     }
 
-    // Mettre à jour la note interne
-    const updatedOffer = await prisma.offer.update({
-      where: { id: offerId },
+    // Créer le commentaire
+    const comment = await prisma.offerComment.create({
       data: {
-        internalNote: note,
+        offerId,
+        content,
+        authorId: user.id,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
-    return { success: true, offer: updatedOffer };
+    return { success: true, comment };
   } catch (error) {
-    console.error("Error updating internal note:", error);
+    console.error("Error adding comment:", error);
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
   }
+}
+
+/**
+ * Récupérer tous les commentaires d'une offre
+ */
+export async function getOfferComments(offerId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Vérifier que l'utilisateur a accès à l'offre
+    const offer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        tender: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  where: {
+                    userId: user.id,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offer?.tender.organization.members.length) {
+      throw new Error("Unauthorized");
+    }
+
+    // Récupérer les commentaires
+    const comments = await prisma.offerComment.findMany({
+      where: { offerId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return comments;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    throw error;
+  }
+}
+
+/**
+ * Supprimer un commentaire
+ * Seul l'auteur peut supprimer son propre commentaire
+ */
+export async function deleteOfferComment(commentId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Vérifier que le commentaire existe et appartient à l'utilisateur
+    const comment = await prisma.offerComment.findUnique({
+      where: { id: commentId },
+      include: {
+        offer: {
+          include: {
+            tender: {
+              include: {
+                organization: {
+                  include: {
+                    members: {
+                      where: {
+                        userId: user.id,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!comment) {
+      return { error: "Commentaire introuvable" };
+    }
+
+    // Vérifier que l'utilisateur est membre de l'organisation
+    if (!comment.offer.tender.organization.members.length) {
+      return { error: "Non autorisé" };
+    }
+
+    // Vérifier que l'utilisateur est l'auteur du commentaire
+    if (comment.authorId !== user.id) {
+      return {
+        error: "Vous ne pouvez supprimer que vos propres commentaires",
+      };
+    }
+
+    // Supprimer le commentaire
+    await prisma.offerComment.delete({
+      where: { id: commentId },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Ajouter ou modifier une note interne sur une offre
+ * @deprecated Utiliser addOfferComment à la place
+ */
+export async function updateOfferInternalNote(
+  offerId: string,
+  note: string | null
+) {
+  // Pour compatibilité ascendante, on crée un commentaire
+  if (!note) {
+    return { success: true };
+  }
+  return addOfferComment(offerId, note);
+}
+
+/**
+ * Récupérer l'historique des modifications de la note interne
+ * @deprecated Utiliser getOfferComments à la place
+ */
+export async function getOfferNoteHistory(offerId: string) {
+  return getOfferComments(offerId);
 }
 
 /**
@@ -1638,7 +1792,18 @@ export async function withdrawOffer(offerId: string) {
       },
     });
 
-    // TODO: Envoyer email de confirmation
+    // Envoyer email de confirmation à l'organisation soumissionnaire
+    try {
+      await sendOfferWithdrawnEmail({
+        to: offer.organization.email || user.email,
+        tenderTitle: offer.tender.title,
+        tenderId: offer.tender.id,
+        organizationName: offer.organization.name,
+      });
+    } catch (emailError) {
+      console.error("Error sending offer withdrawn email:", emailError);
+      // Ne pas bloquer l'action si l'email échoue
+    }
 
     return { success: true, offer: updatedOffer };
   } catch (error) {

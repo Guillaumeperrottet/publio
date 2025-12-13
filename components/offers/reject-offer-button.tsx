@@ -100,6 +100,7 @@ export function RejectOfferButton({
               onClick={handleReject}
               disabled={isRejecting}
               variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isRejecting ? (
                 <>

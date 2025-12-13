@@ -11,7 +11,10 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { sendDeadlinePassedEmail } from "@/lib/email/tender-emails";
+import {
+  sendDeadlinePassedEmail,
+  sendTenderAutoClosedEmail,
+} from "@/lib/email/tender-emails";
 
 const prisma = new PrismaClient();
 
@@ -129,15 +132,27 @@ async function closeExpiredTenders() {
         data: updateData,
       });
 
-      // TODO: Envoyer email de notification de fermeture auto
-      /*
-      await sendTenderAutoClosedEmail({
-        to: tender.organization.members.map(m => m.user.email),
-        tenderTitle: tender.title,
-        offersCount: tender._count.offers,
-        actionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/tenders/${tender.id}`,
-      });
-      */
+      // Envoyer email de notification de fermeture auto
+      console.log(`   📧 Envoi email de fermeture automatique...`);
+
+      const adminEmails = tender.organization.members
+        .map((m) => m.user.email)
+        .filter((email): email is string => !!email);
+
+      if (adminEmails.length > 0) {
+        try {
+          await sendTenderAutoClosedEmail({
+            to: adminEmails,
+            tenderTitle: tender.title,
+            tenderId: tender.id,
+            offersCount: tender._count.offers,
+            daysSinceDeadline,
+          });
+          console.log(`   ✅ Email de fermeture envoyé`);
+        } catch (error) {
+          console.error(`   ❌ Erreur envoi email:`, error);
+        }
+      }
 
       console.log(`   ✅ Tender clôturé automatiquement`);
     }

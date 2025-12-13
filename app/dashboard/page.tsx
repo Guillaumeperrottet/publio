@@ -52,6 +52,7 @@ export default async function DashboardPage() {
   // Prendre la première organisation (on pourra ajouter un sélecteur plus tard)
   const currentMembership = memberships[0];
   const organization = currentMembership.organization;
+  const userRole = currentMembership.role;
 
   console.log("🔍 Dashboard Debug:");
   console.log("User ID:", user.id);
@@ -278,9 +279,8 @@ export default async function DashboardPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-matte-black mb-1">
-            Bienvenue, {user?.name?.split(" ")[0] || "utilisateur"} 👋
+            Dashboard
           </h1>
-          <p className="text-muted-foreground">{organization.name}</p>
         </div>
 
         {/* Cartes en haut - 3 colonnes compactes */}
@@ -309,6 +309,7 @@ export default async function DashboardPage() {
                 activeTenders={activeTenders}
                 draftTenders={draftTenders}
                 urgentCount={urgentDeadlines.length}
+                userRole={userRole}
               />
 
               {/* Mes offres */}

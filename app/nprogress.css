@@ -1,0 +1,50 @@
+/* Personnalisation de la loading bar NProgress */
+
+/* Barre de progression principale */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: #deae00; /* Jaune artisan */
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+/* Effet de lueur */
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #deae00, 0 0 5px #deae00;
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Animation de la barre */
+#nprogress .bar {
+  animation: nprogress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes nprogress-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Spinner (désactivé mais gardé pour référence) */
+#nprogress .spinner {
+  display: none;
+}

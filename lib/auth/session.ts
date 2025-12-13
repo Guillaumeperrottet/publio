@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "./config";
 
 /**
@@ -35,7 +36,7 @@ export async function requireAuth() {
   const session = await getSession();
 
   if (!session) {
-    throw new Error("Unauthorized");
+    redirect("/auth/signin");
   }
 
   return session;

@@ -1,6 +1,8 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserProfile } from "@/features/users/actions";
 import ProtectedLayout from "@/components/layout/protected-layout";
+import EditProfileForm from "@/features/users/edit-profile-form";
+import ChangePasswordForm from "@/features/users/change-password-form";
 import {
   HandDrawnCard,
   HandDrawnCardContent,
@@ -77,12 +79,11 @@ export default async function ProfilePage() {
                   </p>
                 </div>
 
-                {/* TODO: Ajouter formulaire changement de mot de passe */}
                 <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    La modification du mot de passe sera disponible
-                    prochainement.
+                  <p className="text-sm font-semibold mb-4">
+                    Changer le mot de passe
                   </p>
+                  <ChangePasswordForm />
                 </div>
               </div>
             </HandDrawnCardContent>

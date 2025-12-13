@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, TrendingUp } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface Plan {
   id: string;
@@ -42,13 +41,12 @@ const PLANS: Plan[] = [
     id: "VEILLE_BASIC",
     name: "Veille Basic",
     price: 5,
-    maxCommunes: 5,
+    maxCommunes: 1,
     features: [
       "Tout du plan Gratuit",
-      "Veille sur 5 communes",
+      "Veille sur 1 canton",
       "Alertes email quotidiennes",
       "Dashboard publications",
-      "Accès aux archives (30 jours)",
     ],
     recommended: true,
   },
@@ -59,11 +57,9 @@ const PLANS: Plan[] = [
     maxCommunes: "unlimited",
     features: [
       "Tout du plan Basic",
-      "Communes illimitées",
-      "Export CSV des publications",
-      "Accès aux archives (90 jours)",
+      "Cantons illimités",
       "Support prioritaire",
-      "API access (bientôt)",
+      "Demande de sites personnalisés",
     ],
   },
 ];
@@ -79,7 +75,6 @@ export function UpgradeVeilleDialog({
 }: UpgradeVeilleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleUpgrade = async (planId: string) => {
     try {
@@ -169,8 +164,8 @@ export function UpgradeVeilleDialog({
                   {!isFree && (
                     <p className="text-sm text-muted-foreground mt-2 font-medium">
                       {plan.maxCommunes === "unlimited"
-                        ? "Communes illimitées"
-                        : `Jusqu'à ${plan.maxCommunes} communes`}
+                        ? "Cantons illimités"
+                        : `${plan.maxCommunes} canton`}
                     </p>
                   )}
                 </div>

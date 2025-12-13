@@ -22,7 +22,6 @@ import {
   ChevronDown,
   ChevronUp,
   Star,
-  StickyNote,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -30,7 +29,7 @@ import { ShortlistOfferButton } from "@/components/offers/shortlist-offer-button
 import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-button";
 import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
-import { OfferInternalNote } from "@/components/offers/offer-internal-note";
+import { OfferComments } from "@/components/offers/offer-comments";
 
 interface Offer {
   id: string;
@@ -41,7 +40,9 @@ interface Offer {
   timeline: string | null;
   submittedAt: Date | null;
   status: string;
-  internalNote: string | null;
+  _count?: {
+    comments: number;
+  };
   organization: {
     name: string;
     city: string | null;
@@ -54,6 +55,7 @@ interface OffersTableProps {
   tenderId: string;
   tenderStatus: string;
   canAwardTender: boolean;
+  currentUserId: string;
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -73,6 +75,7 @@ export function OffersTable({
   tenderId,
   tenderStatus,
   canAwardTender,
+  currentUserId,
 }: OffersTableProps) {
   const [sortBy, setSortBy] = useState<"price" | "date">("price");
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
@@ -277,19 +280,6 @@ export function OffersTable({
                     {/* Détails expandable */}
                     {isSelected && (
                       <div className="p-6 bg-white border-t-2 border-gray-200">
-                        {/* Note interne si présente */}
-                        {offer.internalNote && (
-                          <div className="mb-6 p-4 bg-deep-green/5 border-l-4 border-deep-green rounded-r">
-                            <h4 className="font-semibold mb-2 flex items-center gap-2 text-deep-green">
-                              <StickyNote className="w-4 h-4" />
-                              Note interne
-                            </h4>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                              {offer.internalNote}
-                            </p>
-                          </div>
-                        )}
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Description */}
                           {offer.description && (
@@ -340,11 +330,12 @@ export function OffersTable({
                             className="flex flex-wrap gap-3"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {/* Note interne (toujours disponible) */}
-                            <OfferInternalNote
+                            {/* Commentaires internes */}
+                            <OfferComments
                               offerId={offer.id}
-                              initialNote={offer.internalNote}
                               organizationName={offer.organization.name}
+                              currentUserId={currentUserId}
+                              commentsCount={offer._count?.comments || 0}
                             />
 
                             {/* Offre SUBMITTED */}

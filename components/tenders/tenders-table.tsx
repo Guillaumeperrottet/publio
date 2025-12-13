@@ -723,9 +723,9 @@ export function TendersTable({ tenders }: TendersTableProps) {
                 <div className="space-y-2 pt-2">
                   <Link
                     href={`/dashboard/tenders/${selectedTenderData.id}`}
-                    className="block"
+                    className="block cursor-pointer"
                   >
-                    <Button className="w-full">
+                    <Button className="w-full cursor-pointer">
                       <Eye className="w-4 h-4 mr-2" />
                       Voir les détails
                     </Button>
@@ -734,9 +734,12 @@ export function TendersTable({ tenders }: TendersTableProps) {
                   {selectedTenderData.status === "DRAFT" && (
                     <Link
                       href={`/dashboard/tenders/${selectedTenderData.id}/edit`}
-                      className="block"
+                      className="block cursor-pointer"
                     >
-                      <Button variant="outline" className="w-full">
+                      <Button
+                        variant="outline"
+                        className="w-full cursor-pointer"
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Éditer le brouillon
                       </Button>
@@ -745,48 +748,47 @@ export function TendersTable({ tenders }: TendersTableProps) {
 
                   {selectedTenderData.status === "PUBLISHED" && (
                     <>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          // TODO: Implémenter la fonctionnalité de clôture
-                          toast.error("Fonctionnalité de clôture à venir");
-                        }}
+                      <Link
+                        href={`/dashboard/tenders/${selectedTenderData.id}`}
+                        className="block cursor-pointer"
                       >
-                        <Lock className="w-4 h-4 mr-2" />
-                        Clôturer l&apos;appel d&apos;offre
-                      </Button>
-
-                      {selectedTenderData._count?.offers &&
-                        selectedTenderData._count.offers > 0 && (
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                              // TODO: Implémenter l'attribution
-                              toast.error(
-                                "Fonctionnalité d'attribution à venir"
-                              );
-                            }}
-                          >
-                            <Award className="w-4 h-4 mr-2" />
-                            Attribuer le marché
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          className="w-full cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Voir les offres reçues
+                        </Button>
+                      </Link>
                     </>
                   )}
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      // TODO: Implémenter l'export PDF
-                      toast.error("Export PDF à venir");
-                    }}
+                  {(selectedTenderData.status === "CLOSED" ||
+                    selectedTenderData.status === "AWARDED") && (
+                    <Link
+                      href={`/dashboard/tenders/${selectedTenderData.id}/equity-log`}
+                      className="block cursor-pointer"
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Journal d&apos;équité
+                      </Button>
+                    </Link>
+                  )}
+
+                  <Link
+                    href={`/tenders/${selectedTenderData.id}`}
+                    target="_blank"
+                    className="block cursor-pointer"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Exporter en PDF
-                  </Button>
+                    <Button variant="outline" className="w-full cursor-pointer">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Page publique
+                    </Button>
+                  </Link>
                 </div>
 
                 {/* Info complémentaire */}

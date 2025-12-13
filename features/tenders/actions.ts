@@ -18,6 +18,7 @@ import {
   sendTenderAwardedWinnerEmail,
   sendTenderAwardedLosersEmail,
   sendTenderAwardedEmitterEmail,
+  sendTenderCancelledEmail,
 } from "@/lib/email/tender-emails";
 import { createEquityLog } from "@/features/equity-log/actions";
 
@@ -1131,7 +1132,61 @@ export async function cancelTender(tenderId: string) {
       },
     });
 
-    // TODO: Envoyer email d'annulation aux soumissionnaires
+    // Récupérer toutes les offres soumises pour cet appel d'offres
+    const submittedOffers = await prisma.offer.findMany({
+      where: {
+        tenderId: tenderId,
+        status: {
+          in: [
+            OfferStatus.SUBMITTED,
+            OfferStatus.SHORTLISTED,
+            OfferStatus.ACCEPTED,
+          ],
+        },
+      },
+      include: {
+        organization: {
+          select: {
+            email: true,
+            members: {
+              select: {
+                user: {
+                  select: {
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Envoyer email d'annulation à tous les soumissionnaires
+    for (const offer of submittedOffers) {
+      try {
+        // Récupérer les emails des membres de l'organisation
+        const memberEmails = offer.organization.members.map(
+          (m) => m.user.email
+        );
+        const recipientEmail = offer.organization.email || memberEmails[0];
+
+        if (recipientEmail) {
+          await sendTenderCancelledEmail({
+            to: recipientEmail,
+            tenderTitle: tender.title,
+            tenderId: tender.id,
+            organizationName: tender.organization.name,
+          });
+        }
+      } catch (emailError) {
+        console.error(
+          `Error sending cancellation email for offer ${offer.id}:`,
+          emailError
+        );
+        // Ne pas bloquer l'action si un email échoue
+      }
+    }
 
     return { success: true, tender: updatedTender };
   } catch (error) {
