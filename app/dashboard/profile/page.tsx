@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserProfile } from "@/features/users/actions";
 import ProtectedLayout from "@/components/layout/protected-layout";
-import EditProfileForm from "@/features/users/edit-profile-form";
 import ChangePasswordForm from "@/features/users/change-password-form";
 import {
   HandDrawnCard,

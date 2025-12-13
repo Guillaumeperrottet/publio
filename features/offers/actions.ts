@@ -11,6 +11,7 @@ import {
   sendOfferRejectedEmail,
   sendOfferWithdrawnEmail,
 } from "@/lib/email/tender-emails";
+import { createOrganizationNotification } from "@/features/notifications/actions";
 
 // Type pour le formulaire d'offre
 interface OfferFormData {
@@ -493,6 +494,26 @@ export async function submitOffer(data: {
           );
         }
       }
+    }
+
+    // Notification in-app à l'émetteur du tender
+    try {
+      await createOrganizationNotification(tender.organizationId, user.id, {
+        type: "OFFER_RECEIVED",
+        title: "Nouvelle offre reçue",
+        message: `${
+          submitterOrg?.name || "Une organisation"
+        } a soumis une offre pour ${tender.title}`,
+        metadata: {
+          tenderId: tender.id,
+          offerId: offer.id,
+          organizationName: submitterOrg?.name,
+          price: offer.price,
+          currency: offer.currency,
+        },
+      });
+    } catch (error) {
+      console.error("Error sending offer received notification:", error);
     }
 
     if (data.formData.materials.length > 0) {
@@ -1444,6 +1465,11 @@ export async function shortlistOffer(offerId: string) {
       },
       include: {
         organization: true,
+        tender: {
+          include: {
+            organization: true,
+          },
+        },
       },
     });
 
@@ -1452,6 +1478,32 @@ export async function shortlistOffer(offerId: string) {
       updatedOffer.id,
       updatedOffer.status
     );
+
+    // Notification in-app à l'organisation soumissionnaire (sauf si tender anonyme non révélé)
+    if (
+      updatedOffer.tender.mode !== "ANONYMOUS" ||
+      updatedOffer.tender.identityRevealed
+    ) {
+      try {
+        await createOrganizationNotification(
+          updatedOffer.organizationId,
+          user.id,
+          {
+            type: "OFFER_SHORTLISTED",
+            title: "Offre mise à l'étude",
+            message: `Votre offre pour ${updatedOffer.tender.title} a été mise à l'étude`,
+            metadata: {
+              tenderId: updatedOffer.tender.id,
+              offerId: updatedOffer.id,
+              tenderTitle: updatedOffer.tender.title,
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error sending offer shortlisted notification:", error);
+      }
+    }
+
     return { success: true, offer: updatedOffer };
   } catch (error) {
     console.error("🔴 Error shortlisting offer:", error);
@@ -1541,6 +1593,11 @@ export async function addOfferComment(offerId: string, content: string) {
     const offer = await prisma.offer.findUnique({
       where: { id: offerId },
       include: {
+        organization: {
+          select: {
+            name: true,
+          },
+        },
         tender: {
           include: {
             organization: {
@@ -1584,6 +1641,25 @@ export async function addOfferComment(offerId: string, content: string) {
         },
       },
     });
+
+    // Envoyer une notification aux autres membres de l'équipe
+    await createOrganizationNotification(
+      offer.tender.organizationId,
+      user.id, // Exclure l'auteur du commentaire
+      {
+        type: "COMMENT_ADDED",
+        title: "Nouveau commentaire",
+        message: `${user.name || user.email} a commenté l'offre de ${
+          offer.organization.name
+        }`,
+        metadata: {
+          offerId: offer.id,
+          tenderId: offer.tenderId,
+          commentId: comment.id,
+          organizationName: offer.organization.name,
+        },
+      }
+    );
 
     return { success: true, comment };
   } catch (error) {
@@ -1803,6 +1879,26 @@ export async function withdrawOffer(offerId: string) {
     } catch (emailError) {
       console.error("Error sending offer withdrawn email:", emailError);
       // Ne pas bloquer l'action si l'email échoue
+    }
+
+    // Notification in-app à l'émetteur du tender
+    try {
+      await createOrganizationNotification(
+        offer.tender.organizationId,
+        user.id,
+        {
+          type: "OFFER_WITHDRAWN",
+          title: "Offre retirée",
+          message: `${offer.organization.name} a retiré son offre pour ${offer.tender.title}`,
+          metadata: {
+            tenderId: offer.tender.id,
+            offerId: offer.id,
+            organizationName: offer.organization.name,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error sending offer withdrawn notification:", error);
     }
 
     return { success: true, offer: updatedOffer };

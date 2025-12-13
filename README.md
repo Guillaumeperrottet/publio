@@ -2,6 +2,30 @@
 
 Publio est une application web destinée aux **communes**, **entreprises**, **architectes**, **ingénieurs**, **bureaux professionnels** et aux **privés** pour la gestion moderne et équitable des appels d'offres.
 
+---
+
+## ⚡ Démarrage Rapide
+
+```bash
+# Installation
+npm install
+
+# Configuration
+cp .env.example .env
+# Éditer .env avec vos variables
+
+# Base de données
+npx prisma generate
+npx prisma db push
+
+# Lancer le serveur
+npm run dev
+```
+
+📖 **[Documentation complète →](./docs/README.md)**
+
+---
+
 ## 🎨 Stack Technique
 
 - **Framework**: Next.js 16 (App Router)
@@ -44,80 +68,40 @@ publio/
 
 ## 🚀 Démarrage Rapide
 
-### Prérequis
+Voir le **[Guide complet de démarrage](./docs/guides/GETTING_STARTED.md)** pour l'installation détaillée.
 
-- Node.js 20+
-- PostgreSQL 15+
-- npm ou yarn
+---
 
-### Installation
+## 📚 Documentation
 
-```bash
-# 1. Cloner le projet
-git clone https://github.com/Guillaumeperrottet/publio.git
-cd publio
+Toute la documentation est organisée dans le dossier **[`docs/`](./docs/README.md)** :
 
-# 2. Installer les dépendances
-npm install
+- 🎯 **[Guides](./docs/guides/)** - Installation, tests, lifecycle
+- 🎨 **[Features](./docs/features/)** - Documentation des fonctionnalités
+- 🏗️ **[Architecture](./docs/architecture/)** - Architecture technique
+- 🚀 **[Deployment](./docs/deployment/)** - Guides de déploiement
 
-# 3. Installer bcryptjs pour les seeds
-npm install bcryptjs
-npm install -D @types/bcryptjs
+---
 
-# 4. Configurer les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos variables
+## 🏗️ Principes d'architecture
 
-# 5. Créer et initialiser la base de données
-npx prisma db push
+### ✅ Feature-based architecture
 
-# 6. Seed les données de test
-npm run db:seed
+Chaque module métier (`/features/*`) contient ses actions, composants et types.
 
-# 7. Lancer le serveur de développement
-npm run dev
-```
+### ✅ Design System artisanal
 
-Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
+- Palette jaune #DEAE00 + vert #1B4332
+- Style hand-drawn subtil (Caveat font)
+- Composants shadcn/ui personnalisés
 
-## 🧪 Tests & Développement
+### ✅ Architecture mobile-first
 
-### Comptes de test
+- Menu hamburger + bottom navigation
+- Responsive sur tous les devices
+- Touch-optimized
 
-Après avoir exécuté `npm run db:seed` :
-
-| Email                             | Mot de passe  | Organisation                      |
-| --------------------------------- | ------------- | --------------------------------- |
-| `commune.fribourg@test.ch`        | `password123` | Ville de Fribourg (Commune)       |
-| `entreprise.construction@test.ch` | `password123` | Construction Pro SA (Entreprise)  |
-| `architecte.lausanne@test.ch`     | `password123` | Architectes Associés (Architecte) |
-| `bureau.ingenieur@test.ch`        | `password123` | Bureau Ingénieurs (Ingénieur)     |
-
-### Commandes utiles
-
-```bash
-# Base de données
-npm run db:seed          # Ajouter des données de test
-npm run db:reset         # Reset complet + seed
-npm run db:studio        # Ouvrir Prisma Studio
-
-# Développement
-npm run dev              # Serveur de développement
-npm run build            # Build de production
-npm start                # Serveur de production
-
-# Scripts
-npx tsx scripts/scrape-publications.ts    # Tester scraping veille
-npx tsx scripts/close-expired-tenders.ts  # Tester clôture auto
-npx tsx scripts/send-search-alerts.ts     # Tester alertes recherches
-```
-
-### Documentation complète
-
-- 📖 [QUICK_START_TESTING.md](./QUICK_START_TESTING.md) - Guide de démarrage pour les tests
-- 🧪 [TESTING.md](./TESTING.md) - Guide complet des tests
-- 🚀 [GETTING_STARTED.md](./GETTING_STARTED.md) - Guide de démarrage détaillé
-- 📊 [PRE_LAUNCH_TESTING_GUIDE.md](./PRE_LAUNCH_TESTING_GUIDE.md) - Checklist pré-lancement
+---
 
 ## 🎯 Fonctionnalités Principales
 
@@ -147,29 +131,30 @@ npx tsx scripts/send-search-alerts.ts     # Tester alertes recherches
 - ✅ Cron jobs automatiques (5 tâches)
 - ✅ Facturation et abonnements
 
-## 🔐 Sécurité
+---
 
-- Authentification Better Auth avec sessions sécurisées
-- Permissions granulaires (OWNER, ADMIN, EDITOR, VIEWER)
-- Mode anonyme pour l'équité des offres
-- Journal d'équité immuable
-- Validation des données (Zod)
-- Protection CSRF
-- Rate limiting (à implémenter)
+## 📝 Licence
 
-## 🌍 Déploiement
+Ce projet est sous licence privée. Tous droits réservés.
 
-### Vercel (Recommandé)
+---
 
-```bash
-# 1. Installer Vercel CLI
-npm i -g vercel
+## 🤝 Contact
 
-# 2. Déployer
+Pour toute question ou support :
+
+- 📧 Email: support@publio.ch
+- 🌐 Site: [publio.ch](https://publio.ch)
+
+---
+
+**Fait avec ❤️ en Suisse romande**
 vercel
 
 # 3. Configurer les variables d'environnement dans Vercel Dashboard
+
 # 4. Vérifier les cron jobs (5 configurés dans vercel.json)
+
 ```
 
 ### Variables d'environnement requises
@@ -201,3 +186,4 @@ Voir [LICENSE](./LICENSE).
 ---
 
 **Fait avec ❤️ en Suisse romande** 🇨🇭
+```

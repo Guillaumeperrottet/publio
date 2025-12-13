@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getUserOrganizations } from "@/features/organizations/actions";
 import { getUnreadOffersCount } from "@/features/offers/actions";
 import { UserMenu } from "./user-menu";
+import { NotificationBell } from "./notification-bell";
+import { MobileMenu } from "./mobile-menu";
 import {
   FileText,
   Plus,
@@ -60,6 +62,30 @@ export async function UniversalHeader() {
     <header className="bg-white sticky top-0 z-50 border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16">
+          {/* Menu hamburger mobile */}
+          <MobileMenu
+            isAuthenticated={isAuthenticated}
+            user={
+              user
+                ? {
+                    name: user.name || "Utilisateur",
+                    email: user.email || "",
+                    image: user.image || undefined,
+                  }
+                : undefined
+            }
+            organization={
+              organization
+                ? {
+                    name: organization.name,
+                    logo: organization.logo || undefined,
+                  }
+                : null
+            }
+            unreadCount={unreadCount}
+            userRole={userRole}
+          />
+
           {/* Logo + Navigation gauche */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 group shrink-0">
@@ -279,16 +305,21 @@ export async function UniversalHeader() {
                   </Button>
                 </Link>
 
-                {/* Menu utilisateur */}
-                <UserMenu
-                  user={{
-                    name: user?.name || "Utilisateur",
-                    email: user?.email || "",
-                    image: user?.image || undefined,
-                  }}
-                  organization={organization}
-                  userRole={userRole}
-                />
+                {/* Cloche de notifications */}
+                <NotificationBell />
+
+                {/* Menu utilisateur - masqué sur mobile car dans le drawer */}
+                <div className="hidden md:block">
+                  <UserMenu
+                    user={{
+                      name: user?.name || "Utilisateur",
+                      email: user?.email || "",
+                      image: user?.image || undefined,
+                    }}
+                    organization={organization}
+                    userRole={userRole}
+                  />
+                </div>
               </>
             ) : (
               <>

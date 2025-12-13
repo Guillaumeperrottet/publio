@@ -1,4 +1,5 @@
 import { UniversalHeader } from "./universal-header";
+import { MobileNavBar } from "./mobile-nav-bar";
 import { PublioFooter } from "./footer";
 
 interface PublicLayoutProps {
@@ -15,11 +16,14 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
       {/* Header universel */}
       <UniversalHeader />
 
-      {/* Contenu */}
+      {/* Contenu - padding conditionnel (si navbar visible) */}
       <main>{children}</main>
 
       {/* Footer professionnel */}
       <PublioFooter />
+
+      {/* Bottom Navigation Mobile */}
+      <MobileNavBar isAuthenticated={false} />
     </div>
   );
 }

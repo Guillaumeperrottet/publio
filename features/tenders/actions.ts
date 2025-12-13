@@ -21,6 +21,10 @@ import {
   sendTenderCancelledEmail,
 } from "@/lib/email/tender-emails";
 import { createEquityLog } from "@/features/equity-log/actions";
+import {
+  createOrganizationNotification,
+  notifyMatchingSavedSearches,
+} from "@/features/notifications/actions";
 
 /**
  * Créer un nouvel appel d'offres
@@ -333,6 +337,14 @@ export async function publishTender(tenderId: string) {
       deadline: updatedTender.deadline,
     },
   });
+
+  // Notify users with matching saved searches
+  try {
+    await notifyMatchingSavedSearches(updatedTender.id);
+  } catch (error) {
+    console.error("Error notifying saved searches:", error);
+    // Don't block publication if notification fails
+  }
 
   return updatedTender;
 }
@@ -832,6 +844,26 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
         },
       });
     });
+
+    // Notification in-app au gagnant
+    try {
+      await createOrganizationNotification(
+        winningOffer.organizationId,
+        user.id,
+        {
+          type: "TENDER_AWARDED",
+          title: "Marché attribué",
+          message: `Félicitations ! Le marché ${tender.title} vous a été attribué`,
+          metadata: {
+            tenderId: tender.id,
+            offerId: winningOffer.id,
+            tenderTitle: tender.title,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error sending tender awarded notification:", error);
+    }
 
     // Récupérer les informations complètes pour les emails
     const finalTender = await prisma.tender.findUnique({

@@ -19,6 +19,7 @@ import {
   ChevronDown,
   CreditCard,
   Shield,
+  Bell,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
@@ -144,6 +145,16 @@ export function UserMenu({ user, organization, userRole }: UserMenuProps) {
           >
             <CreditCard className="w-4 h-4" />
             <span>Facturation</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link
+            href="/dashboard/settings/notifications"
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Bell className="w-4 h-4" />
+            <span>Préférences de notification</span>
           </Link>
         </DropdownMenuItem>
 

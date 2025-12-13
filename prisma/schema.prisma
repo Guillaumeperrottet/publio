@@ -32,8 +32,73 @@ model User {
   equityLogs           EquityLog[]
   savedTenders         SavedTender[]
   offerComments        OfferComment[]       @relation("OfferCommentAuthor")
+  notifications        Notification[]       @relation("UserNotifications")
+  notificationPrefs    NotificationPreferences? @relation("UserNotificationPreferences")
 
   @@map("users")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  COMMENT_ADDED // Nouveau commentaire sur une offre
+  OFFER_RECEIVED // Nouvelle offre reçue
+  OFFER_WITHDRAWN // Offre retirée
+  OFFER_SHORTLISTED // Offre mise à étudier
+  OFFER_REJECTED // Offre rejetée
+  TENDER_AWARDED // Marché attribué
+  TENDER_CLOSING_SOON // Appel d'offre se clôture bientôt
+  TENDER_MATCH // Nouvel appel d'offres correspondant à une recherche sauvegardée
+  VEILLE_MATCH // Nouveau résultat de veille
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Métadonnées optionnelles (JSON pour flexibilité)
+  metadata Json? // Ex: { offerId, tenderId, commentId, organizationName, etc. }
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// Préférences de notification par utilisateur
+model NotificationPreferences {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("UserNotificationPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Canaux activés
+  inAppEnabled   Boolean @default(true)
+  emailEnabled   Boolean @default(true)
+  pushEnabled    Boolean @default(false) // PWA push (nécessite opt-in)
+  
+  // Types de notifications activés (si vide = tous activés)
+  enabledTypes   String[] @default([]) // Si [], tous les types sont activés
+  
+  // Fréquence pour les emails (in-app est toujours instantané)
+  emailFrequency String  @default("INSTANT") // INSTANT, DAILY_DIGEST, WEEKLY_DIGEST, DISABLED
+  
+  // Horaires pour les digests (format HH:MM)
+  digestTime     String  @default("09:00") // Heure d'envoi du digest quotidien
+  digestDay      Int     @default(1) // Jour de la semaine pour digest hebdo (1=Lundi, 7=Dimanche)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_preferences")
 }
 
 model Account {

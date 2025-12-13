@@ -37,6 +37,7 @@ import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-bu
 import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
 import { OfferComments } from "@/components/offers/offer-comments";
+import { OfferCommentsInline } from "@/components/offers/offer-comments-inline";
 
 export default async function OfferDetailPage({
   params,
@@ -80,6 +81,10 @@ export default async function OfferDetailPage({
   const canAwardTender =
     (tender.status === "CLOSED" || tender.status === "PUBLISHED") &&
     offer.tenderId === tender.id;
+
+  // Les actions sont disponibles tant que le tender n'est pas attribué ou annulé
+  const canPerformActions =
+    tender.status !== "AWARDED" && tender.status !== "CANCELLED";
 
   return (
     <ProtectedLayout>
@@ -135,7 +140,7 @@ export default async function OfferDetailPage({
           </div>
 
           {/* Actions sur l'offre */}
-          {identityRevealed && (
+          {canPerformActions && (
             <div className="mt-6 p-4 bg-white border-2 border-matte-black rounded-lg">
               <h3 className="text-sm font-semibold mb-3">Actions</h3>
               <div className="flex flex-wrap gap-3">
@@ -865,6 +870,21 @@ export default async function OfferDetailPage({
                     </div>
                   </>
                 )}
+              </HandDrawnCardContent>
+            </HandDrawnCard>
+
+            {/* Commentaires internes */}
+            <HandDrawnCard>
+              <HandDrawnCardHeader>
+                <HandDrawnCardTitle className="font-handdrawn text-xl">
+                  Discussion interne
+                </HandDrawnCardTitle>
+              </HandDrawnCardHeader>
+              <HandDrawnCardContent>
+                <OfferCommentsInline
+                  offerId={offer.id}
+                  currentUserId={user.id}
+                />
               </HandDrawnCardContent>
             </HandDrawnCard>
 

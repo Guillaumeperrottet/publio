@@ -727,7 +727,6 @@ Notre méthodologie :
       projectSummary: "Installation système vidéosurveillance 25 caméras",
       submittedAt: new Date("2025-11-15"),
       viewedAt: new Date("2025-11-16"),
-      internalNote: "Offre intéressante, à étudier en détail", // Note privée de l'émetteur
     },
   });
 
@@ -745,7 +744,6 @@ Notre méthodologie :
       projectSummary: "Installation système vidéosurveillance avec IA",
       submittedAt: new Date("2025-11-20"),
       viewedAt: new Date("2025-11-20"),
-      internalNote: "Prix trop élevé par rapport au budget", // Raison du rejet
     },
   });
 

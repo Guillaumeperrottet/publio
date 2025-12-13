@@ -20,6 +20,7 @@ import { SimapScraper } from "@/features/veille/scrapers/simap";
 import { FribourgOfficialGazetteScraper } from "@/features/veille/scrapers/fribourg-official";
 import { ValaisOfficialScraper } from "@/features/veille/scrapers/valais-official";
 import { ValaisWebScraper } from "@/features/veille/scrapers/valais-web";
+import { notifyMatchingVeilleSubscriptions } from "@/features/notifications/actions";
 
 async function scrapeAndStorePublications(includeWeekly = false) {
   console.log("=".repeat(60));
@@ -194,7 +195,7 @@ async function scrapeAndStorePublications(includeWeekly = false) {
         }
 
         // Créer la nouvelle publication
-        await prisma.veillePublication.create({
+        const newPublication = await prisma.veillePublication.create({
           data: {
             title: pub.title,
             description: pub.description || null,
@@ -211,6 +212,17 @@ async function scrapeAndStorePublications(includeWeekly = false) {
         console.log(
           `✅ Créée: ${pub.commune} - ${pub.title.substring(0, 50)}...`
         );
+
+        // Notify matching veille subscriptions
+        try {
+          await notifyMatchingVeilleSubscriptions(newPublication.id);
+        } catch (notifError) {
+          console.error(
+            `⚠️  Error notifying subscriptions for ${newPublication.id}:`,
+            notifError
+          );
+          // Don't block the scraping if notification fails
+        }
       } catch (error) {
         console.error(
           `❌ Erreur lors de l'enregistrement de "${pub.title}":`,
