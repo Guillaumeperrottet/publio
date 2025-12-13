@@ -326,8 +326,8 @@ model Tender {
   procedure    TenderProcedure  @default(OPEN)
   isSimpleMode Boolean          @default(true) // Mode simplifié pour particuliers
 
-  // Critère de sélection prioritaire
-  selectionPriority SelectionPriority @default(QUALITY_PRICE) // Ce qui compte le plus
+  // Critères de sélection prioritaires (maximum 3)
+  selectionPriorities SelectionPriority[] @default([QUALITY_PRICE]) // Ce qui compte le plus
 
   // Dates et délais
   publishedAt      DateTime?
@@ -337,25 +337,30 @@ model Tender {
   updatedAt        DateTime  @updatedAt
 
   // Localisation complète
-  location String? // Lieu d'exécution (texte libre)
-  address  String? // Adresse exacte (optionnelle)
-  city     String?
-  canton   String?
-  country  String  @default("CH")
+  location   String? // Lieu d'exécution (texte libre)
+  address    String? // Adresse exacte (optionnelle)
+  postalCode String? // Code postal / NPA
+  city       String?
+  canton     String?
+  country    String  @default("CH")
 
   // Gestion des lots
   hasLots            Boolean @default(false)
   allowPartialOffers Boolean @default(true) // Offres partielles autorisées
 
   // Conditions de participation
-  participationConditions String? // Texte libre
-  requiredDocuments       String? // Liste des pièces justificatives
-  requiresReferences      Boolean @default(false)
-  requiresInsurance       Boolean @default(false)
-  minExperience           Int? // Expérience minimale en années
+  participationConditions String[] @default([]) // Array de conditions
+  requiredDocuments       String[] @default([]) // Array de documents requis
+  requiresReferences      Boolean  @default(false)
+  requiresInsurance       Boolean  @default(false)
+  minExperience           String? // Expérience minimale (texte libre)
 
   // Conditions contractuelles
-  contractualTerms String? // Conditions contractuelles principales
+  contractualTerms String[] @default([]) // Array de conditions contractuelles
+
+  // Médias du projet
+  images Json[] @default([]) // Array de {url: string, name: string, type: "image"}
+  pdfs   Json[] @default([]) // Array de {url: string, name: string, type: "pdf"}
 
   // Fichiers
   documents TenderDocument[]

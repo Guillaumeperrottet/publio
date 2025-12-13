@@ -41,20 +41,23 @@ export async function createTenderWithPayment(data: {
   visibility: string;
   mode: string;
   procedure?: string;
-  selectionPriority: string;
+  selectionPriorities?: string[];
   city?: string;
+  postalCode?: string;
   canton?: string;
   location?: string;
   address?: string;
   country?: string;
   hasLots?: boolean;
   allowPartialOffers?: boolean;
-  participationConditions?: string;
-  requiredDocuments?: string;
+  participationConditions?: string[];
+  requiredDocuments?: string[];
   requiresReferences?: boolean;
   requiresInsurance?: boolean;
   minExperience?: string;
-  contractualTerms?: string;
+  contractualTerms?: string[];
+  images?: Array<{ url: string; name: string; type: "image" }>;
+  pdfs?: Array<{ url: string; name: string; type: "pdf" }>;
   lots?: Array<{
     number: number;
     title: string;
@@ -118,12 +121,16 @@ export async function createTenderWithPayment(data: {
         visibility: data.visibility as TenderVisibility,
         mode: data.mode as TenderMode,
         status: TenderStatus.DRAFT,
-        selectionPriority: data.selectionPriority as
-          | "LOWEST_PRICE"
-          | "QUALITY_PRICE"
-          | "FASTEST_DELIVERY"
-          | "BEST_REFERENCES"
-          | "ECO_FRIENDLY",
+        selectionPriorities:
+          data.selectionPriorities && data.selectionPriorities.length > 0
+            ? (data.selectionPriorities as (
+                | "LOWEST_PRICE"
+                | "QUALITY_PRICE"
+                | "FASTEST_DELIVERY"
+                | "BEST_REFERENCES"
+                | "ECO_FRIENDLY"
+              )[])
+            : ["QUALITY_PRICE"],
         contractDuration: data.contractDuration
           ? parseInt(data.contractDuration)
           : undefined,
@@ -139,12 +146,12 @@ export async function createTenderWithPayment(data: {
         requiredDocuments: data.requiredDocuments,
         requiresReferences: data.requiresReferences ?? false,
         requiresInsurance: data.requiresInsurance ?? false,
-        minExperience: data.minExperience
-          ? parseInt(data.minExperience)
-          : undefined,
+        minExperience: data.minExperience || undefined,
         contractualTerms: data.contractualTerms,
         hasLots: data.hasLots ?? false,
         allowPartialOffers: data.allowPartialOffers ?? true,
+        images: data.images || [],
+        pdfs: data.pdfs || [],
       },
     });
 
@@ -300,20 +307,23 @@ export async function saveDraftTender(data: {
   visibility: string;
   mode: string;
   procedure?: string;
-  selectionPriority: string;
+  selectionPriorities: string[];
   city?: string;
+  postalCode?: string;
   canton?: string;
   location?: string;
   address?: string;
   country?: string;
   hasLots?: boolean;
   allowPartialOffers?: boolean;
-  participationConditions?: string;
-  requiredDocuments?: string;
+  participationConditions?: string[];
+  requiredDocuments?: string[];
   requiresReferences?: boolean;
   requiresInsurance?: boolean;
   minExperience?: string;
-  contractualTerms?: string;
+  contractualTerms?: string[];
+  images?: Array<{ url: string; name: string; type: "image" }>;
+  pdfs?: Array<{ url: string; name: string; type: "pdf" }>;
   isSimpleMode?: boolean;
   lots?: Array<{
     number: number;
@@ -385,13 +395,16 @@ export async function saveDraftTender(data: {
         visibility: data.visibility as TenderVisibility,
         mode: data.mode as TenderMode,
         procedure: (data.procedure as TenderProcedure) || "OPEN",
-        selectionPriority:
-          (data.selectionPriority as
-            | "LOWEST_PRICE"
-            | "QUALITY_PRICE"
-            | "FASTEST_DELIVERY"
-            | "BEST_REFERENCES"
-            | "ECO_FRIENDLY") || "QUALITY_PRICE",
+        selectionPriorities:
+          data.selectionPriorities && data.selectionPriorities.length > 0
+            ? (data.selectionPriorities as (
+                | "LOWEST_PRICE"
+                | "QUALITY_PRICE"
+                | "FASTEST_DELIVERY"
+                | "BEST_REFERENCES"
+                | "ECO_FRIENDLY"
+              )[])
+            : ["QUALITY_PRICE"],
         city: data.city || null,
         canton: data.canton || null,
         location: data.location || null,
@@ -399,16 +412,16 @@ export async function saveDraftTender(data: {
         country: data.country || "CH",
         hasLots: data.hasLots || false,
         allowPartialOffers: data.allowPartialOffers !== false,
-        participationConditions: data.participationConditions || null,
-        requiredDocuments: data.requiredDocuments || null,
+        participationConditions: data.participationConditions || undefined,
+        requiredDocuments: data.requiredDocuments || undefined,
         requiresReferences: data.requiresReferences || false,
         requiresInsurance: data.requiresInsurance || false,
-        minExperience: data.minExperience
-          ? parseInt(data.minExperience.toString())
-          : null,
-        contractualTerms: data.contractualTerms || null,
+        minExperience: data.minExperience || null,
+        contractualTerms: data.contractualTerms || undefined,
         isSimpleMode: data.isSimpleMode !== false,
         status: TenderStatus.DRAFT,
+        images: data.images || [],
+        pdfs: data.pdfs || [],
       },
     });
 

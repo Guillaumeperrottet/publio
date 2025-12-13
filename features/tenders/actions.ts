@@ -428,12 +428,12 @@ export async function updateDraftTender(data: {
     order: number;
   }>;
   questionDeadline?: string;
-  participationConditions?: string;
-  requiredDocuments?: string;
+  participationConditions?: string[];
+  requiredDocuments?: string[];
   requiresReferences?: boolean;
   requiresInsurance?: boolean;
   minExperience?: string;
-  contractualTerms?: string;
+  contractualTerms?: string[];
   procedure?: string;
   allowPartialOffers?: boolean;
   visibility?: string;
@@ -501,7 +501,7 @@ export async function updateDraftTender(data: {
       requiredDocuments: data.requiredDocuments,
       requiresReferences: data.requiresReferences,
       requiresInsurance: data.requiresInsurance,
-      minExperience: data.minExperience ? parseInt(data.minExperience) : null,
+      minExperience: data.minExperience || null,
       contractualTerms: data.contractualTerms,
       procedure: data.procedure as TenderProcedure,
       visibility: data.visibility as TenderVisibility,

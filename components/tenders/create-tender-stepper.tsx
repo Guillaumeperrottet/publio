@@ -7,25 +7,29 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TenderStep1ModeChoice } from "./create-tender-steps/step1-mode-choice";
 import { TenderStep1 } from "./create-tender-steps/step1-basic-info";
 import { TenderStep2 } from "./create-tender-steps/step2-details";
 import { TenderStep3 } from "./create-tender-steps/step3-location";
-import { TenderStep4 } from "./create-tender-steps/step4-lots-criteria";
-import { TenderStep5 } from "./create-tender-steps/step5-delays-conditions";
-import { TenderStep6 } from "./create-tender-steps/step6-parameters";
-import { TenderStep7 } from "./create-tender-steps/step7-review";
+import { TenderStep4 as TenderStep4Media } from "./create-tender-steps/step4-media";
+import { TenderStep4 as TenderStep5Lots } from "./create-tender-steps/step4-lots-criteria";
+import { TenderStep5 as TenderStep6Conditions } from "./create-tender-steps/step5-delays-conditions";
+import { TenderStep6 as TenderStep7Parameters } from "./create-tender-steps/step6-parameters";
+import { TenderStep7 as TenderStep8Review } from "./create-tender-steps/step7-review";
 import { createTenderWithPayment } from "@/features/tenders/payment-actions";
 import { saveDraftTender } from "@/features/tenders/payment-actions";
 import { type CFCCategory } from "@/lib/constants/cfc-codes";
 
 const STEPS = [
-  { number: 1, title: "Informations", description: "Titre et description" },
-  { number: 2, title: "Détails", description: "Marché et budget" },
-  { number: 3, title: "Localisation", description: "Lieu du projet" },
-  { number: 4, title: "Lots & Critères", description: "Organisation" },
-  { number: 5, title: "Conditions", description: "Participation" },
-  { number: 6, title: "Paramètres", description: "Publication" },
-  { number: 7, title: "Vérification", description: "Relecture" },
+  { number: 1, title: "Mode", description: "Publication" },
+  { number: 2, title: "Informations", description: "Titre et description" },
+  { number: 3, title: "Détails", description: "Marché et budget" },
+  { number: 4, title: "Localisation", description: "Lieu du projet" },
+  { number: 5, title: "Photos", description: "Documents" },
+  { number: 6, title: "Lots & Critères", description: "Organisation" },
+  { number: 7, title: "Conditions", description: "Participation" },
+  { number: 8, title: "Paramètres", description: "Visibilité" },
+  { number: 9, title: "Vérification", description: "Relecture" },
 ];
 
 interface CreateTenderStepperProps {
@@ -37,6 +41,7 @@ export function CreateTenderStepper({
 }: CreateTenderStepperProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [maxStepReached, setMaxStepReached] = useState(1); // Nouvelle state pour tracker l'étape max atteinte
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
@@ -64,11 +69,16 @@ export function CreateTenderStepper({
     // Step 3
     address: "",
     city: "",
+    postalCode: "",
     canton: "",
     country: "Suisse",
     location: "",
 
-    // Step 4 - Lots & Criteria
+    // Step 4 - Media
+    images: [] as Array<{ url: string; name: string; type: "image" }>,
+    pdfs: [] as Array<{ url: string; name: string; type: "pdf" }>,
+
+    // Step 5 - Lots & Criteria
     hasLots: false,
     lots: [] as Array<{
       number: number;
@@ -83,21 +93,21 @@ export function CreateTenderStepper({
       weight: number;
     }>,
 
-    // Step 5 - Delays & Conditions
+    // Step 6 - Delays & Conditions
     questionDeadline: "",
-    participationConditions: "",
-    requiredDocuments: "",
+    participationConditions: [] as string[],
+    requiredDocuments: [] as string[],
     requiresReferences: false,
     requiresInsurance: false,
     minExperience: "",
-    contractualTerms: "",
+    contractualTerms: [] as string[],
 
-    // Step 6 - Parameters
+    // Step 7 - Parameters
     procedure: "OPEN",
     allowPartialOffers: true,
     visibility: "PUBLIC",
     mode: "CLASSIC",
-    selectionPriority: "QUALITY_PRICE",
+    selectionPriorities: ["QUALITY_PRICE"] as string[],
     isSimpleMode: true,
 
     // Documents
@@ -116,30 +126,41 @@ export function CreateTenderStepper({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
+        // Step 1: Mode choice - toujours OK
+        return true;
+      case 2:
         return (
           formData.title.length >= 15 && formData.description.length >= 150
         );
-      case 2:
-        return formData.cfcCategory && formData.deadline;
       case 3:
-        return formData.city && formData.canton;
+        return formData.cfcCategory && formData.deadline;
       case 4:
+        return (
+          formData.address &&
+          formData.postalCode &&
+          formData.city &&
+          formData.canton
+        );
+      case 5:
+        // Media is optional
+        return true;
+      case 6:
         // Lots optional, Criteria must total 100% if present
         if (formData.criteria.length > 0) {
           const total = formData.criteria.reduce((sum, c) => sum + c.weight, 0);
           return total === 100;
         }
         return true;
-      case 5:
+      case 7:
         return true; // Tous les champs sont optionnels
-      case 6:
+      case 8:
         return (
           formData.procedure &&
           formData.visibility &&
-          formData.mode &&
-          formData.selectionPriority
+          formData.selectionPriorities &&
+          formData.selectionPriorities.length > 0
         );
-      case 7:
+      case 9:
         return true;
       default:
         return false;
@@ -147,8 +168,13 @@ export function CreateTenderStepper({
   };
 
   const handleNext = () => {
-    if (!canProceed() || currentStep >= 7) return;
-    setCurrentStep(currentStep + 1);
+    if (!canProceed() || currentStep >= 9) return;
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
+    // Mettre à jour l'étape maximale atteinte
+    if (nextStep > maxStepReached) {
+      setMaxStepReached(nextStep);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -156,6 +182,14 @@ export function CreateTenderStepper({
     if (currentStep <= 1) return;
     setCurrentStep(currentStep - 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleStepClick = (stepNumber: number) => {
+    // Permettre de cliquer sur toutes les étapes jusqu'à l'étape maximale atteinte
+    if (stepNumber <= maxStepReached) {
+      setCurrentStep(stepNumber);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleSubmit = async () => {
@@ -188,11 +222,16 @@ export function CreateTenderStepper({
         // Step 3
         address: formData.address || undefined,
         city: formData.city || undefined,
+        postalCode: formData.postalCode || undefined,
         canton: formData.canton || undefined,
         country: formData.country || undefined,
         location: formData.location || undefined,
 
-        // Step 4 - Lots & Criteria
+        // Step 4 - Media
+        images: formData.images.length > 0 ? formData.images : undefined,
+        pdfs: formData.pdfs.length > 0 ? formData.pdfs : undefined,
+
+        // Step 5 - Lots & Criteria
         hasLots: formData.hasLots,
         lots: formData.lots.length > 0 ? formData.lots : undefined,
         criteria:
@@ -212,12 +251,12 @@ export function CreateTenderStepper({
         minExperience: formData.minExperience || undefined,
         contractualTerms: formData.contractualTerms || undefined,
 
-        // Step 6 - Parameters
+        // Step 7 - Parameters
         procedure: "OPEN", // Toujours en procédure ouverte pour PME/particuliers
         allowPartialOffers: formData.allowPartialOffers,
         visibility: formData.visibility,
         mode: formData.mode,
-        selectionPriority: formData.selectionPriority,
+        selectionPriorities: formData.selectionPriorities,
       });
 
       if (result.error) {
@@ -273,11 +312,16 @@ export function CreateTenderStepper({
         // Step 3
         address: formData.address || undefined,
         city: formData.city || undefined,
+        postalCode: formData.postalCode || undefined,
         canton: formData.canton || undefined,
         location: formData.location || undefined,
         country: formData.country || "CH",
 
-        // Step 4
+        // Step 4 - Media
+        images: formData.images.length > 0 ? formData.images : undefined,
+        pdfs: formData.pdfs.length > 0 ? formData.pdfs : undefined,
+
+        // Step 5 - Lots
         hasLots: formData.hasLots,
         lots:
           formData.lots.length > 0
@@ -298,7 +342,7 @@ export function CreateTenderStepper({
               }))
             : undefined,
 
-        // Step 5
+        // Step 6 - Conditions
         questionDeadline: formData.questionDeadline || undefined,
         participationConditions: formData.participationConditions || undefined,
         requiredDocuments: formData.requiredDocuments || undefined,
@@ -307,12 +351,12 @@ export function CreateTenderStepper({
         minExperience: formData.minExperience || undefined,
         contractualTerms: formData.contractualTerms || undefined,
 
-        // Step 6
+        // Step 7 - Parameters
         procedure: "OPEN",
         allowPartialOffers: formData.allowPartialOffers,
         visibility: formData.visibility,
         mode: formData.mode,
-        selectionPriority: formData.selectionPriority,
+        selectionPriorities: formData.selectionPriorities,
         isSimpleMode: true,
       });
 
@@ -344,14 +388,20 @@ export function CreateTenderStepper({
               <div key={step.number} className="flex items-center flex-1">
                 {/* Step Circle */}
                 <div className="flex flex-col items-center">
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => handleStepClick(step.number)}
+                    disabled={step.number > maxStepReached}
                     className={cn(
                       "w-10 h-10 rounded-full border-2 flex items-center justify-center font-semibold text-sm transition-all",
                       currentStep > step.number
-                        ? "bg-green-500 border-green-500 text-white"
+                        ? "bg-green-500 border-green-500 text-white cursor-pointer hover:bg-green-600"
                         : currentStep === step.number
                         ? "bg-artisan-yellow border-artisan-yellow text-matte-black"
-                        : "bg-white border-gray-300 text-gray-400"
+                        : step.number <= maxStepReached
+                        ? "bg-white border-artisan-yellow text-artisan-yellow cursor-pointer hover:bg-artisan-yellow hover:text-matte-black"
+                        : "bg-white border-gray-300 text-gray-400 cursor-not-allowed",
+                      step.number < currentStep && "hover:scale-110"
                     )}
                   >
                     {currentStep > step.number ? (
@@ -359,18 +409,21 @@ export function CreateTenderStepper({
                     ) : (
                       step.number
                     )}
-                  </div>
+                  </button>
                   <div className="mt-2 text-center hidden md:block">
-                    <div
+                    <button
+                      type="button"
+                      onClick={() => handleStepClick(step.number)}
+                      disabled={step.number > maxStepReached}
                       className={cn(
-                        "text-xs font-semibold",
-                        currentStep >= step.number
-                          ? "text-matte-black"
-                          : "text-gray-400"
+                        "text-xs font-semibold transition-colors",
+                        step.number <= maxStepReached
+                          ? "text-matte-black hover:text-artisan-yellow cursor-pointer"
+                          : "text-gray-400 cursor-not-allowed"
                       )}
                     >
                       {step.title}
-                    </div>
+                    </button>
                     <div className="text-xs text-muted-foreground">
                       {step.description}
                     </div>
@@ -397,24 +450,45 @@ export function CreateTenderStepper({
         {/* Step Content */}
         <div className="bg-white rounded-lg border border-gray-200 p-8 mb-6">
           {currentStep === 1 && (
-            <TenderStep1 formData={formData} updateFormData={updateFormData} />
+            <TenderStep1ModeChoice
+              formData={formData}
+              updateFormData={updateFormData}
+            />
           )}
           {currentStep === 2 && (
-            <TenderStep2 formData={formData} updateFormData={updateFormData} />
+            <TenderStep1 formData={formData} updateFormData={updateFormData} />
           )}
           {currentStep === 3 && (
-            <TenderStep3 formData={formData} updateFormData={updateFormData} />
+            <TenderStep2 formData={formData} updateFormData={updateFormData} />
           )}
           {currentStep === 4 && (
-            <TenderStep4 formData={formData} updateFormData={updateFormData} />
+            <TenderStep3 formData={formData} updateFormData={updateFormData} />
           )}
           {currentStep === 5 && (
-            <TenderStep5 formData={formData} updateFormData={updateFormData} />
+            <TenderStep4Media
+              formData={formData}
+              updateFormData={updateFormData}
+            />
           )}
           {currentStep === 6 && (
-            <TenderStep6 formData={formData} updateFormData={updateFormData} />
+            <TenderStep5Lots
+              formData={formData}
+              updateFormData={updateFormData}
+            />
           )}
-          {currentStep === 7 && <TenderStep7 formData={formData} />}
+          {currentStep === 7 && (
+            <TenderStep6Conditions
+              formData={formData}
+              updateFormData={updateFormData}
+            />
+          )}
+          {currentStep === 8 && (
+            <TenderStep7Parameters
+              formData={formData}
+              updateFormData={updateFormData}
+            />
+          )}
+          {currentStep === 9 && <TenderStep8Review formData={formData} />}
         </div>
 
         {/* Navigation Buttons */}
@@ -430,7 +504,7 @@ export function CreateTenderStepper({
           </Button>
 
           <div className="flex gap-3">
-            {currentStep < 7 ? (
+            {currentStep < 9 ? (
               <>
                 <Button
                   variant="outline"

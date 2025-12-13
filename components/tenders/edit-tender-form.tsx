@@ -43,6 +43,7 @@ interface EditTenderFormProps {
     deadline: Date;
     address: string | null;
     city: string | null;
+    postalCode: string | null;
     canton: string | null;
     country: string;
     location: string | null;
@@ -50,14 +51,16 @@ interface EditTenderFormProps {
     allowPartialOffers: boolean;
     visibility: string;
     mode: string;
-    selectionPriority: string;
+    selectionPriorities: string[];
+    images: Array<{ url: string; name: string; type: string }>;
+    pdfs: Array<{ url: string; name: string; type: string }>;
     questionDeadline: Date | null;
-    participationConditions: string | null;
-    requiredDocuments: string | null;
+    participationConditions: string[];
+    requiredDocuments: string[];
     requiresReferences: boolean;
     requiresInsurance: boolean;
-    minExperience: number | null;
-    contractualTerms: string | null;
+    minExperience: string | null;
+    contractualTerms: string[];
     hasLots: boolean;
     lots: Array<{
       id: string;
@@ -104,6 +107,7 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
     deadline: new Date(tender.deadline).toISOString().slice(0, 16),
     address: tender.address || "",
     city: tender.city || "",
+    postalCode: tender.postalCode || "",
     canton: tender.canton || "",
     country: tender.country,
     location: tender.location || "",
@@ -123,17 +127,19 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
     questionDeadline: tender.questionDeadline
       ? new Date(tender.questionDeadline).toISOString().slice(0, 16)
       : "",
-    participationConditions: tender.participationConditions || "",
-    requiredDocuments: tender.requiredDocuments || "",
+    participationConditions: tender.participationConditions || [],
+    requiredDocuments: tender.requiredDocuments || [],
     requiresReferences: tender.requiresReferences,
     requiresInsurance: tender.requiresInsurance,
-    minExperience: tender.minExperience?.toString() || "",
-    contractualTerms: tender.contractualTerms || "",
+    minExperience: tender.minExperience || "",
+    contractualTerms: tender.contractualTerms || [],
     procedure: tender.procedure,
     allowPartialOffers: tender.allowPartialOffers,
     visibility: tender.visibility,
     mode: tender.mode,
-    selectionPriority: tender.selectionPriority,
+    selectionPriorities: tender.selectionPriorities,
+    images: tender.images || [],
+    pdfs: tender.pdfs || [],
   });
 
   const updateFormData = (data: Partial<typeof formData>) => {
@@ -235,13 +241,13 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
           order: index + 1,
         })),
         questionDeadline: formData.questionDeadline || undefined,
-        participationConditions: formData.participationConditions || undefined,
-        requiredDocuments: formData.requiredDocuments || undefined,
+        participationConditions: formData.participationConditions,
+        requiredDocuments: formData.requiredDocuments,
         requiresReferences: formData.requiresReferences,
         requiresInsurance: formData.requiresInsurance,
         minExperience: formData.minExperience || undefined,
-        contractualTerms: formData.contractualTerms || undefined,
-        procedure: formData.procedure || undefined,
+        contractualTerms: formData.contractualTerms,
+        procedure: formData.procedure,
         allowPartialOffers: formData.allowPartialOffers,
         visibility: formData.visibility,
         mode: formData.mode,
@@ -296,12 +302,12 @@ export function EditTenderForm({ tender }: EditTenderFormProps) {
           order: index + 1,
         })),
         questionDeadline: formData.questionDeadline || undefined,
-        participationConditions: formData.participationConditions || undefined,
-        requiredDocuments: formData.requiredDocuments || undefined,
+        participationConditions: formData.participationConditions,
+        requiredDocuments: formData.requiredDocuments,
         requiresReferences: formData.requiresReferences,
         requiresInsurance: formData.requiresInsurance,
         minExperience: formData.minExperience || undefined,
-        contractualTerms: formData.contractualTerms || undefined,
+        contractualTerms: formData.contractualTerms,
         procedure: formData.procedure || undefined,
         allowPartialOffers: formData.allowPartialOffers,
         visibility: formData.visibility,

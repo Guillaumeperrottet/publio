@@ -56,7 +56,21 @@ export default async function EditTenderPage({
   return (
     <ProtectedLayout>
       <div className="p-8 max-w-7xl mx-auto">
-        <EditTenderForm tender={tender} />
+        <EditTenderForm
+          tender={{
+            ...tender,
+            images: tender.images as Array<{
+              url: string;
+              name: string;
+              type: string;
+            }>,
+            pdfs: tender.pdfs as Array<{
+              url: string;
+              name: string;
+              type: string;
+            }>,
+          }}
+        />
       </div>
     </ProtectedLayout>
   );

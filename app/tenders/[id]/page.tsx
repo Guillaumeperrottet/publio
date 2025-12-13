@@ -438,25 +438,108 @@ export default async function TenderDetailPage({
                   </div>
                 )}
 
-                {/* Critère de sélection - Mise en avant */}
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-artisan-yellow" />
-                    Critère de sélection prioritaire
-                  </h2>
-                  <div className="flex items-center gap-4 p-4 bg-artisan-yellow/10 rounded-lg">
-                    <TrendingUp className="w-8 h-8 text-artisan-yellow shrink-0" />
-                    <div>
-                      <p className="font-bold text-lg text-matte-black">
-                        {selectionPriorityLabels[tender.selectionPriority]}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Ce critère est le plus important pour l&apos;évaluation
-                        des offres
-                      </p>
-                    </div>
+                {/* Photos et Documents */}
+                {((tender.images && tender.images.length > 0) ||
+                  (tender.pdfs && tender.pdfs.length > 0)) && (
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-artisan-yellow" />
+                      Photos et documents du projet
+                    </h2>
+
+                    {/* Images */}
+                    {tender.images && tender.images.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="font-semibold mb-3 text-sm">
+                          Photos ({tender.images.length})
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {tender.images.map((img: any, index: number) => (
+                            <a
+                              key={index}
+                              href={img.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group relative aspect-video overflow-hidden rounded-lg border border-gray-300 hover:border-artisan-yellow transition-colors"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={img.url}
+                                alt={img.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Eye className="w-6 h-6 text-white" />
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PDFs */}
+                    {tender.pdfs && tender.pdfs.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3 text-sm">
+                          Documents PDF ({tender.pdfs.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {tender.pdfs.map((pdf: any, index: number) => (
+                            <a
+                              key={index}
+                              href={pdf.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-3 bg-sand-light rounded-lg border border-gray-300 hover:border-artisan-yellow hover:bg-artisan-yellow/5 transition-colors group"
+                            >
+                              <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {pdf.name}
+                                </p>
+                              </div>
+                              <Download className="w-4 h-4 text-muted-foreground group-hover:text-artisan-yellow shrink-0" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {/* Critère de sélection - Mise en avant */}
+                {tender.selectionPriorities &&
+                  tender.selectionPriorities.length > 0 && (
+                    <div className="p-6 border-b border-gray-200">
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-artisan-yellow" />
+                        Critères de sélection prioritaires
+                      </h2>
+                      <div className="space-y-3">
+                        {tender.selectionPriorities.map(
+                          (priority: string, index: number) => (
+                            <div
+                              key={priority}
+                              className="flex items-center gap-4 p-4 bg-artisan-yellow/10 rounded-lg"
+                            >
+                              <div className="w-8 h-8 bg-artisan-yellow rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-bold text-lg text-matte-black">
+                                  {selectionPriorityLabels[priority]}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        )}
+                        <p className="text-sm text-muted-foreground mt-3">
+                          Ces critères sont les plus importants pour
+                          l&apos;évaluation des offres
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Conditions de participation */}
                 {(tender.participationConditions ||
@@ -520,9 +603,7 @@ export default async function TenderDetailPage({
                               <li className="flex items-center gap-2 text-sm">
                                 <CheckCircle2 className="w-4 h-4 text-deep-green shrink-0" />
                                 <span>
-                                  Expérience minimale : {tender.minExperience}{" "}
-                                  an
-                                  {tender.minExperience > 1 ? "s" : ""}
+                                  Expérience minimale : {tender.minExperience}
                                 </span>
                               </li>
                             )}

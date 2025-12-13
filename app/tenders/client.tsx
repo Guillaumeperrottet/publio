@@ -218,7 +218,7 @@ export function TendersCatalogClient({
 
           {/* Type de marché */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Type</label>
+            <label className="text-sm font-semibold">Type de travaux</label>
             <Select
               value={localFilters.marketType || "all"}
               onValueChange={(value) =>
@@ -233,10 +233,19 @@ export function TendersCatalogClient({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
-                <SelectItem value="WORKS">Travaux</SelectItem>
-                <SelectItem value="SERVICES">Services</SelectItem>
-                <SelectItem value="SUPPLIES">Fournitures</SelectItem>
-                <SelectItem value="CONCESSION">Concession</SelectItem>
+                <SelectItem value="CONSTRUCTION">
+                  🏗️ Travaux de construction
+                </SelectItem>
+                <SelectItem value="ENGINEERING">⚙️ Ingénierie</SelectItem>
+                <SelectItem value="ARCHITECTURE">📐 Architecture</SelectItem>
+                <SelectItem value="IT_SERVICES">
+                  💻 Services informatiques
+                </SelectItem>
+                <SelectItem value="CONSULTING">🎯 Conseil</SelectItem>
+                <SelectItem value="SUPPLIES">📦 Fournitures</SelectItem>
+                <SelectItem value="MAINTENANCE">🔧 Maintenance</SelectItem>
+                <SelectItem value="SERVICES">🛠️ Services généraux</SelectItem>
+                <SelectItem value="OTHER">📋 Autre</SelectItem>
               </SelectContent>
             </Select>
           </div>

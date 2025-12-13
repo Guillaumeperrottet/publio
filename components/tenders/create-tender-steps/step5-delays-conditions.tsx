@@ -2,19 +2,25 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TagSelector } from "@/components/ui/tag-selector";
 import { FileText, Calendar, ShieldCheck } from "lucide-react";
+import {
+  PARTICIPATION_CONDITIONS_SUGGESTIONS,
+  REQUIRED_DOCUMENTS_SUGGESTIONS,
+  CONTRACTUAL_TERMS_SUGGESTIONS,
+  EXPERIENCE_SUGGESTIONS,
+} from "@/lib/constants/participation-suggestions";
 
 interface TenderStep5Props {
   formData: {
     deadline: string; // Deadline de soumission (Step 2)
     questionDeadline: string;
-    participationConditions: string;
-    requiredDocuments: string;
+    participationConditions: string[];
+    requiredDocuments: string[];
     requiresReferences: boolean;
     requiresInsurance: boolean;
     minExperience: string;
-    contractualTerms: string;
+    contractualTerms: string[];
   };
   updateFormData: (data: Partial<TenderStep5Props["formData"]>) => void;
 }
@@ -88,30 +94,36 @@ export function TenderStep5({ formData, updateFormData }: TenderStep5Props) {
           <div className="space-y-4">
             <div>
               <Label htmlFor="participationConditions">
-                Conditions générales
+                Conditions générales (optionnel)
               </Label>
-              <Textarea
-                id="participationConditions"
+              <TagSelector
                 value={formData.participationConditions}
-                onChange={(e) =>
-                  updateFormData({ participationConditions: e.target.value })
+                onChange={(tags) =>
+                  updateFormData({ participationConditions: tags })
                 }
-                placeholder="Ex: Autorisation d'exploitation valide, inscription au registre du commerce..."
-                rows={4}
+                suggestions={PARTICIPATION_CONDITIONS_SUGGESTIONS}
+                placeholder="Sélectionnez ou ajoutez des conditions..."
+                allowCustom={true}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ex: Autorisation d&apos;exploitation valide, inscription au
+                registre du commerce...
+              </p>
             </div>
 
             <div>
               <Label htmlFor="minExperience">
                 Expérience minimale requise (optionnel)
               </Label>
-              <Input
-                id="minExperience"
-                value={formData.minExperience}
-                onChange={(e) =>
-                  updateFormData({ minExperience: e.target.value })
+              <TagSelector
+                value={formData.minExperience ? [formData.minExperience] : []}
+                onChange={(tags) =>
+                  updateFormData({ minExperience: tags[0] || "" })
                 }
-                placeholder="Ex: 5 ans dans le domaine"
+                suggestions={EXPERIENCE_SUGGESTIONS}
+                placeholder="Sélectionnez l'expérience requise..."
+                maxTags={1}
+                allowCustom={true}
               />
             </div>
 
@@ -147,24 +159,18 @@ export function TenderStep5({ formData, updateFormData }: TenderStep5Props) {
         <div className="border rounded-lg p-4">
           <h3 className="font-semibold mb-3">Documents requis</h3>
           <Label htmlFor="requiredDocuments">
-            Liste des documents à fournir avec l&apos;offre
+            Liste des documents à fournir avec l&apos;offre (optionnel)
           </Label>
-          <Textarea
-            id="requiredDocuments"
+          <TagSelector
             value={formData.requiredDocuments}
-            onChange={(e) =>
-              updateFormData({ requiredDocuments: e.target.value })
-            }
-            placeholder="Ex: 
-- Extrait du registre du commerce
-- Attestation AVS/AI
-- Références de projets similaires
-- Assurance RC professionnelle
-- Offre de prix détaillée"
-            rows={6}
+            onChange={(tags) => updateFormData({ requiredDocuments: tags })}
+            suggestions={REQUIRED_DOCUMENTS_SUGGESTIONS}
+            placeholder="Sélectionnez ou ajoutez des documents..."
+            allowCustom={true}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Séparez chaque document par un retour à la ligne
+            Ex: Extrait du registre du commerce, Attestation AVS/AI, Références
+            de projets similaires...
           </p>
         </div>
 
@@ -174,15 +180,16 @@ export function TenderStep5({ formData, updateFormData }: TenderStep5Props) {
           <Label htmlFor="contractualTerms">
             Termes et conditions du contrat (optionnel)
           </Label>
-          <Textarea
-            id="contractualTerms"
+          <TagSelector
             value={formData.contractualTerms}
-            onChange={(e) =>
-              updateFormData({ contractualTerms: e.target.value })
-            }
-            placeholder="Ex: Modalités de paiement, garanties, pénalités de retard, conditions de résiliation..."
-            rows={5}
+            onChange={(tags) => updateFormData({ contractualTerms: tags })}
+            suggestions={CONTRACTUAL_TERMS_SUGGESTIONS}
+            placeholder="Sélectionnez ou ajoutez des conditions..."
+            allowCustom={true}
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Ex: Modalités de paiement, garanties, pénalités de retard...
+          </p>
         </div>
       </div>
     </div>

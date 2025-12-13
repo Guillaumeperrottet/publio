@@ -242,8 +242,9 @@ export default async function TenderDetailDashboardPage({
                   Mode anonyme activé
                 </p>
                 <p className="text-muted-foreground">
-                  Les identités des soumissionnaires sont masquées jusqu&apos;à
-                  la date limite. Vous pourrez les révéler après le{" "}
+                  Votre identité en tant qu&apos;émetteur reste masquée pour les
+                  soumissionnaires jusqu&apos;à la date limite. Elle sera
+                  révélée automatiquement après le{" "}
                   {format(deadline, "dd MMMM yyyy", { locale: fr })}.
                 </p>
               </div>

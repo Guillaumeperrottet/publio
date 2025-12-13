@@ -9,6 +9,7 @@ import {
   Briefcase,
   Package,
   FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   CFC_CATEGORIES,
@@ -44,7 +45,11 @@ interface TenderStep7Props {
     country: string;
     location: string;
 
-    // Step 4
+    // Step 4 - Media
+    images: Array<{ url: string; name: string; type: "image" }>;
+    pdfs: Array<{ url: string; name: string; type: "pdf" }>;
+
+    // Step 5
     hasLots: boolean;
     lots: Array<{
       number: number;
@@ -54,21 +59,21 @@ interface TenderStep7Props {
     }>;
     criteria: Array<{ name: string; description: string; weight: number }>;
 
-    // Step 5
+    // Step 6
     questionDeadline: string;
-    participationConditions: string;
-    requiredDocuments: string;
+    participationConditions: string[];
+    requiredDocuments: string[];
     requiresReferences: boolean;
     requiresInsurance: boolean;
     minExperience: string;
-    contractualTerms: string;
+    contractualTerms: string[];
 
-    // Step 6
+    // Step 7
     procedure: string;
     allowPartialOffers: boolean;
     visibility: string;
     mode: string;
-    selectionPriority: string;
+    selectionPriorities: string[];
   };
 }
 
@@ -239,15 +244,88 @@ export function TenderStep7({ formData }: TenderStep7Props) {
       </div>
 
       {/* Sélection prioritaire */}
-      {formData.selectionPriority && (
-        <div className="border-2 border-artisan-yellow rounded-lg p-5 bg-artisan-yellow/5">
-          <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-artisan-yellow" />
-            Critère prioritaire de sélection
+      {formData.selectionPriorities &&
+        formData.selectionPriorities.length > 0 && (
+          <div className="border-2 border-artisan-yellow rounded-lg p-5 bg-artisan-yellow/5">
+            <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-artisan-yellow" />
+              Critères prioritaires de sélection
+            </h3>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.selectionPriorities.map((priority) => (
+                <Badge key={priority} className="text-base px-4 py-2">
+                  {SELECTION_PRIORITY_LABELS[priority]}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+      {/* Photos et Documents */}
+      {((formData.images && formData.images.length > 0) ||
+        (formData.pdfs && formData.pdfs.length > 0)) && (
+        <div className="border rounded-lg p-5">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-artisan-yellow" />
+            Photos et documents
           </h3>
-          <Badge className="mt-2 text-base px-4 py-2">
-            {SELECTION_PRIORITY_LABELS[formData.selectionPriority]}
-          </Badge>
+
+          {/* Images */}
+          {formData.images && formData.images.length > 0 && (
+            <div className="mb-4">
+              <div className="text-sm text-muted-foreground mb-2">
+                {formData.images.length} photo
+                {formData.images.length > 1 ? "s" : ""}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {formData.images.map((img, index) => (
+                  <div key={index} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt={img.name}
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                      <a
+                        href={img.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white text-xs"
+                      >
+                        Voir
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PDFs */}
+          {formData.pdfs && formData.pdfs.length > 0 && (
+            <div>
+              <div className="text-sm text-muted-foreground mb-2">
+                {formData.pdfs.length} document
+                {formData.pdfs.length > 1 ? "s" : ""} PDF
+              </div>
+              <div className="space-y-2">
+                {formData.pdfs.map((pdf, index) => (
+                  <a
+                    key={index}
+                    href={pdf.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-red-500 shrink-0" />
+                    <span className="text-sm truncate flex-1">{pdf.name}</span>
+                    <span className="text-xs text-muted-foreground">PDF</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

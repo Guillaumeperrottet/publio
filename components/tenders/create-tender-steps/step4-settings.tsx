@@ -96,9 +96,9 @@ export function TenderStep4({ formData, updateFormData }: TenderStep4Props) {
                     Anonyme (Recommandé)
                   </div>
                   <p className="text-sm text-muted-foreground font-normal">
-                    Les identités des soumissionnaires sont masquées
-                    jusqu&apos;à la date limite. Garantit équité et
-                    transparence.
+                    Votre identité reste masquée jusqu&apos;à la date limite.
+                    Les soumissionnaires verront le projet sans savoir qui vous
+                    êtes. Garantit équité et transparence.
                   </p>
                 </Label>
               </div>
