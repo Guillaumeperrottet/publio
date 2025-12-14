@@ -2,7 +2,7 @@ import ProtectedLayout from "@/components/layout/protected-layout";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { EditTenderForm } from "@/components/tenders/edit-tender-form";
+import { CreateTenderStepper } from "@/components/tenders/create-tender-stepper";
 
 export default async function EditTenderPage({
   params,
@@ -55,23 +55,67 @@ export default async function EditTenderPage({
 
   return (
     <ProtectedLayout>
-      <div className="p-8 max-w-7xl mx-auto">
-        <EditTenderForm
-          tender={{
-            ...tender,
-            images: tender.images as Array<{
-              url: string;
-              name: string;
-              type: string;
-            }>,
-            pdfs: tender.pdfs as Array<{
-              url: string;
-              name: string;
-              type: string;
-            }>,
-          }}
-        />
-      </div>
+      <CreateTenderStepper
+        organizationId={tender.organizationId}
+        existingTender={{
+          id: tender.id,
+          title: tender.title,
+          summary: tender.summary,
+          description: tender.description,
+          currentSituation: tender.currentSituation,
+          mode: tender.mode,
+          cfcCodes: tender.cfcCodes,
+          budget: tender.budget,
+          showBudget: tender.showBudget,
+          surfaceM2: tender.surfaceM2,
+          volumeM3: tender.volumeM3,
+          constraints: tender.constraints,
+          contractDuration: tender.contractDuration,
+          contractStartDate: tender.contractStartDate,
+          isRenewable: tender.isRenewable,
+          deadline: tender.deadline,
+          address: tender.address,
+          city: tender.city,
+          postalCode: tender.postalCode,
+          canton: tender.canton,
+          country: tender.country,
+          location: tender.location,
+          images: tender.images as Array<{
+            url: string;
+            name: string;
+            type: string;
+          }>,
+          pdfs: tender.pdfs as Array<{
+            url: string;
+            name: string;
+            type: string;
+          }>,
+          hasLots: tender.hasLots,
+          lots: tender.lots.map((lot) => ({
+            number: lot.number,
+            title: lot.title,
+            description: lot.description,
+            budget: lot.budget,
+          })),
+          criteria: tender.criteria.map((c) => ({
+            name: c.name,
+            description: c.description,
+            weight: c.weight,
+            order: c.order,
+          })),
+          questionDeadline: tender.questionDeadline,
+          participationConditions: tender.participationConditions,
+          requiredDocuments: tender.requiredDocuments,
+          requiresReferences: tender.requiresReferences,
+          requiresInsurance: tender.requiresInsurance,
+          minExperience: tender.minExperience,
+          contractualTerms: tender.contractualTerms,
+          procedure: tender.procedure,
+          allowPartialOffers: tender.allowPartialOffers,
+          visibility: tender.visibility,
+          selectionPriorities: tender.selectionPriorities,
+        }}
+      />
     </ProtectedLayout>
   );
 }

@@ -16,8 +16,12 @@ import { TenderStep4 as TenderStep5Lots } from "./create-tender-steps/step4-lots
 import { TenderStep5 as TenderStep6Conditions } from "./create-tender-steps/step5-delays-conditions";
 import { TenderStep6 as TenderStep7Parameters } from "./create-tender-steps/step6-parameters";
 import { TenderStep7 as TenderStep8Review } from "./create-tender-steps/step7-review";
-import { createTenderWithPayment } from "@/features/tenders/payment-actions";
-import { saveDraftTender } from "@/features/tenders/payment-actions";
+import {
+  createTenderWithPayment,
+  saveDraftTender,
+  updateDraftTenderComplete,
+  publishTenderWithPayment,
+} from "@/features/tenders/payment-actions";
 import { type CFCCategory } from "@/lib/constants/cfc-codes";
 
 const STEPS = [
@@ -34,80 +38,162 @@ const STEPS = [
 
 interface CreateTenderStepperProps {
   organizationId: string;
+  existingTender?: {
+    id: string;
+    title: string;
+    summary: string | null;
+    description: string;
+    currentSituation: string | null;
+    mode: string;
+    cfcCodes: string[];
+    budget: number | null;
+    showBudget: boolean;
+    surfaceM2: number | null;
+    volumeM3: number | null;
+    constraints: string[];
+    contractDuration: number | null;
+    contractStartDate: Date | null;
+    isRenewable: boolean;
+    deadline: Date;
+    address: string | null;
+    city: string | null;
+    postalCode: string | null;
+    canton: string | null;
+    country: string;
+    location: string | null;
+    images: Array<{ url: string; name: string; type: string }>;
+    pdfs: Array<{ url: string; name: string; type: string }>;
+    hasLots: boolean;
+    lots: Array<{
+      number: number;
+      title: string;
+      description: string;
+      budget: number | null;
+    }>;
+    criteria: Array<{
+      name: string;
+      description: string | null;
+      weight: number;
+      order: number;
+    }>;
+    questionDeadline: Date | null;
+    participationConditions: string[];
+    requiredDocuments: string[];
+    requiresReferences: boolean;
+    requiresInsurance: boolean;
+    minExperience: string | null;
+    contractualTerms: string[];
+    procedure: string;
+    allowPartialOffers: boolean;
+    visibility: string;
+    selectionPriorities: string[];
+  };
 }
 
 export function CreateTenderStepper({
   organizationId,
+  existingTender,
 }: CreateTenderStepperProps) {
   const router = useRouter();
+  const isEditMode = !!existingTender;
   const [currentStep, setCurrentStep] = useState(1);
-  const [maxStepReached, setMaxStepReached] = useState(1); // Nouvelle state pour tracker l'étape max atteinte
+  const [maxStepReached, setMaxStepReached] = useState(isEditMode ? 9 : 1); // En mode édition, toutes les étapes sont accessibles
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
-  // État du formulaire
+  // État du formulaire (pré-rempli si mode édition)
   const [formData, setFormData] = useState({
     // Step 1
-    title: "",
-    summary: "",
-    description: "",
-    currentSituation: "",
+    title: existingTender?.title || "",
+    summary: existingTender?.summary || "",
+    description: existingTender?.description || "",
+    currentSituation: existingTender?.currentSituation || "",
 
     // Step 2
     cfcCategory: undefined as CFCCategory | undefined,
-    cfcCodes: [] as string[],
-    budget: "",
-    showBudget: false,
-    surfaceM2: "",
-    volumeM3: "",
-    contractDuration: "",
-    contractStartDate: "",
-    isRenewable: false,
-    deadline: "",
-    constraints: [] as string[],
+    cfcCodes: existingTender?.cfcCodes || ([] as string[]),
+    budget: existingTender?.budget?.toString() || "",
+    showBudget: existingTender?.showBudget || false,
+    surfaceM2: existingTender?.surfaceM2?.toString() || "",
+    volumeM3: existingTender?.volumeM3?.toString() || "",
+    contractDuration: existingTender?.contractDuration?.toString() || "",
+    contractStartDate: existingTender?.contractStartDate
+      ? new Date(existingTender.contractStartDate).toISOString().split("T")[0]
+      : "",
+    isRenewable: existingTender?.isRenewable || false,
+    deadline: existingTender?.deadline
+      ? new Date(existingTender.deadline).toISOString().slice(0, 16)
+      : "",
+    constraints: existingTender?.constraints || ([] as string[]),
 
     // Step 3
-    address: "",
-    city: "",
-    postalCode: "",
-    canton: "",
-    country: "Suisse",
-    location: "",
+    address: existingTender?.address || "",
+    city: existingTender?.city || "",
+    postalCode: existingTender?.postalCode || "",
+    canton: existingTender?.canton || "",
+    country: existingTender?.country || "Suisse",
+    location: existingTender?.location || "",
 
     // Step 4 - Media
-    images: [] as Array<{ url: string; name: string; type: "image" }>,
-    pdfs: [] as Array<{ url: string; name: string; type: "pdf" }>,
+    images: (existingTender?.images || []) as Array<{
+      url: string;
+      name: string;
+      type: "image";
+    }>,
+    pdfs: (existingTender?.pdfs || []) as Array<{
+      url: string;
+      name: string;
+      type: "pdf";
+    }>,
 
     // Step 5 - Lots & Criteria
-    hasLots: false,
-    lots: [] as Array<{
-      number: number;
-      title: string;
-      description: string;
-      budget: string;
-    }>,
-    criteria: [] as Array<{
-      id: string;
-      name: string;
-      description: string;
-      weight: number;
-    }>,
+    hasLots: existingTender?.hasLots || false,
+    lots:
+      existingTender?.lots?.map((lot) => ({
+        number: lot.number,
+        title: lot.title,
+        description: lot.description,
+        budget: lot.budget?.toString() || "",
+      })) ||
+      ([] as Array<{
+        number: number;
+        title: string;
+        description: string;
+        budget: string;
+      }>),
+    criteria:
+      existingTender?.criteria?.map((c) => ({
+        id: `${c.name}-${c.order}`,
+        name: c.name,
+        description: c.description || "",
+        weight: c.weight,
+      })) ||
+      ([] as Array<{
+        id: string;
+        name: string;
+        description: string;
+        weight: number;
+      }>),
 
     // Step 6 - Delays & Conditions
-    questionDeadline: "",
-    participationConditions: [] as string[],
-    requiredDocuments: [] as string[],
-    requiresReferences: false,
-    requiresInsurance: false,
-    minExperience: "",
-    contractualTerms: [] as string[],
+    questionDeadline: existingTender?.questionDeadline
+      ? new Date(existingTender.questionDeadline).toISOString().slice(0, 16)
+      : "",
+    participationConditions:
+      existingTender?.participationConditions || ([] as string[]),
+    requiredDocuments: existingTender?.requiredDocuments || ([] as string[]),
+    requiresReferences: existingTender?.requiresReferences || false,
+    requiresInsurance: existingTender?.requiresInsurance || false,
+    minExperience: existingTender?.minExperience || "",
+    contractualTerms: existingTender?.contractualTerms || ([] as string[]),
 
     // Step 7 - Parameters
-    procedure: "OPEN",
-    allowPartialOffers: true,
-    visibility: "PUBLIC",
-    mode: "CLASSIC",
-    selectionPriorities: ["QUALITY_PRICE"] as string[],
+    procedure: existingTender?.procedure || "OPEN",
+    allowPartialOffers: existingTender?.allowPartialOffers ?? true,
+    visibility: existingTender?.visibility || "PUBLIC",
+    mode: existingTender?.mode || "CLASSIC",
+    selectionPriorities:
+      existingTender?.selectionPriorities || (["QUALITY_PRICE"] as string[]),
     isSimpleMode: true,
 
     // Documents
@@ -195,6 +281,19 @@ export function CreateTenderStepper({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // En mode édition, on update puis on publie
+      if (isEditMode && existingTender) {
+        await updateDraftTenderComplete({
+          id: existingTender.id,
+          ...getFormDataForSubmission(),
+        });
+
+        const { url } = await publishTenderWithPayment(existingTender.id);
+        window.location.href = url;
+        return;
+      }
+
+      // Mode création normal
       const result = await createTenderWithPayment({
         organizationId,
         // Step 1
@@ -280,10 +379,83 @@ export function CreateTenderStepper({
     }
   };
 
+  const getFormDataForSubmission = () => ({
+    title: formData.title,
+    summary: formData.summary || undefined,
+    description: formData.description,
+    currentSituation: formData.currentSituation || undefined,
+    cfcCategory: formData.cfcCategory,
+    cfcCodes: formData.cfcCodes.length > 0 ? formData.cfcCodes : undefined,
+    budget: formData.budget ? parseFloat(formData.budget) : undefined,
+    showBudget: formData.showBudget,
+    surfaceM2: formData.surfaceM2 ? parseFloat(formData.surfaceM2) : undefined,
+    volumeM3: formData.volumeM3 ? parseFloat(formData.volumeM3) : undefined,
+    constraints:
+      formData.constraints.length > 0 ? formData.constraints : undefined,
+    contractDuration: formData.contractDuration || undefined,
+    contractStartDate: formData.contractStartDate || undefined,
+    isRenewable: formData.isRenewable,
+    deadline: new Date(formData.deadline),
+    address: formData.address || undefined,
+    city: formData.city || undefined,
+    postalCode: formData.postalCode || undefined,
+    canton: formData.canton || undefined,
+    location: formData.location || undefined,
+    country: formData.country || "CH",
+    images: formData.images.length > 0 ? formData.images : undefined,
+    pdfs: formData.pdfs.length > 0 ? formData.pdfs : undefined,
+    hasLots: formData.hasLots,
+    lots:
+      formData.lots.length > 0
+        ? formData.lots.map((lot) => ({
+            number: lot.number,
+            title: lot.title,
+            description: lot.description,
+            budget: lot.budget || undefined,
+          }))
+        : undefined,
+    criteria:
+      formData.criteria.length > 0
+        ? formData.criteria.map((c, index) => ({
+            name: c.name,
+            description: c.description || "",
+            weight: c.weight,
+            order: index + 1,
+          }))
+        : undefined,
+    questionDeadline: formData.questionDeadline || undefined,
+    participationConditions: formData.participationConditions || undefined,
+    requiredDocuments: formData.requiredDocuments || undefined,
+    requiresReferences: formData.requiresReferences,
+    requiresInsurance: formData.requiresInsurance,
+    minExperience: formData.minExperience || undefined,
+    contractualTerms: formData.contractualTerms || undefined,
+    procedure: "OPEN",
+    allowPartialOffers: formData.allowPartialOffers,
+    visibility: formData.visibility,
+    mode: formData.mode,
+    selectionPriorities: formData.selectionPriorities,
+    isSimpleMode: true,
+  });
+
   const handleSaveDraft = async () => {
     try {
       setIsSavingDraft(true);
 
+      // En mode édition, on update
+      if (isEditMode && existingTender) {
+        await updateDraftTenderComplete({
+          id: existingTender.id,
+          ...getFormDataForSubmission(),
+        });
+
+        toast.success("Brouillon mis à jour avec succès");
+        router.refresh();
+        setIsSavingDraft(false);
+        return;
+      }
+
+      // Mode création normal
       const result = await saveDraftTender({
         organizationId,
 
@@ -364,8 +536,9 @@ export function CreateTenderStepper({
         throw new Error(result.error);
       }
 
-      // Rediriger vers la page d'édition du brouillon
-      router.push(`/dashboard/tenders/${result.tenderId}/edit`);
+      // Rediriger vers le dashboard des tenders avec toast de succès
+      toast.success("Brouillon enregistré avec succès");
+      router.push("/dashboard/tenders");
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error(
