@@ -286,15 +286,13 @@ export default async function DashboardPage() {
         {/* Cartes en haut - 3 colonnes compactes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Tâches du jour */}
-          {todayTasks.length > 0 && <TodayTasks tasks={todayTasks} />}
+          <TodayTasks tasks={todayTasks} />
 
           {/* Offres reçues */}
           <OffersReceivedCard tendersWithOffers={tendersWithUnread} />
 
           {/* Échéances urgentes */}
-          {upcomingDeadlines.length > 0 && (
-            <DeadlinesTimeline deadlines={upcomingDeadlines} />
-          )}
+          <DeadlinesTimeline deadlines={upcomingDeadlines} />
         </div>
 
         {/* Grid moderne - Layout asymétrique Google-style */}

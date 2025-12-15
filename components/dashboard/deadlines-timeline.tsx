@@ -24,7 +24,27 @@ type DeadlinesTimelineProps = {
 
 export function DeadlinesTimeline({ deadlines }: DeadlinesTimelineProps) {
   if (deadlines.length === 0) {
-    return null;
+    return (
+      <HandDrawnCard>
+        <HandDrawnCardHeader>
+          <HandDrawnCardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-artisan-yellow" />
+            Prochaines échéances
+          </HandDrawnCardTitle>
+        </HandDrawnCardHeader>
+        <HandDrawnCardContent>
+          <div className="text-center py-8">
+            <Clock className="w-12 h-12 mx-auto text-artisan-yellow mb-3" />
+            <p className="text-sm font-medium text-matte-black mb-1">
+              Aucune échéance
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Publiez un appel d&apos;offres pour voir vos échéances ici
+            </p>
+          </div>
+        </HandDrawnCardContent>
+      </HandDrawnCard>
+    );
   }
 
   // Calculer l'urgence en heures
