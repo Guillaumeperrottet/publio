@@ -166,16 +166,32 @@ export async function createTender(
     TENDER_TITLES.CONSTRUCTION;
   const title = faker.helpers.arrayElement(titles);
 
-  const isAnonymous = faker.datatype.boolean({ probability: 0.3 }); // 30% anonymes
-  const isPublished = faker.datatype.boolean({ probability: 0.7 }); // 70% publiés
+  const isSimpleMode =
+    overrides.isSimpleMode ?? faker.datatype.boolean({ probability: 0.4 }); // 40% mode simple
+  const isAnonymous = isSimpleMode
+    ? false
+    : faker.datatype.boolean({ probability: 0.3 }); // Pas d'anonymat en mode simple
+  const isPublished = faker.datatype.boolean({ probability: 0.8 }); // 80% publiés
 
-  // Date deadline entre 7 et 60 jours
-  const deadline = faker.date.soon({
-    days: faker.number.int({ min: 7, max: 60 }),
-  });
+  // Deadlines variées : 20% passées, 30% imminentes (1-7j), 50% futures (8-90j)
+  const deadlineType = faker.number.float();
+  let deadline: Date;
 
-  // Générer 1-3 images via Lorem Picsum (plus rapide que Unsplash)
-  const imageCount = faker.number.int({ min: 0, max: 3 });
+  if (deadlineType < 0.2) {
+    // 20% deadlines passées (pour tester cron job)
+    deadline = faker.date.recent({ days: 30 });
+  } else if (deadlineType < 0.5) {
+    // 30% deadlines imminentes (1-7 jours)
+    deadline = faker.date.soon({ days: faker.number.int({ min: 1, max: 7 }) });
+  } else {
+    // 50% deadlines futures (8-90 jours)
+    deadline = faker.date.soon({ days: faker.number.int({ min: 8, max: 90 }) });
+  }
+
+  // Mode simple = moins d'images, budget plus petit
+  const imageCount = isSimpleMode
+    ? faker.number.int({ min: 0, max: 2 })
+    : faker.number.int({ min: 1, max: 3 });
   const images = Array.from({ length: imageCount }, () => ({
     url: `https://picsum.photos/seed/${faker.string.alphanumeric(10)}/800/600`,
     name:
@@ -190,8 +206,8 @@ export async function createTender(
     type: "image" as const,
   }));
 
-  // Générer 0-2 PDFs fictifs (juste des exemples)
-  const pdfCount = faker.number.int({ min: 0, max: 2 });
+  // Mode simple = moins de PDFs
+  const pdfCount = isSimpleMode ? 0 : faker.number.int({ min: 0, max: 2 });
   const pdfs = Array.from({ length: pdfCount }, () => ({
     url: `https://www.example.com/documents/${faker.string.alphanumeric(
       16
@@ -207,27 +223,39 @@ export async function createTender(
     type: "pdf" as const,
   }));
 
+  // Budget adapté au type
+  const budgetRange = isSimpleMode
+    ? { min: 5000, max: 50000 } // Particuliers : 5k-50k CHF
+    : { min: 15000, max: 500000 }; // Communes/Entreprises : 15k-500k CHF
+
   return prisma.tender.create({
     data: {
       title,
-      summary: faker.lorem.sentence(),
-      description: faker.lorem.paragraphs(3),
+      summary: isSimpleMode ? faker.lorem.sentence() : faker.lorem.sentences(2),
+      description: isSimpleMode
+        ? faker.lorem.paragraphs(2) // Plus court pour privés
+        : faker.lorem.paragraphs(3),
       marketType,
       cfcCodes: faker.helpers.arrayElements(["211", "221", "231"], {
         min: 1,
         max: 2,
       }),
-      budget: faker.number.int({ min: 15000, max: 500000 }),
+      budget: faker.number.int(budgetRange),
       showBudget: faker.datatype.boolean({ probability: 0.8 }),
       status: isPublished ? "PUBLISHED" : "DRAFT",
       mode: isAnonymous ? "ANONYMOUS" : "CLASSIC",
       visibility: "PUBLIC",
-      procedure: faker.helpers.arrayElement(["OPEN", "SELECTIVE"]),
+      procedure: isSimpleMode
+        ? "OPEN"
+        : faker.helpers.arrayElement(["OPEN", "SELECTIVE"]),
+      isSimpleMode: isSimpleMode as boolean,
       deadline,
       publishedAt: isPublished ? faker.date.recent({ days: 30 }) : null,
       city: faker.helpers.arrayElement(SWISS_CANTONS).cities[0],
       canton: faker.helpers.arrayElement(SWISS_CANTONS).code,
-      requiresReferences: faker.datatype.boolean({ probability: 0.6 }),
+      requiresReferences: isSimpleMode
+        ? false
+        : faker.datatype.boolean({ probability: 0.6 }),
       requiresInsurance: faker.datatype.boolean({ probability: 0.4 }),
       images,
       pdfs,
@@ -238,25 +266,34 @@ export async function createTender(
 }
 
 /**
- * Crée une offre réaliste pour un tender
+ * Crée une offre réaliste complète pour un tender
  */
 export async function createOffer(
   tenderId: string,
   organizationId: string,
-  tender: { budget?: number | null }
+  tender: { budget?: number | null },
+  options: { withDetails?: boolean } = {}
 ) {
   const isSubmitted = faker.datatype.boolean({ probability: 0.8 }); // 80% soumises
+  const withDetails =
+    options.withDetails ?? faker.datatype.boolean({ probability: 0.6 }); // 60% avec détails
 
   // Prix autour du budget du tender (+/- 20%)
   const budgetVariation = faker.number.float({ min: 0.8, max: 1.2 });
   const price = Math.round((tender.budget || 50000) * budgetVariation);
+  const totalHT = withDetails ? Math.round(price / 1.077) : null;
+  const totalTVA = withDetails ? Math.round(price - (totalHT || 0)) : null;
 
-  return prisma.offer.create({
+  const offer = await prisma.offer.create({
     data: {
       tenderId,
       organizationId,
       price,
       currency: "CHF",
+      priceType: withDetails ? "DETAILED" : "GLOBAL",
+      totalHT,
+      totalTVA,
+      tvaRate: 7.7,
       projectSummary: faker.helpers.arrayElement([
         "Nous avons pris connaissance du projet et proposons une solution complète.",
         "Notre entreprise dispose de l'expertise nécessaire pour ce type de projet.",
@@ -274,6 +311,107 @@ export async function createOffer(
       validityDays: 60,
     },
   });
+
+  // Ajouter des détails si demandé
+  if (withDetails && totalHT) {
+    // Lignes de prix (3-6 postes)
+    const numItems = faker.number.int({ min: 3, max: 6 });
+    const itemPriceHT = Math.round(totalHT / numItems);
+
+    for (let i = 0; i < numItems; i++) {
+      await prisma.offerLineItem.create({
+        data: {
+          offerId: offer.id,
+          position: i + 1,
+          description: faker.helpers.arrayElement([
+            "Démolition et évacuation",
+            "Maçonnerie et gros œuvre",
+            "Charpente et couverture",
+            "Menuiseries extérieures",
+            "Isolation thermique",
+            "Électricité et domotique",
+            "Plomberie et sanitaires",
+            "Finitions et peinture",
+          ]),
+          quantity: faker.number.float({
+            min: 10,
+            max: 200,
+            fractionDigits: 2,
+          }),
+          unit: faker.helpers.arrayElement(["m²", "ml", "pce", "h"]),
+          priceHT: itemPriceHT,
+          tvaRate: 7.7,
+        },
+      });
+    }
+
+    // Inclusions (2-4 prestations)
+    const inclusions = [
+      "Nettoyage final du chantier",
+      "Garantie décennale incluse",
+      "Plans d'exécution",
+      "Suivi de chantier hebdomadaire",
+      "Coordination avec autres corps de métier",
+    ];
+    const numInclusions = faker.number.int({ min: 2, max: 4 });
+    for (let i = 0; i < numInclusions; i++) {
+      await prisma.offerInclusion.create({
+        data: {
+          offerId: offer.id,
+          position: i + 1,
+          description: inclusions[i % inclusions.length],
+        },
+      });
+    }
+
+    // Exclusions (1-3 prestations)
+    const exclusions = [
+      "Raccordements aux réseaux publics",
+      "Aménagements extérieurs",
+      "Mobilier et équipements",
+    ];
+    const numExclusions = faker.number.int({ min: 1, max: 3 });
+    for (let i = 0; i < numExclusions; i++) {
+      await prisma.offerExclusion.create({
+        data: {
+          offerId: offer.id,
+          position: i + 1,
+          description: exclusions[i % exclusions.length],
+        },
+      });
+    }
+
+    // Matériaux (2-4 matériaux)
+    const materials = [
+      { name: "Béton C25/30", brand: "Holcim", warranty: "10 ans" },
+      {
+        name: "Fenêtres PVC triple vitrage",
+        brand: "Finstral",
+        warranty: "5 ans",
+      },
+      {
+        name: "Isolation laine de roche",
+        brand: "Rockwool",
+        warranty: "30 ans",
+      },
+      { name: "Tuiles en terre cuite", brand: "Eternit", warranty: "30 ans" },
+    ];
+    const numMaterials = faker.number.int({ min: 2, max: 4 });
+    for (let i = 0; i < numMaterials; i++) {
+      const mat = materials[i % materials.length];
+      await prisma.offerMaterial.create({
+        data: {
+          offerId: offer.id,
+          position: i + 1,
+          name: mat.name,
+          brand: mat.brand,
+          manufacturerWarranty: mat.warranty,
+        },
+      });
+    }
+  }
+
+  return offer;
 }
 
 /**

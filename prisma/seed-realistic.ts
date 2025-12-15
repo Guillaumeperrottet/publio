@@ -63,28 +63,28 @@ async function main() {
   console.log(`✅ ${users.length} utilisateurs créés\n`);
 
   // ====================================
-  // 2. ORGANISATIONS (15 orgs)
+  // 2. ORGANISATIONS (20 orgs)
   // ====================================
   console.log("🏢 Création des organisations...");
 
   const organizations = [];
 
-  // 6 Communes
-  for (let i = 0; i < 6; i++) {
+  // 4 Communes (20%)
+  for (let i = 0; i < 4; i++) {
     const org = await createOrganization(users[i].id, "COMMUNE");
     organizations.push(org);
     console.log(`  ✓ ${org.name} (${org.city})`);
   }
 
-  // 7 Entreprises
-  for (let i = 6; i < 13; i++) {
+  // 6 Entreprises (30%)
+  for (let i = 4; i < 10; i++) {
     const org = await createOrganization(users[i].id, "ENTREPRISE");
     organizations.push(org);
     console.log(`  ✓ ${org.name} (${org.city})`);
   }
 
-  // 2 Privés
-  for (let i = 13; i < 15; i++) {
+  // 10 Privés (50%) - Pour refléter la cible principale
+  for (let i = 10; i < 20; i++) {
     const org = await createOrganization(users[i].id, "PRIVE");
     organizations.push(org);
     console.log(`  ✓ ${org.name}`);
@@ -115,25 +115,34 @@ async function main() {
   console.log(`✅ ${memberCount} membres ajoutés\n`);
 
   // ====================================
-  // 4. APPELS D'OFFRES (30 tenders)
+  // 4. APPELS D'OFFRES (40 tenders)
   // ====================================
   console.log("📋 Création des appels d'offres...");
 
   const tenders = [];
   const communeOrgs = organizations.filter((o) => o.type === "COMMUNE");
   const privateOrgs = organizations.filter((o) => o.type === "PRIVE");
+  const entrepriseOrgs = organizations.filter((o) => o.type === "ENTREPRISE");
 
-  // 20 tenders pour les communes
-  for (let i = 0; i < 20; i++) {
+  // 10 tenders pour les communes (25%)
+  for (let i = 0; i < 10; i++) {
     const org = communeOrgs[i % communeOrgs.length];
     const tender = await createTender(org.id);
     tenders.push(tender);
     console.log(`  ✓ ${tender.title} (${org.name})`);
   }
 
-  // 10 tenders pour les privés
-  for (let i = 0; i < 10; i++) {
+  // 25 tenders pour les privés (62.5%) - Annonces simples de particuliers
+  for (let i = 0; i < 25; i++) {
     const org = privateOrgs[i % privateOrgs.length];
+    const tender = await createTender(org.id, { isSimpleMode: true });
+    tenders.push(tender);
+    console.log(`  ✓ ${tender.title} (${org.name})`);
+  }
+
+  // 5 tenders pour les entreprises (12.5%)
+  for (let i = 0; i < 5; i++) {
+    const org = entrepriseOrgs[i % entrepriseOrgs.length];
     const tender = await createTender(org.id);
     tenders.push(tender);
     console.log(`  ✓ ${tender.title} (${org.name})`);
@@ -142,11 +151,10 @@ async function main() {
   console.log(`✅ ${tenders.length} appels d'offres créés\n`);
 
   // ====================================
-  // 5. OFFRES (50 offers)
+  // 5. OFFRES (60 offers)
   // ====================================
   console.log("💼 Création des offres...");
 
-  const entrepriseOrgs = organizations.filter((o) => o.type === "ENTREPRISE");
   let offerCount = 0;
 
   // Chaque tender publié reçoit 1-4 offres
@@ -155,12 +163,14 @@ async function main() {
   for (const tender of publishedTenders) {
     const numOffers = Math.floor(Math.random() * 4) + 1;
 
-    for (let i = 0; i < numOffers && offerCount < 50; i++) {
+    for (let i = 0; i < numOffers && offerCount < 60; i++) {
       const org = entrepriseOrgs[offerCount % entrepriseOrgs.length];
 
       // Ne pas créer d'offre si l'org est celle qui a créé le tender
       if (org.id !== tender.organizationId) {
-        await createOffer(tender.id, org.id, tender);
+        // 60% avec détails complets (lineItems, inclusions, etc.)
+        const withDetails = Math.random() < 0.6;
+        await createOffer(tender.id, org.id, tender, { withDetails });
         offerCount++;
       }
     }
@@ -183,17 +193,28 @@ async function main() {
   console.log(`✅ ${searchCount} recherches sauvegardées créées\n`);
 
   // ====================================
-  // 7. PUBLICATIONS DE VEILLE (40)
+  // 7. PUBLICATIONS DE VEILLE (150)
   // ====================================
   console.log("📰 Création des publications de veille...");
 
   let pubCount = 0;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 150; i++) {
     await createVeillePublication();
     pubCount++;
   }
 
   console.log(`✅ ${pubCount} publications de veille créées\n`);
+
+  // Statistiques détaillées
+  const communeTenders = tenders.filter((t) =>
+    communeOrgs.some((o) => o.id === t.organizationId)
+  );
+  const privateTenders = tenders.filter((t) =>
+    privateOrgs.some((o) => o.id === t.organizationId)
+  );
+  const entrepriseTenders = tenders.filter((t) =>
+    entrepriseOrgs.some((o) => o.id === t.organizationId)
+  );
 
   // ====================================
   // RÉSUMÉ
@@ -201,22 +222,68 @@ async function main() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("✨ Seed terminé avec succès!\n");
   console.log("📊 Résumé des données créées:");
+  console.log(`\n👥 Utilisateurs & Organisations:`);
   console.log(`   • ${users.length} utilisateurs`);
-  console.log(`   • ${organizations.length} organisations`);
-  console.log(`     - ${communeOrgs.length} communes`);
-  console.log(`     - ${entrepriseOrgs.length} entreprises`);
-  console.log(`     - ${privateOrgs.length} privés`);
-  console.log(`   • ${memberCount} membres d'organisations`);
-  console.log(`   • ${tenders.length} appels d'offres`);
-  console.log(`     - ${publishedTenders.length} publiés`);
-  console.log(`     - ${tenders.length - publishedTenders.length} brouillons`);
-  console.log(`   • ${offerCount} offres`);
+  console.log(`   • ${organizations.length} organisations au total`);
+  console.log(
+    `     - ${communeOrgs.length} communes (${Math.round(
+      (communeOrgs.length / organizations.length) * 100
+    )}%)`
+  );
+  console.log(
+    `     - ${entrepriseOrgs.length} entreprises (${Math.round(
+      (entrepriseOrgs.length / organizations.length) * 100
+    )}%)`
+  );
+  console.log(
+    `     - ${privateOrgs.length} privés (${Math.round(
+      (privateOrgs.length / organizations.length) * 100
+    )}%) 🏠`
+  );
+  console.log(`   • ${memberCount} membres d'organisations\n`);
+
+  console.log(`📋 Appels d'offres:`);
+  console.log(`   • ${tenders.length} appels d'offres au total`);
+  console.log(
+    `     - ${publishedTenders.length} publiés (${Math.round(
+      (publishedTenders.length / tenders.length) * 100
+    )}%)`
+  );
+  console.log(
+    `     - ${
+      tenders.length - publishedTenders.length
+    } brouillons (${Math.round(
+      ((tenders.length - publishedTenders.length) / tenders.length) * 100
+    )}%)`
+  );
+  console.log(`   • Par type d'émetteur:`);
+  console.log(
+    `     - ${communeTenders.length} par des communes (${Math.round(
+      (communeTenders.length / tenders.length) * 100
+    )}%)`
+  );
+  console.log(
+    `     - ${privateTenders.length} par des privés (${Math.round(
+      (privateTenders.length / tenders.length) * 100
+    )}%) 🏠`
+  );
+  console.log(
+    `     - ${entrepriseTenders.length} par des entreprises (${Math.round(
+      (entrepriseTenders.length / tenders.length) * 100
+    )}%)\n`
+  );
+
+  console.log(`💼 Offres & Recherches:`);
+  console.log(`   • ${offerCount} offres déposées`);
   console.log(`   • ${searchCount} recherches sauvegardées`);
-  console.log(`   • ${pubCount} publications de veille`);
+  console.log(`   • ${pubCount} publications de veille\n`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   console.log("🔐 Tous les utilisateurs utilisent le mot de passe: Test1234!");
-  console.log("📧 Les emails sont vérifiés automatiquement\n");
+  console.log("📧 Les emails sont vérifiés automatiquement");
+  console.log(
+    "🏠 L'application est maintenant optimisée pour les particuliers !\n"
+  );
 }
 
 main()

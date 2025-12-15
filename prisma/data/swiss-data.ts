@@ -104,6 +104,17 @@ export const TENDER_TITLES = {
     "Agrandissement du centre sportif",
     "Construction d'un parking souterrain",
     "Rénovation énergétique de l'hôtel de ville",
+    // Titres pour privés
+    "Rénovation de ma maison familiale",
+    "Extension de mon chalet",
+    "Transformation de mon appartement",
+    "Création d'une terrasse et pergola",
+    "Rénovation de ma salle de bain",
+    "Isolation de mes combles",
+    "Remplacement de mes fenêtres",
+    "Construction d'un garage",
+    "Aménagement de mon jardin",
+    "Pose d'une nouvelle cuisine",
   ],
   ENGINEERING: [
     "Aménagement d'une zone piétonne",
@@ -112,22 +123,41 @@ export const TENDER_TITLES = {
     "Installation d'un réseau d'éclairage LED",
     "Modernisation du réseau d'eau potable",
     "Création d'une piste cyclable",
+    // Titres pour privés
+    "Installation pompe à chaleur",
+    "Mise en place panneaux solaires",
+    "Raccordement électrique complet",
+    "Système de chauffage au sol",
+    "Installation borne électrique",
   ],
   ARCHITECTURE: [
     "Étude architecturale pour nouveau quartier",
     "Plans pour la rénovation du théâtre",
     "Conception d'un centre culturel",
     "Projet architectural pour crèche",
+    // Titres pour privés
+    "Plans pour extension de ma maison",
+    "Projet de transformation intérieure",
+    "Étude faisabilité surélévation",
   ],
   SUPPLIES: [
     "Fourniture de mobilier scolaire",
     "Acquisition de véhicules communaux",
     "Fourniture de matériel informatique",
+    // Titres pour privés
+    "Fourniture et pose carrelage",
+    "Achat matériaux de construction",
+    "Fourniture parquet massif",
   ],
   MAINTENANCE: [
     "Entretien des espaces verts communaux",
     "Maintenance des installations sportives",
     "Entretien de la voirie communale",
+    // Titres pour privés
+    "Entretien annuel de mon jardin",
+    "Maintenance chaudière et chauffage",
+    "Nettoyage façade de ma maison",
+    "Déneigement de mon allée",
   ],
 };
 

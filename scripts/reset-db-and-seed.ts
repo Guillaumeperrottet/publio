@@ -27,6 +27,13 @@ async function resetAndSeed() {
     console.log("🗑️  Suppression de toutes les données...\n");
 
     // Ordre important : supprimer d'abord les relations
+    await prisma.offerComment.deleteMany();
+    await prisma.offerLineItem.deleteMany();
+    await prisma.offerInclusion.deleteMany();
+    await prisma.offerExclusion.deleteMany();
+    await prisma.offerMaterial.deleteMany();
+    await prisma.notification.deleteMany();
+    await prisma.notificationPreferences.deleteMany();
     await prisma.equityLog.deleteMany();
     await prisma.savedTender.deleteMany();
     await prisma.savedSearch.deleteMany();
@@ -51,8 +58,8 @@ async function resetAndSeed() {
 
     console.log("✅ Base de données nettoyée\n");
 
-    console.log("🌱 Lancement du seed...\n");
-    execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
+    console.log("🌱 Lancement du seed réaliste...\n");
+    execSync("npx tsx prisma/seed-realistic.ts", { stdio: "inherit" });
 
     console.log("\n✨ Reset et seed terminés avec succès !");
   } catch (error) {
