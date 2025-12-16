@@ -134,21 +134,28 @@ export async function GET(
     };
 
     // Préparer les données du tableau
-    const tableData = tender.equityLogs.map((log) => [
-      new Date(log.createdAt).toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }),
-      new Date(log.createdAt).toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-      ACTION_LABELS[log.action] || log.action,
-      log.description,
-      log.user.name || log.user.email || "Système",
-    ]);
+    const tableData = tender.equityLogs.map(
+      (log: {
+        createdAt: Date;
+        action: string;
+        description: string;
+        user: { name: string | null; email: string | null };
+      }) => [
+        new Date(log.createdAt).toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        new Date(log.createdAt).toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        ACTION_LABELS[log.action] || log.action,
+        log.description,
+        log.user.name || log.user.email || "Système",
+      ]
+    );
 
     // Générer le tableau avec autoTable
     autoTable(doc, {
