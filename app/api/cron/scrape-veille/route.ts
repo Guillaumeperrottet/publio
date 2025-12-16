@@ -55,7 +55,9 @@ export async function GET(request: Request) {
     });
 
     const allCantons = Array.from(
-      new Set(activeSubscriptions.flatMap((sub) => sub.cantons))
+      new Set(
+        activeSubscriptions.flatMap((sub: { cantons: string[] }) => sub.cantons)
+      )
     );
 
     console.log(`[Veille Cron] Cantons surveillés: ${allCantons.join(", ")}`);
