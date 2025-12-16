@@ -69,13 +69,15 @@ export default async function EquityLogsPage() {
 
   // Récupérer les tenders avec logs pour toutes les organisations admin
   const tendersWithLogs = await Promise.all(
-    adminMemberships.map(async (membership) => {
-      const result = await getRecentTendersWithLogs(
-        membership.organization.id,
-        10
-      );
-      return result.tenders || [];
-    })
+    adminMemberships.map(
+      async (membership: { organization: { id: string } }) => {
+        const result = await getRecentTendersWithLogs(
+          membership.organization.id,
+          10
+        );
+        return result.tenders || [];
+      }
+    )
   );
 
   const allTenders = tendersWithLogs.flat().sort((a, b) => {
