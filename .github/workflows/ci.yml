@@ -10,6 +10,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
 
     steps:
       - name: Checkout code
@@ -45,6 +47,8 @@ jobs:
     name: Build Application
     runs-on: ubuntu-latest
     needs: test
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
 
     steps:
       - name: Checkout code
