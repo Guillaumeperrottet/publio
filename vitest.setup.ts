@@ -2,14 +2,10 @@
  * Setup file pour Vitest
  */
 
-import { expect, afterEach, vi } from "vitest";
-import { cleanup } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import { expect, vi } from "vitest";
 
-// Cleanup après chaque test
-afterEach(() => {
-  cleanup();
-});
+// Extend expect avec des matchers personnalisés si nécessaire
+expect.extend({});
 
 // Mock de Next.js
 vi.mock("next/navigation", () => ({
