@@ -76,18 +76,31 @@ export default async function DashboardPage() {
   console.log("Total tenders:", tenders.length);
   console.log(
     "Tenders by status:",
-    tenders.map((t) => ({ id: t.id, title: t.title, status: t.status }))
+    tenders.map((t: { id: string; title: string; status: string }) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+    }))
   );
   console.log("Total offers:", offers.length);
   console.log(
     "Offers by status:",
-    offers.map((o) => ({ id: o.id, status: o.status }))
+    offers.map((o: { id: string; status: string }) => ({
+      id: o.id,
+      status: o.status,
+    }))
   );
 
   // Statistiques
-  const activeTenders = tenders.filter((t) => t.status === "PUBLISHED").length;
-  const draftTenders = tenders.filter((t) => t.status === "DRAFT").length;
-  const submittedOffers = offers.filter((o) => o.status === "SUBMITTED").length;
+  const activeTenders = tenders.filter(
+    (t: { status: string }) => t.status === "PUBLISHED"
+  ).length;
+  const draftTenders = tenders.filter(
+    (t: { status: string }) => t.status === "DRAFT"
+  ).length;
+  const submittedOffers = offers.filter(
+    (o: { status: string }) => o.status === "SUBMITTED"
+  ).length;
   const draftOffers = offers.filter((o) => o.status === "DRAFT").length;
   const savedSearchesWithAlerts = savedSearches.filter(
     (s) => s.alertsEnabled
