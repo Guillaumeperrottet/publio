@@ -49,6 +49,22 @@ jobs:
     needs: test
     env:
       DATABASE_URL: postgresql://test:test@localhost:5432/test
+      BETTER_AUTH_SECRET: dummy-secret-for-build-only
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      RESEND_API_KEY: dummy-resend-key
+      PUSHER_APP_ID: dummy-pusher-id
+      PUSHER_KEY: dummy-pusher-key
+      PUSHER_SECRET: dummy-pusher-secret
+      PUSHER_CLUSTER: eu
+      NEXT_PUBLIC_PUSHER_KEY: dummy-pusher-key
+      NEXT_PUBLIC_PUSHER_CLUSTER: eu
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_dummy
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_dummy
+      CLOUDINARY_CLOUD_NAME: dummy-cloud
+      CLOUDINARY_API_KEY: dummy-api-key
+      CLOUDINARY_API_SECRET: dummy-api-secret
 
     steps:
       - name: Checkout code
@@ -71,12 +87,6 @@ jobs:
 
       - name: Build application
         run: npm run build
-        env:
-          # Utiliser des variables d'environnement dummy pour le build
-          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
-          BETTER_AUTH_SECRET: "dummy-secret-for-build-only"
-          BETTER_AUTH_URL: "http://localhost:3000"
-          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
   lint:
     name: Lint Code
