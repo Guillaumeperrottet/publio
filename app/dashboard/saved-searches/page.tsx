@@ -1,16 +1,18 @@
+import { Suspense } from "react";
 import ProtectedLayout from "@/components/layout/protected-layout";
 import { getUserSavedSearches } from "@/features/search/actions";
 import { SavedSearchCard } from "@/components/search/saved-search-card";
+import { SkeletonHandDrawnCardList } from "@/components/ui/skeleton-card";
 import { BookmarkPlus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SavedSearch } from "@prisma/client";
 
-export default async function SavedSearchesPage() {
+async function SavedSearchesContent() {
   const searches = await getUserSavedSearches();
 
   return (
-    <ProtectedLayout>
+    <>
       <div className="p-6 md:p-8 bg-white min-h-full">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -51,6 +53,28 @@ export default async function SavedSearchesPage() {
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+function SavedSearchesSkeleton() {
+  return (
+    <div className="p-6 md:p-8 bg-white min-h-full">
+      <div className="mb-8">
+        <div className="h-10 w-80 bg-sand-light/50 rounded animate-pulse mb-2" />
+        <div className="h-5 w-96 bg-sand-light/50 rounded animate-pulse" />
+      </div>
+      <SkeletonHandDrawnCardList count={6} />
+    </div>
+  );
+}
+
+export default function SavedSearchesPage() {
+  return (
+    <ProtectedLayout>
+      <Suspense fallback={<SavedSearchesSkeleton />}>
+        <SavedSearchesContent />
+      </Suspense>
     </ProtectedLayout>
   );
 }

@@ -2,6 +2,8 @@ import ProtectedLayout from "@/components/layout/protected-layout";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserOrganizations } from "@/features/organizations/actions";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { SkeletonCard } from "@/components/ui/skeleton-card";
 import {
   getOrganizationVeilleSubscription,
   getOrganizationVeillePublications,

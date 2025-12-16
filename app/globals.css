@@ -98,6 +98,16 @@ body {
 }
 
 /* Typographie hand-drawn pour les titres */
+
+/* Animation shimmer pour les skeletons */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
 /* Désactivé temporairement - causait un affichage vertical
 h1,
 h2,

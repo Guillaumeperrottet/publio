@@ -1,11 +1,13 @@
+import { Suspense } from "react";
 import ProtectedLayout from "@/components/layout/protected-layout";
 import { getUserOrganizations } from "@/features/organizations/actions";
 import { redirect } from "next/navigation";
 import { HandDrawnHighlight } from "@/components/ui/hand-drawn-highlight";
 import { getOrganizationOffers } from "@/features/offers/actions";
 import { OffersList } from "@/components/tenders/offers-list";
+import { SkeletonHandDrawnCardList } from "@/components/ui/skeleton-card";
 
-export default async function DashboardOffersPage() {
+async function OffersContent() {
   const memberships = await getUserOrganizations();
 
   if (memberships.length === 0) {
@@ -18,6 +20,14 @@ export default async function DashboardOffersPage() {
   // Récupérer les offres de l'organisation
   const offers = await getOrganizationOffers(organization.id);
 
+  return <OffersList offers={offers} />;
+}
+
+function OffersSkeleton() {
+  return <SkeletonHandDrawnCardList count={3} />;
+}
+
+export default function DashboardOffersPage() {
   return (
     <ProtectedLayout>
       <div className="p-8">
@@ -34,7 +44,9 @@ export default async function DashboardOffersPage() {
         </div>
 
         {/* Liste des offres */}
-        <OffersList offers={offers} />
+        <Suspense fallback={<OffersSkeleton />}>
+          <OffersContent />
+        </Suspense>
       </div>
     </ProtectedLayout>
   );

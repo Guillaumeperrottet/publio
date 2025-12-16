@@ -1,10 +1,16 @@
 "use client";
 
 import { toast } from "sonner";
+import {
+  toastSuccess,
+  toastError,
+  handleError,
+} from "@/lib/utils/toast-messages";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TenderStep1ModeChoice } from "./create-tender-steps/step1-mode-choice";
@@ -369,12 +375,7 @@ export function CreateTenderStepper({
         throw new Error("URL de paiement non disponible");
       }
     } catch (error) {
-      console.error("Error creating tender:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors de la création de l'appel d'offres"
-      );
+      handleError(error, "createTender");
       setIsSubmitting(false);
     }
   };
@@ -449,7 +450,7 @@ export function CreateTenderStepper({
           ...getFormDataForSubmission(),
         });
 
-        toast.success("Brouillon mis à jour avec succès");
+        toastSuccess.saved();
         router.refresh();
         setIsSavingDraft(false);
         return;
@@ -537,15 +538,10 @@ export function CreateTenderStepper({
       }
 
       // Rediriger vers le dashboard des tenders avec toast de succès
-      toast.success("Brouillon enregistré avec succès");
+      toastSuccess.saved();
       router.push("/dashboard/tenders");
     } catch (error) {
-      console.error("Error saving draft:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors de la sauvegarde du brouillon"
-      );
+      handleError(error, "saveDraftTender");
       setIsSavingDraft(false);
     }
   };
@@ -679,14 +675,15 @@ export function CreateTenderStepper({
           <div className="flex gap-3">
             {currentStep < 9 ? (
               <>
-                <Button
+                <LoadingButton
                   variant="outline"
                   onClick={handleSaveDraft}
-                  disabled={isSavingDraft || !formData.title}
+                  disabled={!formData.title}
+                  loading={isSavingDraft}
                   className="gap-2"
                 >
-                  {isSavingDraft ? "Sauvegarde..." : "Sauvegarder en brouillon"}
-                </Button>
+                  Sauvegarder en brouillon
+                </LoadingButton>
                 <Button
                   onClick={handleNext}
                   disabled={!canProceed()}
@@ -698,28 +695,23 @@ export function CreateTenderStepper({
               </>
             ) : (
               <>
-                <Button
+                <LoadingButton
                   variant="outline"
                   onClick={handleSaveDraft}
-                  disabled={isSavingDraft}
+                  loading={isSavingDraft}
                   className="gap-2"
                 >
-                  {isSavingDraft ? "Sauvegarde..." : "Sauvegarder en brouillon"}
-                </Button>
-                <Button
+                  Sauvegarder en brouillon
+                </LoadingButton>
+                <LoadingButton
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !canProceed()}
+                  disabled={!canProceed()}
+                  loading={isSubmitting}
                   className="gap-2 bg-green-600 hover:bg-green-700"
                 >
-                  {isSubmitting ? (
-                    "Création..."
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Procéder au paiement (CHF 10.–)
-                    </>
-                  )}
-                </Button>
+                  <Check className="w-4 h-4" />
+                  Procéder au paiement (CHF 10.–)
+                </LoadingButton>
               </>
             )}
           </div>

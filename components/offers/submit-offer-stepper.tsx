@@ -7,8 +7,10 @@ import { OfferStep3 } from "./submit-offer-steps/step3-prix";
 import { OfferStep4 } from "./submit-offer-steps/step4-delais-paiement";
 import { OfferStep5 } from "./submit-offer-steps/step5-review";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { saveDraftOffer } from "@/features/offers/actions";
+import { toastSuccess, handleError } from "@/lib/utils/toast-messages";
 
 export interface OfferLineItem {
   position: number;
@@ -156,13 +158,18 @@ export function SubmitOfferStepper({
     const handleSaveDraft = async () => {
       setIsSaving(true);
       try {
-        await saveDraftOffer({
+        const result = await saveDraftOffer({
           offerId: existingOffer?.id,
           tenderId: tender.id,
           organizationId: organization.id,
           formData,
         });
-        setLastSaved(new Date());
+
+        if (result.error) {
+          console.error("Error saving draft:", result.error);
+        } else {
+          setLastSaved(new Date());
+        }
       } catch (error) {
         console.error("Error saving draft:", error);
       } finally {
@@ -180,15 +187,21 @@ export function SubmitOfferStepper({
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      await saveDraftOffer({
+      const result = await saveDraftOffer({
         offerId: existingOffer?.id,
         tenderId: tender.id,
         organizationId: organization.id,
         formData,
       });
-      setLastSaved(new Date());
+
+      if (result.error) {
+        handleError(new Error(result.error), "saveDraftOffer");
+      } else {
+        setLastSaved(new Date());
+        toastSuccess.saved();
+      }
     } catch (error) {
-      console.error("Error saving draft:", error);
+      handleError(error, "saveDraftOffer");
     } finally {
       setIsSaving(false);
     }
@@ -307,14 +320,14 @@ export function SubmitOfferStepper({
             <span>Brouillon non sauvegardé</span>
           )}
         </div>
-        <Button
+        <LoadingButton
           variant="outline"
           size="sm"
           onClick={handleSaveDraft}
-          disabled={isSaving}
+          loading={isSaving}
         >
           Sauvegarder maintenant
-        </Button>
+        </LoadingButton>
       </div>
 
       {/* Contenu de l'étape */}
