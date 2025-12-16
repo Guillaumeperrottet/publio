@@ -47,7 +47,8 @@ export default async function EquityLogsPage() {
 
   // Filtrer uniquement les organisations où l'utilisateur est OWNER ou ADMIN
   const adminMemberships = memberships.filter(
-    (membership) => membership.role === "OWNER" || membership.role === "ADMIN"
+    (membership: { role: string }) =>
+      membership.role === "OWNER" || membership.role === "ADMIN"
   );
 
   if (adminMemberships.length === 0) {
