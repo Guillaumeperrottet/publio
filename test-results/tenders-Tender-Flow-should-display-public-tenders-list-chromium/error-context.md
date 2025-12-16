@@ -1,0 +1,643 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Publio" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - img "Publio" [ref=e8]
+          - navigation
+        - generic [ref=e9]:
+          - link "Créer une annonce" [ref=e10] [cursor=pointer]:
+            - /url: /auth/signup
+            - button "Créer une annonce" [ref=e11]:
+              - img
+              - text: Créer une annonce
+          - link "Connexion" [ref=e12] [cursor=pointer]:
+            - /url: /auth/signin
+            - button "Connexion" [ref=e13]
+    - main [ref=e14]:
+      - generic [ref=e16]:
+        - complementary [ref=e17]:
+          - generic [ref=e18]:
+            - heading "Filtres" [level=2] [ref=e20]:
+              - img [ref=e21]
+              - text: Filtres
+            - generic [ref=e22]:
+              - text: Canton
+              - combobox [ref=e23]:
+                - generic: Tous les cantons
+                - img
+            - generic [ref=e24]:
+              - text: Ville / NPA
+              - generic [ref=e26]:
+                - img [ref=e27]
+                - textbox "Rechercher ville ou code postal..." [ref=e30]
+            - generic [ref=e31]:
+              - text: Type de travaux
+              - combobox [ref=e32]:
+                - generic: Tous les types
+                - img
+            - generic [ref=e33]:
+              - text: Budget (CHF)
+              - generic [ref=e34]:
+                - spinbutton [ref=e35]
+                - spinbutton [ref=e36]
+            - generic [ref=e37]:
+              - text: Échéance
+              - generic [ref=e38]:
+                - textbox [ref=e39]
+                - textbox [ref=e40]
+            - generic [ref=e41]:
+              - text: Mode
+              - combobox [ref=e42]:
+                - generic: Tous
+                - img
+        - main [ref=e43]:
+          - generic [ref=e46]:
+            - img [ref=e47]
+            - textbox "Rechercher par mots-clés, projet, entreprise..." [ref=e50]
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - generic [ref=e55]: 22 projets
+              - generic [ref=e57]:
+                - button "Nouveaux" [ref=e58]
+                - button "Urgent" [ref=e59]
+            - generic [ref=e60]:
+              - 'link "NOUVEAU 2j restants Construction d''un garage Studio Urbanisme Lausanne, FR CHF 23 702 Échéance: 2j Voir le projet →" [ref=e61] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5zj006texrso4n0nd8c
+                - generic [ref=e62]:
+                  - button "Sauvegarder" [ref=e64]:
+                    - img [ref=e65]
+                  - generic [ref=e67]:
+                    - generic [ref=e68]:
+                      - generic [ref=e69]: NOUVEAU
+                      - generic [ref=e70]: 2j restants
+                    - heading "Construction d'un garage" [level=3] [ref=e71]
+                  - generic [ref=e72]:
+                    - generic [ref=e73]:
+                      - img [ref=e74]
+                      - generic [ref=e78]: Studio Urbanisme
+                    - generic [ref=e79]:
+                      - img [ref=e80]
+                      - generic [ref=e83]: Lausanne, FR
+                    - generic [ref=e84]:
+                      - img [ref=e85]
+                      - generic [ref=e87]: CHF 23 702
+                    - generic [ref=e88]:
+                      - img [ref=e89]
+                      - generic [ref=e91]: "Échéance: 2j"
+                  - button "Voir le projet →" [ref=e93]
+              - 'link "NOUVEAU 3j restants Anonyme Étude architecturale pour nouveau quartier Genève, FR CHF 429 546 Échéance: 3j Voir le projet →" [ref=e94] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5xj006pexrsns4paima
+                - generic [ref=e95]:
+                  - button "Sauvegarder" [ref=e97]:
+                    - img [ref=e98]
+                  - generic [ref=e100]:
+                    - generic [ref=e101]:
+                      - generic [ref=e102]: NOUVEAU
+                      - generic [ref=e103]: 3j restants
+                      - generic [ref=e104]:
+                        - img
+                        - text: Anonyme
+                    - heading "Étude architecturale pour nouveau quartier" [level=3] [ref=e105]
+                  - generic [ref=e106]:
+                    - generic [ref=e107]:
+                      - img [ref=e108]
+                      - generic [ref=e111]: Genève, FR
+                    - generic [ref=e112]:
+                      - img [ref=e113]
+                      - generic [ref=e115]: CHF 429 546
+                    - generic [ref=e116]:
+                      - img [ref=e117]
+                      - generic [ref=e119]: "Échéance: 3j"
+                  - button "Voir le projet →" [ref=e121]
+              - 'link "NOUVEAU Projet de transformation intérieure Nicolas Schmid Delémont, VS CHF 8 001 Échéance: 84j Voir le projet →" [ref=e122] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5uk006jexrsuu8z4bst
+                - generic [ref=e123]:
+                  - button "Sauvegarder" [ref=e125]:
+                    - img [ref=e126]
+                  - generic [ref=e128]:
+                    - generic [ref=e130]: NOUVEAU
+                    - heading "Projet de transformation intérieure" [level=3] [ref=e131]
+                  - generic [ref=e132]:
+                    - generic [ref=e133]:
+                      - img [ref=e134]
+                      - generic [ref=e138]: Nicolas Schmid
+                    - generic [ref=e139]:
+                      - img [ref=e140]
+                      - generic [ref=e143]: Delémont, VS
+                    - generic [ref=e144]:
+                      - img [ref=e145]
+                      - generic [ref=e147]: CHF 8 001
+                    - generic [ref=e148]:
+                      - img [ref=e149]
+                      - generic [ref=e151]: "Échéance: 84j"
+                  - button "Voir le projet →" [ref=e153]
+              - 'link "NOUVEAU Fourniture de matériel informatique Claire Monnier Neuchâtel, VD CHF 24 308 Échéance: 44j Voir le projet →" [ref=e154] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5tm006hexrsn3cm0unt
+                - generic [ref=e155]:
+                  - button "Sauvegarder" [ref=e157]:
+                    - img [ref=e158]
+                  - generic [ref=e160]:
+                    - generic [ref=e162]: NOUVEAU
+                    - heading "Fourniture de matériel informatique" [level=3] [ref=e163]
+                  - generic [ref=e164]:
+                    - generic [ref=e165]:
+                      - img [ref=e166]
+                      - generic [ref=e170]: Claire Monnier
+                    - generic [ref=e171]:
+                      - img [ref=e172]
+                      - generic [ref=e175]: Neuchâtel, VD
+                    - generic [ref=e176]:
+                      - img [ref=e177]
+                      - generic [ref=e179]: CHF 24 308
+                    - generic [ref=e180]:
+                      - img [ref=e181]
+                      - generic [ref=e183]: "Échéance: 44j"
+                  - button "Voir le projet →" [ref=e185]
+              - 'link "NOUVEAU 2j restants Réfection complète de la route principale Nicolas Schmid Lausanne, NE CHF 32 758 Échéance: 2j Voir le projet →" [ref=e186] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5qy006bexrsxbk2ghzp
+                - generic [ref=e187]:
+                  - button "Sauvegarder" [ref=e189]:
+                    - img [ref=e190]
+                  - generic [ref=e192]:
+                    - generic [ref=e193]:
+                      - generic [ref=e194]: NOUVEAU
+                      - generic [ref=e195]: 2j restants
+                    - heading "Réfection complète de la route principale" [level=3] [ref=e196]
+                  - generic [ref=e197]:
+                    - generic [ref=e198]:
+                      - img [ref=e199]
+                      - generic [ref=e203]: Nicolas Schmid
+                    - generic [ref=e204]:
+                      - img [ref=e205]
+                      - generic [ref=e208]: Lausanne, NE
+                    - generic [ref=e209]:
+                      - img [ref=e210]
+                      - generic [ref=e212]: CHF 32 758
+                    - generic [ref=e213]:
+                      - img [ref=e214]
+                      - generic [ref=e216]: "Échéance: 2j"
+                  - button "Voir le projet →" [ref=e218]
+              - 'link "NOUVEAU 1j restants Entretien des espaces verts communaux Claire Monnier Neuchâtel, GE CHF 30 385 Échéance: 1j Voir le projet →" [ref=e219] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5q30069exrs62o98yqy
+                - generic [ref=e220]:
+                  - button "Sauvegarder" [ref=e222]:
+                    - img [ref=e223]
+                  - generic [ref=e225]:
+                    - generic [ref=e226]:
+                      - generic [ref=e227]: NOUVEAU
+                      - generic [ref=e228]: 1j restants
+                    - heading "Entretien des espaces verts communaux" [level=3] [ref=e229]
+                  - generic [ref=e230]:
+                    - generic [ref=e231]:
+                      - img [ref=e232]
+                      - generic [ref=e236]: Claire Monnier
+                    - generic [ref=e237]:
+                      - img [ref=e238]
+                      - generic [ref=e241]: Neuchâtel, GE
+                    - generic [ref=e242]:
+                      - img [ref=e243]
+                      - generic [ref=e245]: CHF 30 385
+                    - generic [ref=e246]:
+                      - img [ref=e247]
+                      - generic [ref=e249]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e251]
+              - 'link "NOUVEAU 1j restants Isolation de mes combles Pierre Favre Neuchâtel, GE CHF 14 444 Échéance: 1j Voir le projet →" [ref=e252] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5oc0065exrsjnrf4y5s
+                - generic [ref=e253]:
+                  - button "Sauvegarder" [ref=e255]:
+                    - img [ref=e256]
+                  - generic [ref=e258]:
+                    - generic [ref=e259]:
+                      - generic [ref=e260]: NOUVEAU
+                      - generic [ref=e261]: 1j restants
+                    - heading "Isolation de mes combles" [level=3] [ref=e262]
+                  - generic [ref=e263]:
+                    - generic [ref=e264]:
+                      - img [ref=e265]
+                      - generic [ref=e269]: Pierre Favre
+                    - generic [ref=e270]:
+                      - img [ref=e271]
+                      - generic [ref=e274]: Neuchâtel, GE
+                    - generic [ref=e275]:
+                      - img [ref=e276]
+                      - generic [ref=e278]: CHF 14 444
+                    - generic [ref=e279]:
+                      - img [ref=e280]
+                      - generic [ref=e282]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e284]
+              - 'link "NOUVEAU Conception d''un centre culturel Nicolas Schmid Lausanne, FR CHF 41 321 Échéance: 10j Voir le projet →" [ref=e285] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5lk005zexrs9x57qcky
+                - generic [ref=e286]:
+                  - button "Sauvegarder" [ref=e288]:
+                    - img [ref=e289]
+                  - generic [ref=e291]:
+                    - generic [ref=e293]: NOUVEAU
+                    - heading "Conception d'un centre culturel" [level=3] [ref=e294]
+                  - generic [ref=e295]:
+                    - generic [ref=e296]:
+                      - img [ref=e297]
+                      - generic [ref=e301]: Nicolas Schmid
+                    - generic [ref=e302]:
+                      - img [ref=e303]
+                      - generic [ref=e306]: Lausanne, FR
+                    - generic [ref=e307]:
+                      - img [ref=e308]
+                      - generic [ref=e310]: CHF 41 321
+                    - generic [ref=e311]:
+                      - img [ref=e312]
+                      - generic [ref=e314]: "Échéance: 10j"
+                  - button "Voir le projet →" [ref=e316]
+              - 'link "NOUVEAU 1j restants Pose d''une nouvelle cuisine Sophie Bernard Sion, GE CHF 5 698 Échéance: 1j Voir le projet →" [ref=e317] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5jm005vexrsw8iv7pvv
+                - generic [ref=e318]:
+                  - button "Sauvegarder" [ref=e320]:
+                    - img [ref=e321]
+                  - generic [ref=e323]:
+                    - generic [ref=e324]:
+                      - generic [ref=e325]: NOUVEAU
+                      - generic [ref=e326]: 1j restants
+                    - heading "Pose d'une nouvelle cuisine" [level=3] [ref=e327]
+                  - generic [ref=e328]:
+                    - generic [ref=e329]:
+                      - img [ref=e330]
+                      - generic [ref=e334]: Sophie Bernard
+                    - generic [ref=e335]:
+                      - img [ref=e336]
+                      - generic [ref=e339]: Sion, GE
+                    - generic [ref=e340]:
+                      - img [ref=e341]
+                      - generic [ref=e343]: CHF 5 698
+                    - generic [ref=e344]:
+                      - img [ref=e345]
+                      - generic [ref=e347]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e349]
+              - 'link "NOUVEAU 1j restants Nettoyage façade de ma maison Luc Perret Delémont, NE CHF 14 500 Échéance: 1j Voir le projet →" [ref=e350] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5ip005texrsnhwhcu7d
+                - generic [ref=e351]:
+                  - button "Sauvegarder" [ref=e353]:
+                    - img [ref=e354]
+                  - generic [ref=e356]:
+                    - generic [ref=e357]:
+                      - generic [ref=e358]: NOUVEAU
+                      - generic [ref=e359]: 1j restants
+                    - heading "Nettoyage façade de ma maison" [level=3] [ref=e360]
+                  - generic [ref=e361]:
+                    - generic [ref=e362]:
+                      - img [ref=e363]
+                      - generic [ref=e367]: Luc Perret
+                    - generic [ref=e368]:
+                      - img [ref=e369]
+                      - generic [ref=e372]: Delémont, NE
+                    - generic [ref=e373]:
+                      - img [ref=e374]
+                      - generic [ref=e376]: CHF 14 500
+                    - generic [ref=e377]:
+                      - img [ref=e378]
+                      - generic [ref=e380]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e382]
+              - 'link "NOUVEAU Fourniture parquet massif Claire Monnier Neuchâtel, JU CHF 33 309 Échéance: 24j Voir le projet →" [ref=e383] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5gw005pexrsjc8wg27s
+                - generic [ref=e384]:
+                  - button "Sauvegarder" [ref=e386]:
+                    - img [ref=e387]
+                  - generic [ref=e389]:
+                    - generic [ref=e391]: NOUVEAU
+                    - heading "Fourniture parquet massif" [level=3] [ref=e392]
+                  - generic [ref=e393]:
+                    - generic [ref=e394]:
+                      - img [ref=e395]
+                      - generic [ref=e399]: Claire Monnier
+                    - generic [ref=e400]:
+                      - img [ref=e401]
+                      - generic [ref=e404]: Neuchâtel, JU
+                    - generic [ref=e405]:
+                      - img [ref=e406]
+                      - generic [ref=e408]: CHF 33 309
+                    - generic [ref=e409]:
+                      - img [ref=e410]
+                      - generic [ref=e412]: "Échéance: 24j"
+                  - button "Voir le projet →" [ref=e414]
+              - 'link "NOUVEAU 1j restants Fourniture et pose carrelage Sophie Bernard Delémont, JU CHF 25 145 Échéance: 1j Voir le projet →" [ref=e415] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5fz005nexrs8ic94skm
+                - generic [ref=e416]:
+                  - button "Sauvegarder" [ref=e418]:
+                    - img [ref=e419]
+                  - generic [ref=e421]:
+                    - generic [ref=e422]:
+                      - generic [ref=e423]: NOUVEAU
+                      - generic [ref=e424]: 1j restants
+                    - heading "Fourniture et pose carrelage" [level=3] [ref=e425]
+                  - generic [ref=e426]:
+                    - generic [ref=e427]:
+                      - img [ref=e428]
+                      - generic [ref=e432]: Sophie Bernard
+                    - generic [ref=e433]:
+                      - img [ref=e434]
+                      - generic [ref=e437]: Delémont, JU
+                    - generic [ref=e438]:
+                      - img [ref=e439]
+                      - generic [ref=e441]: CHF 25 145
+                    - generic [ref=e442]:
+                      - img [ref=e443]
+                      - generic [ref=e445]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e447]
+              - 'link "NOUVEAU Rénovation de ma salle de bain Luc Perret Lausanne, NE CHF 42 921 Échéance: 37j Voir le projet →" [ref=e448] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5e4005jexrsedjw0fxy
+                - generic [ref=e449]:
+                  - button "Sauvegarder" [ref=e451]:
+                    - img [ref=e452]
+                  - generic [ref=e454]:
+                    - generic [ref=e456]: NOUVEAU
+                    - heading "Rénovation de ma salle de bain" [level=3] [ref=e457]
+                  - generic [ref=e458]:
+                    - generic [ref=e459]:
+                      - img [ref=e460]
+                      - generic [ref=e464]: Luc Perret
+                    - generic [ref=e465]:
+                      - img [ref=e466]
+                      - generic [ref=e469]: Lausanne, NE
+                    - generic [ref=e470]:
+                      - img [ref=e471]
+                      - generic [ref=e473]: CHF 42 921
+                    - generic [ref=e474]:
+                      - img [ref=e475]
+                      - generic [ref=e477]: "Échéance: 37j"
+                  - button "Voir le projet →" [ref=e479]
+              - 'link "NOUVEAU 4j restants Transformation de mon appartement Luc Perret Delémont, VS CHF 42 834 Échéance: 4j Voir le projet →" [ref=e480] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5d9005hexrs5fyqic2u
+                - generic [ref=e481]:
+                  - button "Sauvegarder" [ref=e483]:
+                    - img [ref=e484]
+                  - generic [ref=e486]:
+                    - generic [ref=e487]:
+                      - generic [ref=e488]: NOUVEAU
+                      - generic [ref=e489]: 4j restants
+                    - heading "Transformation de mon appartement" [level=3] [ref=e490]
+                  - generic [ref=e491]:
+                    - generic [ref=e492]:
+                      - img [ref=e493]
+                      - generic [ref=e497]: Luc Perret
+                    - generic [ref=e498]:
+                      - img [ref=e499]
+                      - generic [ref=e502]: Delémont, VS
+                    - generic [ref=e503]:
+                      - img [ref=e504]
+                      - generic [ref=e506]: CHF 42 834
+                    - generic [ref=e507]:
+                      - img [ref=e508]
+                      - generic [ref=e510]: "Échéance: 4j"
+                  - button "Voir le projet →" [ref=e512]
+              - 'link "NOUVEAU 1j restants Installation borne électrique Nicolas Schmid Genève, NE CHF 16 097 Échéance: 1j Voir le projet →" [ref=e513] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5cb005fexrsr8ius6k9
+                - generic [ref=e514]:
+                  - button "Sauvegarder" [ref=e516]:
+                    - img [ref=e517]
+                  - generic [ref=e519]:
+                    - generic [ref=e520]:
+                      - generic [ref=e521]: NOUVEAU
+                      - generic [ref=e522]: 1j restants
+                    - heading "Installation borne électrique" [level=3] [ref=e523]
+                  - generic [ref=e524]:
+                    - generic [ref=e525]:
+                      - img [ref=e526]
+                      - generic [ref=e530]: Nicolas Schmid
+                    - generic [ref=e531]:
+                      - img [ref=e532]
+                      - generic [ref=e535]: Genève, NE
+                    - generic [ref=e536]:
+                      - img [ref=e537]
+                      - generic [ref=e539]: CHF 16 097
+                    - generic [ref=e540]:
+                      - img [ref=e541]
+                      - generic [ref=e543]: "Échéance: 1j"
+                  - button "Voir le projet →" [ref=e545]
+              - 'link "NOUVEAU Aménagement de mon jardin Claire Monnier Sion, FR CHF 10 192 Échéance: 30j Voir le projet →" [ref=e546] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5bf005dexrsr0wgu3ae
+                - generic [ref=e547]:
+                  - button "Sauvegarder" [ref=e549]:
+                    - img [ref=e550]
+                  - generic [ref=e552]:
+                    - generic [ref=e554]: NOUVEAU
+                    - heading "Aménagement de mon jardin" [level=3] [ref=e555]
+                  - generic [ref=e556]:
+                    - generic [ref=e557]:
+                      - img [ref=e558]
+                      - generic [ref=e562]: Claire Monnier
+                    - generic [ref=e563]:
+                      - img [ref=e564]
+                      - generic [ref=e567]: Sion, FR
+                    - generic [ref=e568]:
+                      - img [ref=e569]
+                      - generic [ref=e571]: CHF 10 192
+                    - generic [ref=e572]:
+                      - img [ref=e573]
+                      - generic [ref=e575]: "Échéance: 30j"
+                  - button "Voir le projet →" [ref=e577]
+              - 'link "NOUVEAU Raccordement électrique complet Sophie Bernard Delémont, VD CHF 15 648 Échéance: 43j Voir le projet →" [ref=e578] [cursor=pointer]':
+                - /url: /tenders/cmj7ll5ah005bexrsloba2g9f
+                - generic [ref=e579]:
+                  - button "Sauvegarder" [ref=e581]:
+                    - img [ref=e582]
+                  - generic [ref=e584]:
+                    - generic [ref=e586]: NOUVEAU
+                    - heading "Raccordement électrique complet" [level=3] [ref=e587]
+                  - generic [ref=e588]:
+                    - generic [ref=e589]:
+                      - img [ref=e590]
+                      - generic [ref=e594]: Sophie Bernard
+                    - generic [ref=e595]:
+                      - img [ref=e596]
+                      - generic [ref=e599]: Delémont, VD
+                    - generic [ref=e600]:
+                      - img [ref=e601]
+                      - generic [ref=e603]: CHF 15 648
+                    - generic [ref=e604]:
+                      - img [ref=e605]
+                      - generic [ref=e607]: "Échéance: 43j"
+                  - button "Voir le projet →" [ref=e609]
+              - 'link "NOUVEAU Entretien des espaces verts communaux Nicolas Schmid Genève, VD CHF 34 250 Échéance: 16j Voir le projet →" [ref=e610] [cursor=pointer]':
+                - /url: /tenders/cmj7ll58n0057exrso4lrgfsu
+                - generic [ref=e611]:
+                  - button "Sauvegarder" [ref=e613]:
+                    - img [ref=e614]
+                  - generic [ref=e616]:
+                    - generic [ref=e618]: NOUVEAU
+                    - heading "Entretien des espaces verts communaux" [level=3] [ref=e619]
+                  - generic [ref=e620]:
+                    - generic [ref=e621]:
+                      - img [ref=e622]
+                      - generic [ref=e626]: Nicolas Schmid
+                    - generic [ref=e627]:
+                      - img [ref=e628]
+                      - generic [ref=e631]: Genève, VD
+                    - generic [ref=e632]:
+                      - img [ref=e633]
+                      - generic [ref=e635]: CHF 34 250
+                    - generic [ref=e636]:
+                      - img [ref=e637]
+                      - generic [ref=e639]: "Échéance: 16j"
+                  - button "Voir le projet →" [ref=e641]
+              - 'link "NOUVEAU 2j restants Entretien annuel de mon jardin Ville de Sion Neuchâtel, VS CHF 197 961 Échéance: 2j Voir le projet →" [ref=e642] [cursor=pointer]':
+                - /url: /tenders/cmj7ll53y004xexrs3fruoeau
+                - generic [ref=e643]:
+                  - button "Sauvegarder" [ref=e645]:
+                    - img [ref=e646]
+                  - generic [ref=e648]:
+                    - generic [ref=e649]:
+                      - generic [ref=e650]: NOUVEAU
+                      - generic [ref=e651]: 2j restants
+                    - heading "Entretien annuel de mon jardin" [level=3] [ref=e652]
+                  - generic [ref=e653]:
+                    - generic [ref=e654]:
+                      - img [ref=e655]
+                      - generic [ref=e659]: Ville de Sion
+                    - generic [ref=e660]:
+                      - img [ref=e661]
+                      - generic [ref=e664]: Neuchâtel, VS
+                    - generic [ref=e665]:
+                      - img [ref=e666]
+                      - generic [ref=e668]: CHF 197 961
+                    - generic [ref=e669]:
+                      - img [ref=e670]
+                      - generic [ref=e672]: "Échéance: 2j"
+                  - button "Voir le projet →" [ref=e674]
+              - 'link "NOUVEAU 3j restants Plans pour extension de ma maison Ville de Lausanne Lausanne, GE CHF 46 073 Échéance: 3j Voir le projet →" [ref=e675] [cursor=pointer]':
+                - /url: /tenders/cmj7ll524004texrs9voytisb
+                - generic [ref=e676]:
+                  - button "Sauvegarder" [ref=e678]:
+                    - img [ref=e679]
+                  - generic [ref=e681]:
+                    - generic [ref=e682]:
+                      - generic [ref=e683]: NOUVEAU
+                      - generic [ref=e684]: 3j restants
+                    - heading "Plans pour extension de ma maison" [level=3] [ref=e685]
+                  - generic [ref=e686]:
+                    - generic [ref=e687]:
+                      - img [ref=e688]
+                      - generic [ref=e692]: Ville de Lausanne
+                    - generic [ref=e693]:
+                      - img [ref=e694]
+                      - generic [ref=e697]: Lausanne, GE
+                    - generic [ref=e698]:
+                      - img [ref=e699]
+                      - generic [ref=e701]: CHF 46 073
+                    - generic [ref=e702]:
+                      - img [ref=e703]
+                      - generic [ref=e705]: "Échéance: 3j"
+                  - button "Voir le projet →" [ref=e707]
+              - 'link "NOUVEAU 5j restants Modernisation du réseau d''eau potable Ville de Sion Genève, FR CHF 390 746 Échéance: 5j Voir le projet →" [ref=e708] [cursor=pointer]':
+                - /url: /tenders/cmj7ll516004rexrswv8s7k4g
+                - generic [ref=e709]:
+                  - button "Sauvegarder" [ref=e711]:
+                    - img [ref=e712]
+                  - generic [ref=e714]:
+                    - generic [ref=e715]:
+                      - generic [ref=e716]: NOUVEAU
+                      - generic [ref=e717]: 5j restants
+                    - heading "Modernisation du réseau d'eau potable" [level=3] [ref=e718]
+                  - generic [ref=e719]:
+                    - generic [ref=e720]:
+                      - img [ref=e721]
+                      - generic [ref=e725]: Ville de Sion
+                    - generic [ref=e726]:
+                      - img [ref=e727]
+                      - generic [ref=e730]: Genève, FR
+                    - generic [ref=e731]:
+                      - img [ref=e732]
+                      - generic [ref=e734]: CHF 390 746
+                    - generic [ref=e735]:
+                      - img [ref=e736]
+                      - generic [ref=e738]: "Échéance: 5j"
+                  - button "Voir le projet →" [ref=e740]
+              - 'link "NOUVEAU Conception d''un centre culturel Ville de Sion Neuchâtel, NE CHF 24 428 Échéance: 53j Voir le projet →" [ref=e741] [cursor=pointer]':
+                - /url: /tenders/cmj7ll509004pexrshm45b9x2
+                - generic [ref=e742]:
+                  - button "Sauvegarder" [ref=e744]:
+                    - img [ref=e745]
+                  - generic [ref=e747]:
+                    - generic [ref=e749]: NOUVEAU
+                    - heading "Conception d'un centre culturel" [level=3] [ref=e750]
+                  - generic [ref=e751]:
+                    - generic [ref=e752]:
+                      - img [ref=e753]
+                      - generic [ref=e757]: Ville de Sion
+                    - generic [ref=e758]:
+                      - img [ref=e759]
+                      - generic [ref=e762]: Neuchâtel, NE
+                    - generic [ref=e763]:
+                      - img [ref=e764]
+                      - generic [ref=e766]: CHF 24 428
+                    - generic [ref=e767]:
+                      - img [ref=e768]
+                      - generic [ref=e770]: "Échéance: 53j"
+                  - button "Voir le projet →" [ref=e772]
+    - contentinfo [ref=e773]:
+      - generic [ref=e774]:
+        - generic [ref=e775]:
+          - generic [ref=e776]:
+            - link "Publio" [ref=e777] [cursor=pointer]:
+              - /url: /
+              - img "Publio" [ref=e778]
+            - paragraph [ref=e779]: La plateforme moderne pour vos appels d'offres en Suisse romande.
+          - generic [ref=e780]:
+            - heading "Produit" [level=4] [ref=e781]
+            - list [ref=e782]:
+              - listitem [ref=e783]:
+                - link "Appels d'offres" [ref=e784] [cursor=pointer]:
+                  - /url: /tenders
+              - listitem [ref=e785]:
+                - link "Créer un compte" [ref=e786] [cursor=pointer]:
+                  - /url: /auth/signup
+              - listitem [ref=e787]:
+                - link "Se connecter" [ref=e788] [cursor=pointer]:
+                  - /url: /auth/signin
+              - listitem [ref=e789]:
+                - link "Tableau de bord" [ref=e790] [cursor=pointer]:
+                  - /url: /dashboard
+          - generic [ref=e791]:
+            - heading "Légal" [level=4] [ref=e792]
+            - list [ref=e793]:
+              - listitem [ref=e794]:
+                - link "Conditions générales" [ref=e795] [cursor=pointer]:
+                  - /url: /legal/terms
+              - listitem [ref=e796]:
+                - link "Politique de confidentialité" [ref=e797] [cursor=pointer]:
+                  - /url: /legal/privacy
+              - listitem [ref=e798]:
+                - link "Mentions légales" [ref=e799] [cursor=pointer]:
+                  - /url: /legal/mentions
+              - listitem [ref=e800]:
+                - link "Politique des cookies" [ref=e801] [cursor=pointer]:
+                  - /url: /legal/cookies
+          - generic [ref=e802]:
+            - heading "Contact" [level=4] [ref=e803]
+            - list [ref=e804]:
+              - listitem [ref=e805]:
+                - img [ref=e806]
+                - link "contact@publio.ch" [ref=e809] [cursor=pointer]:
+                  - /url: mailto:contact@publio.ch
+              - listitem [ref=e810]:
+                - img [ref=e811]
+                - generic [ref=e813]: +41 XX XXX XX XX
+              - listitem [ref=e814]:
+                - img [ref=e815]
+                - generic [ref=e818]: Suisse Romande
+        - generic [ref=e820]:
+          - paragraph [ref=e821]: © 2025 Publio. Tous droits réservés.
+          - generic [ref=e822]:
+            - generic [ref=e823]: 🇨🇭 Hébergé en Suisse
+            - generic [ref=e824]: •
+            - generic [ref=e825]: 🔒 Sécurisé
+            - generic [ref=e826]: •
+            - generic [ref=e827]: ✓ RGPD
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e833] [cursor=pointer]:
+    - img [ref=e834]
+  - alert [ref=e837]
+```

@@ -1,0 +1,294 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7]:
+      - img [ref=e8]
+    - generic [ref=e13]:
+      - button "Open issues overlay" [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: "2"
+          - generic [ref=e17]: "3"
+        - generic [ref=e18]:
+          - text: Issue
+          - generic [ref=e19]: s
+      - button "Collapse issues badge" [ref=e20]:
+        - img [ref=e21]
+  - generic [ref=e23]:
+    - banner [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - link "Publio" [ref=e28]:
+            - /url: /
+            - img "Publio" [ref=e29]
+          - navigation
+        - generic [ref=e30]:
+          - link "Créer une annonce" [ref=e31]:
+            - /url: /auth/signup
+            - button "Créer une annonce" [ref=e32]:
+              - img
+              - text: Créer une annonce
+          - link "Connexion" [ref=e33]:
+            - /url: /auth/signin
+            - button "Connexion" [ref=e34]
+    - main [ref=e35]:
+      - generic [ref=e38]:
+        - generic [ref=e39]: 🚀 La marketplace des appels d'offres en Suisse romande
+        - heading "Publio" [level=1] [ref=e40]:
+          - img "Publio" [ref=e41]
+        - paragraph [ref=e42]:
+          - text: La marketplace des appels d'offres pour PME, artisans et privés.
+          - generic [ref=e43]:
+            - img [ref=e45]
+            - text: Nouveaux projets chaque jour
+          - text: en Suisse romande.
+        - generic [ref=e48]:
+          - link "Chercher des projets" [ref=e49]:
+            - /url: /tenders
+            - img
+            - text: Chercher des projets
+          - link "Publier un appel d'offre" [ref=e50]:
+            - /url: /auth/signup?callbackUrl=/dashboard/tenders/new
+            - img
+            - text: Publier un appel d'offre
+        - generic [ref=e51]:
+          - generic [ref=e53]: ✓ Sans engagement
+          - generic [ref=e55]: ✓ Hébergé en Suisse 🇨🇭
+          - generic [ref=e57]: ✓ Mise en relation équitable & transparent
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "Pourquoi Publio ." [level=2] [ref=e62]:
+            - text: Pourquoi
+            - generic [ref=e64]:
+              - text: Publio
+              - img
+            - text: .
+          - paragraph [ref=e65]:
+            - text: Trouvez des opportunités,
+            - generic [ref=e66]:
+              - text: comblez vos trous
+              - img [ref=e67]
+            - text: ", développez votre activité"
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - img [ref=e73]
+            - heading "Marketplace active" [level=3] [ref=e77]:
+              - text: Marketplace
+              - generic [ref=e79]:
+                - text: active
+                - img
+            - paragraph [ref=e80]: Restez proactif. Filtrez par métier, canton et budget. Nouveaux appels d'offres chaque jour.
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - img [ref=e83]
+                - generic [ref=e86]: Recherche avancée
+              - generic [ref=e87]:
+                - img [ref=e88]
+                - generic [ref=e91]: Alertes personnalisées
+          - generic [ref=e92]:
+            - img [ref=e95]
+            - heading "Veille intelligente" [level=3] [ref=e98]:
+              - text: Veille
+              - generic [ref=e100]:
+                - text: intelligente
+                - img
+            - paragraph [ref=e101]: Ne ratez plus jamais une opportunité. Recevez les publications communales et mises à l'enquête en temps réel.
+            - generic [ref=e102]:
+              - generic [ref=e103]:
+                - img [ref=e104]
+                - generic [ref=e107]: Alertes quotidiennes
+              - generic [ref=e108]:
+                - img [ref=e109]
+                - generic [ref=e112]: CHF 5-10/mois
+          - generic [ref=e113]:
+            - img [ref=e116]
+            - heading "Offres anonymes" [level=3] [ref=e118]:
+              - text: Offres
+              - generic [ref=e120]:
+                - text: anonymes
+                - img
+            - paragraph [ref=e121]: Mode anonyme optionnel. Identité masquée jusqu'à la deadline pour une évaluation 100% objective.
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - img [ref=e124]
+                - generic [ref=e127]: Évaluation équitable
+              - generic [ref=e128]:
+                - img [ref=e129]
+                - generic [ref=e132]: CHF 10.- / offre
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - heading "Ne ratez plus jamais une opportunité" [level=2] [ref=e137]:
+            - text: Ne ratez plus jamais une
+            - generic [ref=e138]: opportunité
+          - paragraph [ref=e139]: Veille communale intelligente pour professionnels ambitieux
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - heading "Publications communales en temps réel" [level=3] [ref=e142]
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - img [ref=e145]
+                - generic [ref=e148]:
+                  - paragraph [ref=e149]: Mises à l'enquête
+                  - paragraph [ref=e150]: Soyez alerté dès qu'une nouvelle construction est mise à l'enquête
+              - listitem [ref=e151]:
+                - img [ref=e152]
+                - generic [ref=e155]:
+                  - paragraph [ref=e156]: Permis de construire
+                  - paragraph [ref=e157]: Suivez les projets de construction dans vos communes cibles
+              - listitem [ref=e158]:
+                - img [ref=e159]
+                - generic [ref=e162]:
+                  - paragraph [ref=e163]: Appels d'offres publics
+                  - paragraph [ref=e164]: Accédez aux marchés publics avant vos concurrents
+              - listitem [ref=e165]:
+                - img [ref=e166]
+                - generic [ref=e169]:
+                  - paragraph [ref=e170]: Alertes quotidiennes
+                  - paragraph [ref=e171]: Recevez un résumé chaque matin par email
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - paragraph [ref=e174]: À partir de
+              - paragraph [ref=e175]: CHF 5.-
+              - paragraph [ref=e176]: par mois
+            - generic [ref=e177]:
+              - generic [ref=e180]: "Basic : 1 canton"
+              - generic [ref=e183]: "Premium : cantons illimités (CHF 10.-)"
+            - link "Activer la veille" [ref=e184]:
+              - /url: /dashboard/veille
+              - img
+              - text: Activer la veille
+            - paragraph [ref=e185]: ✓ Sans engagement · ✓ Résiliable à tout moment
+      - generic [ref=e188]:
+        - generic [ref=e189]:
+          - heading "Comment ça marche ?" [level=2] [ref=e190]:
+            - text: Comment ça
+            - generic [ref=e192]:
+              - text: marche
+              - img
+            - text: "?"
+          - paragraph [ref=e193]: Deux parcours, une plateforme
+        - generic [ref=e194]:
+          - generic [ref=e195]:
+            - generic [ref=e196]:
+              - img [ref=e197]
+              - heading "Vous cherchez du travail ?" [level=3] [ref=e200]
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - generic [ref=e203]: "1"
+                - generic [ref=e204]:
+                  - heading "Parcourez les projets" [level=4] [ref=e205]
+                  - paragraph [ref=e206]: Filtrez par métier, canton et budget. Trier selon les CFC
+              - generic [ref=e207]:
+                - generic [ref=e208]: "2"
+                - generic [ref=e209]:
+                  - heading "Soumettez votre offre" [level=4] [ref=e210]
+                  - paragraph [ref=e211]: Uniquement pour les projets qui vous intéressent vraiment. Filtre qualité garanti.
+              - generic [ref=e212]:
+                - generic [ref=e213]: "3"
+                - generic [ref=e214]:
+                  - heading "Placer des alertes" [level=4] [ref=e215]
+                  - paragraph [ref=e216]: Recevez des notifications pour les nouveaux projets correspondant à vos critères.
+            - link "Trouver des projets" [ref=e217]:
+              - /url: /tenders
+              - img
+              - text: Trouver des projets
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - img [ref=e220]
+              - heading "Vous avez un projet ?" [level=3] [ref=e223]
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - generic [ref=e226]: "1"
+                - generic [ref=e227]:
+                  - heading "Publiez votre appel d'offre" [level=4] [ref=e228]
+                  - paragraph [ref=e229]: Formulaire simple. Choisissez le mode anonyme pour plus d'équité.
+              - generic [ref=e230]:
+                - generic [ref=e231]: "2"
+                - generic [ref=e232]:
+                  - heading "Recevez des offres" [level=4] [ref=e233]
+                  - paragraph [ref=e234]: Les professionnels soumettent leurs propositions. Comparez facilement.
+              - generic [ref=e235]:
+                - generic [ref=e236]: "3"
+                - generic [ref=e237]:
+                  - heading "Choisissez le meilleur" [level=4] [ref=e238]
+                  - paragraph [ref=e239]: Évaluez objectivement. Révélez les identités après la deadline.
+            - link "Publier un appel d'offres" [ref=e240]:
+              - /url: /dashboard/tenders
+              - img
+              - text: Publier un appel d'offres
+      - generic [ref=e244]:
+        - heading "Prêt à trouver votre prochain projet ?" [level=2] [ref=e245]:
+          - text: Prêt à trouver votre
+          - generic [ref=e246]:
+            - text: prochain projet
+            - img [ref=e247]
+          - text: "?"
+        - paragraph [ref=e249]: Rejoignez les professionnels qui font confiance à Publio pour développer leur activité.
+        - link "Commencer gratuitement" [ref=e250]:
+          - /url: /auth/signup
+          - text: Commencer gratuitement
+          - img
+        - paragraph [ref=e251]: ✓ Sans engagement · ✓ Hébergé en Suisse · ✓ Support en français
+    - contentinfo [ref=e252]:
+      - generic [ref=e253]:
+        - generic [ref=e254]:
+          - generic [ref=e255]:
+            - link "Publio" [ref=e256]:
+              - /url: /
+              - img "Publio" [ref=e257]
+            - paragraph [ref=e258]: La plateforme moderne pour vos appels d'offres en Suisse romande.
+          - generic [ref=e259]:
+            - heading "Produit" [level=4] [ref=e260]
+            - list [ref=e261]:
+              - listitem [ref=e262]:
+                - link "Appels d'offres" [ref=e263]:
+                  - /url: /tenders
+              - listitem [ref=e264]:
+                - link "Créer un compte" [ref=e265]:
+                  - /url: /auth/signup
+              - listitem [ref=e266]:
+                - link "Se connecter" [ref=e267]:
+                  - /url: /auth/signin
+              - listitem [ref=e268]:
+                - link "Tableau de bord" [ref=e269]:
+                  - /url: /dashboard
+          - generic [ref=e270]:
+            - heading "Légal" [level=4] [ref=e271]
+            - list [ref=e272]:
+              - listitem [ref=e273]:
+                - link "Conditions générales" [ref=e274]:
+                  - /url: /legal/terms
+              - listitem [ref=e275]:
+                - link "Politique de confidentialité" [ref=e276]:
+                  - /url: /legal/privacy
+              - listitem [ref=e277]:
+                - link "Mentions légales" [ref=e278]:
+                  - /url: /legal/mentions
+              - listitem [ref=e279]:
+                - link "Politique des cookies" [ref=e280]:
+                  - /url: /legal/cookies
+          - generic [ref=e281]:
+            - heading "Contact" [level=4] [ref=e282]
+            - list [ref=e283]:
+              - listitem [ref=e284]:
+                - img [ref=e285]
+                - link "contact@publio.ch" [ref=e288]:
+                  - /url: mailto:contact@publio.ch
+              - listitem [ref=e289]:
+                - img [ref=e290]
+                - generic [ref=e292]: +41 XX XXX XX XX
+              - listitem [ref=e293]:
+                - img [ref=e294]
+                - generic [ref=e297]: Suisse Romande
+        - generic [ref=e299]:
+          - paragraph [ref=e300]: © 2025 Publio. Tous droits réservés.
+          - generic [ref=e301]:
+            - generic [ref=e302]: 🇨🇭 Hébergé en Suisse
+            - generic [ref=e303]: •
+            - generic [ref=e304]: 🔒 Sécurisé
+            - generic [ref=e305]: •
+            - generic [ref=e306]: ✓ RGPD
+  - region "Notifications alt+T"
+  - alert [ref=e307]
+```
