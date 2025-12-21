@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, Calendar, Euro, EyeOff } from "lucide-react";
+import { Building2, MapPin, Calendar, EyeOff } from "lucide-react";
 import { BookmarkTenderButton } from "./bookmark-tender-button";
 
 type TenderCardProps = {
@@ -85,8 +85,8 @@ export function TenderCard({
               </Badge>
             )}
             {isUrgent && (
-              <Badge variant="destructive" className="font-bold">
-                {daysUntilDeadline}j restants
+              <Badge className="bg-red-600 text-white border-2 border-red-700 font-bold shadow-sm">
+                Échéance: {daysUntilDeadline}j
               </Badge>
             )}
             {isAnonymous && (
@@ -131,7 +131,6 @@ export function TenderCard({
           {/* Budget */}
           {tender.budget && (
             <div className="flex items-center gap-2 text-sm">
-              <Euro className="w-4 h-4 text-artisan-yellow shrink-0" />
               <span className="font-semibold">
                 CHF {tender.budget.toLocaleString("fr-CH")}
               </span>

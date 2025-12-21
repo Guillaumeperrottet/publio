@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, SlidersHorizontal, X, Bookmark, Bell } from "lucide-react";
+import { Search, SlidersHorizontal, X, Bookmark } from "lucide-react";
 import {
   MarketType,
   TenderMode,
@@ -109,9 +109,12 @@ export function TendersCatalogClient({
   const router = useRouter();
   const [localFilters, setLocalFilters] =
     useState<TenderFilters>(initialFilters);
-  const [showAllFilters, setShowAllFilters] = useState(false);
+  const [quickFilter, setQuickFilter] = useState<"new" | "urgent" | null>(null);
 
-  const handleFilterChange = (key: keyof TenderFilters, value: any) => {
+  const handleFilterChange = (
+    key: keyof TenderFilters,
+    value: string | number | boolean | string[] | undefined
+  ) => {
     const newFilters = { ...localFilters, [key]: value };
     setLocalFilters(newFilters);
     applyFilters(newFilters);
@@ -148,8 +151,29 @@ export function TendersCatalogClient({
 
   const clearFilters = () => {
     setLocalFilters({});
+    setQuickFilter(null);
     router.push("/tenders");
   };
+
+  // Apply quick filters
+  const filteredTenders = initialTenders.filter((tender) => {
+    if (quickFilter === "new") {
+      const isNew =
+        new Date().getTime() - new Date(tender.createdAt).getTime() <
+        24 * 60 * 60 * 1000; // 24h
+      return isNew;
+    }
+    if (quickFilter === "urgent") {
+      const now = new Date().getTime();
+      const deadline = new Date(tender.deadline).getTime();
+      const daysUntilDeadline = Math.ceil(
+        (deadline - now) / (1000 * 60 * 60 * 24)
+      );
+      const isUrgent = daysUntilDeadline <= 7 && daysUntilDeadline > 0;
+      return isUrgent;
+    }
+    return true;
+  });
 
   const activeFiltersCount = Object.values(localFilters).filter(
     (v) => v !== undefined && v !== "" && v !== null
@@ -352,8 +376,8 @@ export function TendersCatalogClient({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-semibold">
-                  {initialTenders.length} projet
-                  {initialTenders.length > 1 ? "s" : ""}
+                  {filteredTenders.length} projet
+                  {filteredTenders.length > 1 ? "s" : ""}
                 </span>
                 {activeFiltersCount > 0 && (
                   <Badge
@@ -362,6 +386,11 @@ export function TendersCatalogClient({
                   >
                     {activeFiltersCount} filtre
                     {activeFiltersCount > 1 ? "s" : ""}
+                  </Badge>
+                )}
+                {quickFilter && (
+                  <Badge className="bg-artisan-yellow text-matte-black">
+                    {quickFilter === "new" ? "Nouveaux" : "Urgents"}
                   </Badge>
                 )}
               </div>
@@ -382,14 +411,28 @@ export function TendersCatalogClient({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-matte-black hover:bg-artisan-yellow hover:text-matte-black"
+                  onClick={() =>
+                    setQuickFilter(quickFilter === "new" ? null : "new")
+                  }
+                  className={`border-2 ${
+                    quickFilter === "new"
+                      ? "bg-artisan-yellow text-matte-black border-matte-black"
+                      : "border-matte-black hover:bg-artisan-yellow hover:text-matte-black"
+                  }`}
                 >
                   Nouveaux
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-matte-black hover:bg-artisan-yellow hover:text-matte-black"
+                  onClick={() =>
+                    setQuickFilter(quickFilter === "urgent" ? null : "urgent")
+                  }
+                  className={`border-2 ${
+                    quickFilter === "urgent"
+                      ? "bg-artisan-yellow text-matte-black border-matte-black"
+                      : "border-matte-black hover:bg-artisan-yellow hover:text-matte-black"
+                  }`}
                 >
                   Urgent
                 </Button>
@@ -411,7 +454,7 @@ export function TendersCatalogClient({
           </div>
 
           {/* Results Grid */}
-          {initialTenders.length === 0 ? (
+          {filteredTenders.length === 0 ? (
             <div className="text-center py-20">
               <div className="inline-block p-12 bg-white border-2 border-matte-black rounded-lg">
                 <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -432,7 +475,7 @@ export function TendersCatalogClient({
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-8">
-              {initialTenders.map((tender) => (
+              {filteredTenders.map((tender) => (
                 <TenderCard
                   key={tender.id}
                   tender={tender}
