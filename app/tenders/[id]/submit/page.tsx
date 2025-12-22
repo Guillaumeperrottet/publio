@@ -95,10 +95,11 @@ export default async function SubmitOfferPage({
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
-            href={`/tenders/${id}`}
+            href={existingOffer ? "/dashboard/offers" : `/tenders/${id}`}
             className="text-sm text-muted-foreground hover:text-matte-black transition-colors"
           >
-            ← Retour à l&apos;appel d&apos;offre
+            ←{" "}
+            {existingOffer ? "Retour à mes offres" : "Retour à l'appel d'offre"}
           </Link>
         </div>
 
