@@ -6,13 +6,17 @@ import { getUserOrganizations } from "@/features/organizations/actions";
 import { SubmitOfferStepper } from "@/components/offers/submit-offer-stepper";
 import { HandDrawnHighlight } from "@/components/ui/hand-drawn-highlight";
 import Link from "next/link";
+import { prisma } from "@/lib/db/prisma";
 
 export default async function SubmitOfferPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ offerId?: string }>;
 }) {
   const { id } = await params;
+  const { offerId } = await searchParams;
   const user = await getCurrentUser();
   const tender = await getTenderById(id);
 
@@ -28,6 +32,38 @@ export default async function SubmitOfferPage({
 
   const currentMembership = memberships[0];
   const organization = currentMembership.organization;
+
+  // Si offerId est fourni, récupérer le brouillon existant
+  let existingOffer = null;
+  if (offerId) {
+    existingOffer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        documents: true,
+        lineItems: {
+          orderBy: { position: "asc" },
+        },
+        inclusions: {
+          orderBy: { position: "asc" },
+        },
+        exclusions: {
+          orderBy: { position: "asc" },
+        },
+        materials: {
+          orderBy: { position: "asc" },
+        },
+      },
+    });
+
+    // Vérifier que le brouillon appartient à l'organisation
+    if (
+      existingOffer &&
+      (existingOffer.organizationId !== organization.id ||
+        existingOffer.status !== "DRAFT")
+    ) {
+      redirect(`/tenders/${id}/submit`);
+    }
+  }
 
   // Vérifier que l'utilisateur ne fait pas partie de l'organisation du tender
   const isOwner = tender.organization.members.some(
@@ -70,11 +106,11 @@ export default async function SubmitOfferPage({
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">
             <HandDrawnHighlight variant="yellow">
-              Soumettre une offre
+              {existingOffer ? "Modifier votre offre" : "Soumettre une offre"}
             </HandDrawnHighlight>
           </h1>
           <p className="text-lg text-muted-foreground">
-            Déposez votre offre pour le projet{" "}
+            {existingOffer ? "Modifiez" : "Déposez"} votre offre pour le projet{" "}
             <span className="font-semibold">{tender.title}</span>
           </p>
         </div>
@@ -91,6 +127,7 @@ export default async function SubmitOfferPage({
           }}
           organization={organization}
           userId={user.id}
+          existingOffer={existingOffer}
         />
       </div>
     </ProtectedLayout>

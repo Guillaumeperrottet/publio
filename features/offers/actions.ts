@@ -329,21 +329,28 @@ export async function submitOffer(data: {
       };
     }
 
-    // Vérifier si l'organisation a déjà soumis une offre
+    // Vérifier si l'organisation a déjà une offre (DRAFT ou SUBMITTED) pour éviter les doublons
     const existingOffer = await prisma.offer.findFirst({
       where: {
         tenderId: data.tenderId,
         organizationId: data.organizationId,
         status: {
-          in: ["SUBMITTED"],
+          in: ["DRAFT", "SUBMITTED"], // Empêcher plusieurs brouillons ET plusieurs soumissions
         },
       },
     });
 
     if (existingOffer) {
-      return {
-        error: "Vous avez déjà soumis une offre pour cet appel d'offres",
-      };
+      if (existingOffer.status === "SUBMITTED") {
+        return {
+          error: "Vous avez déjà soumis une offre pour cet appel d'offres",
+        };
+      } else {
+        return {
+          error:
+            "Vous avez déjà un brouillon d'offre pour cet appel d'offres. Veuillez le terminer ou le supprimer avant d'en créer un nouveau.",
+        };
+      }
     }
 
     // Générer un numéro d'offre si vide
@@ -1904,6 +1911,75 @@ export async function withdrawOffer(offerId: string) {
     return { success: true, offer: updatedOffer };
   } catch (error) {
     console.error("Error withdrawing offer:", error);
+    return {
+      error: error instanceof Error ? error.message : "Une erreur est survenue",
+    };
+  }
+}
+
+/**
+ * Supprimer un brouillon d'offre (action du soumissionnaire)
+ */
+export async function deleteDraftOffer(offerId: string) {
+  try {
+    const user = await getCurrentUser();
+
+    // Récupérer l'offre
+    const offer = await prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        organization: {
+          include: {
+            members: {
+              where: {
+                userId: user.id,
+                role: {
+                  in: ["OWNER", "ADMIN", "EDITOR"],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offer) {
+      return { error: "Offre introuvable" };
+    }
+
+    // Vérifier que l'utilisateur appartient à l'organisation soumissionnaire
+    if (!offer.organization.members.length) {
+      return {
+        error: "Vous n'avez pas les droits pour supprimer cette offre",
+      };
+    }
+
+    // Vérifier que l'offre est bien un brouillon
+    if (offer.status !== "DRAFT") {
+      return { error: "Seuls les brouillons peuvent être supprimés" };
+    }
+
+    // Supprimer toutes les relations liées
+    await prisma.$transaction([
+      // Supprimer les commentaires
+      prisma.offerComment.deleteMany({ where: { offerId } }),
+      // Supprimer les documents
+      prisma.offerDocument.deleteMany({ where: { offerId } }),
+      // Supprimer les line items
+      prisma.offerLineItem.deleteMany({ where: { offerId } }),
+      // Supprimer les inclusions
+      prisma.offerInclusion.deleteMany({ where: { offerId } }),
+      // Supprimer les exclusions
+      prisma.offerExclusion.deleteMany({ where: { offerId } }),
+      // Supprimer les matériaux
+      prisma.offerMaterial.deleteMany({ where: { offerId } }),
+      // Supprimer l'offre
+      prisma.offer.delete({ where: { id: offerId } }),
+    ]);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting draft offer:", error);
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
