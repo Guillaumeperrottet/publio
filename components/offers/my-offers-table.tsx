@@ -27,6 +27,8 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
+  Star,
+  Trophy,
 } from "lucide-react";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -51,6 +53,11 @@ const statusConfig: Record<
     icon: CheckCircle2,
     color: "bg-green-100 text-green-700",
   },
+  SHORTLISTED: {
+    label: "À étudier",
+    icon: Star,
+    color: "bg-yellow-100 text-yellow-700",
+  },
   WITHDRAWN: {
     label: "Retirée",
     icon: XCircle,
@@ -65,6 +72,11 @@ const statusConfig: Record<
     label: "Rejetée",
     icon: XCircle,
     color: "bg-orange-100 text-orange-700",
+  },
+  AWARDED: {
+    label: "Marché attribué",
+    icon: Trophy,
+    color: "bg-green-100 text-green-700 font-bold",
   },
 };
 
@@ -125,6 +137,10 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
       return { label: "Rejetée", color: "text-orange-600" };
     if (offerStatus === "WITHDRAWN")
       return { label: "Retirée", color: "text-red-600" };
+
+    // Si c'est un brouillon et que la deadline est passée
+    if (offerStatus === "DRAFT" && diffHours < 0)
+      return { label: "Expiré ⚠️", color: "text-red-600 font-semibold" };
 
     if (diffHours < 0)
       return { label: "En évaluation", color: "text-blue-600" };
@@ -352,15 +368,22 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {offer.status === "DRAFT" ? (
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/tenders/${offer.tender.id}/submit?offerId=${offer.id}`}
-                                    className="cursor-pointer"
-                                  >
+                                isPast(new Date(offer.tender.deadline)) ? (
+                                  <DropdownMenuItem disabled>
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Modifier le brouillon
-                                  </Link>
-                                </DropdownMenuItem>
+                                    Modifier le brouillon (expiré)
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem asChild>
+                                    <Link
+                                      href={`/tenders/${offer.tender.id}/submit?offerId=${offer.id}`}
+                                      className="cursor-pointer"
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      Modifier le brouillon
+                                    </Link>
+                                  </DropdownMenuItem>
+                                )
                               ) : (
                                 <DropdownMenuItem asChild>
                                   <Link
@@ -525,14 +548,29 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                           {/* Actions rapides */}
                           <div className="flex gap-2 pt-4 border-t">
                             {offer.status === "DRAFT" ? (
-                              <Link
-                                href={`/tenders/${offer.tender.id}/submit?offerId=${offer.id}`}
-                              >
-                                <Button variant="outline" size="sm">
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  Modifier le brouillon
-                                </Button>
-                              </Link>
+                              isPast(new Date(offer.tender.deadline)) ? (
+                                <div className="flex-1">
+                                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <p className="text-sm text-red-800 font-semibold">
+                                      ⚠️ Brouillon expiré
+                                    </p>
+                                    <p className="text-xs text-red-700 mt-1">
+                                      La date limite de cet appel d'offres est
+                                      dépassée. Ce brouillon ne peut plus être
+                                      soumis.
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Link
+                                  href={`/tenders/${offer.tender.id}/submit?offerId=${offer.id}`}
+                                >
+                                  <Button variant="outline" size="sm">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Modifier le brouillon
+                                  </Button>
+                                </Link>
+                              )
                             ) : (
                               <Link
                                 href={`/dashboard/tenders/${offer.tender.id}/offers/${offer.id}`}

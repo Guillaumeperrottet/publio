@@ -66,26 +66,30 @@ export default async function SubmitOfferPage({
   }
 
   // Vérifier que l'utilisateur ne fait pas partie de l'organisation du tender
+  // SAUF si on édite un brouillon existant qui nous appartient (cas d'édition de brouillon)
   const isOwner = tender.organization.members.some(
     (member: { userId: string }) => member.userId === user.id
   );
 
-  if (isOwner) {
+  const isEditingOwnDraft =
+    existingOffer && existingOffer.organizationId === organization.id;
+
+  if (isOwner && !isEditingOwnDraft) {
     // Rediriger vers la page du tender avec un message d'erreur
     redirect(`/tenders/${id}?error=own-tender`);
   }
 
-  // Vérifier que le tender n'est pas expiré
+  // Vérifier que le tender n'est pas expiré (sauf si on édite un brouillon)
   const now = new Date();
   const deadline = new Date(tender.deadline);
   const isExpired = now > deadline;
 
-  if (isExpired) {
+  if (isExpired && !isEditingOwnDraft) {
     redirect(`/tenders/${id}`);
   }
 
-  // Vérifier que l'organisation n'est pas l'émettrice
-  if (tender.organizationId === organization.id) {
+  // Vérifier que l'organisation n'est pas l'émettrice (sauf si on édite un brouillon)
+  if (tender.organizationId === organization.id && !isEditingOwnDraft) {
     redirect(`/tenders/${id}`);
   }
 

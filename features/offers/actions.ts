@@ -329,13 +329,13 @@ export async function submitOffer(data: {
       };
     }
 
-    // Vérifier si l'organisation a déjà une offre (DRAFT ou SUBMITTED) pour éviter les doublons
+    // Vérifier si l'organisation a déjà une offre (DRAFT ou SUBMITTED ou WITHDRAWN) pour éviter les doublons
     const existingOffer = await prisma.offer.findFirst({
       where: {
         tenderId: data.tenderId,
         organizationId: data.organizationId,
         status: {
-          in: ["DRAFT", "SUBMITTED"], // Empêcher plusieurs brouillons ET plusieurs soumissions
+          in: ["DRAFT", "SUBMITTED", "WITHDRAWN"], // Empêcher re-soumission après retrait
         },
       },
     });
@@ -344,6 +344,11 @@ export async function submitOffer(data: {
       if (existingOffer.status === "SUBMITTED") {
         return {
           error: "Vous avez déjà soumis une offre pour cet appel d'offres",
+        };
+      } else if (existingOffer.status === "WITHDRAWN") {
+        return {
+          error:
+            "Vous avez retiré votre offre pour cet appel d'offres. Vous ne pouvez plus soumettre de nouvelle offre.",
         };
       } else {
         return {
@@ -361,57 +366,105 @@ export async function submitOffer(data: {
         .substring(2, 8)
         .toUpperCase()}`;
 
-    // Créer l'offre en mode SUBMITTED
-    const offer = await prisma.offer.create({
-      data: {
-        tenderId: data.tenderId,
-        organizationId: data.organizationId,
-        offerNumber,
-        validityDays: data.formData.validityDays,
-        projectSummary: data.formData.projectSummary,
-        description: data.formData.description,
-        methodology: data.formData.methodology,
-        priceType: data.formData.priceType,
-        price: data.formData.price,
-        totalHT: data.formData.totalHT,
-        totalTVA: data.formData.totalTVA,
-        tvaRate: data.formData.tvaRate,
-        timeline: data.formData.timeline,
-        startDate: data.formData.startDate
-          ? new Date(data.formData.startDate)
-          : null,
-        durationDays: data.formData.durationDays,
-        constraints: data.formData.constraints,
-        paymentTerms: data.formData.paymentTerms,
-        warrantyYears: data.formData.warrantyYears,
-        insuranceAmount: data.formData.insuranceAmount,
-        manufacturerWarranty: data.formData.manufacturerWarranty,
-        references: data.formData.references,
-        status: OfferStatus.SUBMITTED,
-        submittedAt: new Date(),
-      },
+    // Créer l'offre et ses relations en transaction atomique
+    const offer = await prisma.$transaction(async (tx) => {
+      // Créer l'offre en mode SUBMITTED
+      const newOffer = await tx.offer.create({
+        data: {
+          tenderId: data.tenderId,
+          organizationId: data.organizationId,
+          offerNumber,
+          validityDays: data.formData.validityDays,
+          projectSummary: data.formData.projectSummary,
+          description: data.formData.description,
+          methodology: data.formData.methodology,
+          priceType: data.formData.priceType,
+          price: data.formData.price,
+          totalHT: data.formData.totalHT,
+          totalTVA: data.formData.totalTVA,
+          tvaRate: data.formData.tvaRate,
+          timeline: data.formData.timeline,
+          startDate: data.formData.startDate
+            ? new Date(data.formData.startDate)
+            : null,
+          durationDays: data.formData.durationDays,
+          constraints: data.formData.constraints,
+          paymentTerms: data.formData.paymentTerms,
+          warrantyYears: data.formData.warrantyYears,
+          insuranceAmount: data.formData.insuranceAmount,
+          manufacturerWarranty: data.formData.manufacturerWarranty,
+          references: data.formData.references,
+          status: OfferStatus.SUBMITTED,
+          submittedAt: new Date(),
+        },
+      });
+
+      // Créer les relations
+      if (data.formData.inclusions.length > 0) {
+        await tx.offerInclusion.createMany({
+          data: data.formData.inclusions.map((inc) => ({
+            offerId: newOffer.id,
+            position: inc.position,
+            description: inc.description,
+          })),
+        });
+      }
+
+      if (data.formData.exclusions.length > 0) {
+        await tx.offerExclusion.createMany({
+          data: data.formData.exclusions.map((exc) => ({
+            offerId: newOffer.id,
+            position: exc.position,
+            description: exc.description,
+          })),
+        });
+      }
+
+      // Créer les matériaux
+      if (data.formData.materials.length > 0) {
+        await tx.offerMaterial.createMany({
+          data: data.formData.materials.map((mat) => ({
+            offerId: newOffer.id,
+            position: mat.position,
+            name: mat.name,
+            brand: mat.brand,
+            model: mat.model,
+            range: mat.range,
+            manufacturerWarranty: mat.manufacturerWarranty,
+          })),
+        });
+      }
+
+      // Créer les lignes de prix détaillées
+      if (data.formData.lineItems.length > 0) {
+        await tx.offerLineItem.createMany({
+          data: data.formData.lineItems.map((item) => ({
+            offerId: newOffer.id,
+            position: item.position,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            priceHT: item.priceHT,
+            tvaRate: item.tvaRate,
+          })),
+        });
+      }
+
+      // Créer les documents liés
+      if (data.formData.documents && data.formData.documents.length > 0) {
+        await tx.offerDocument.createMany({
+          data: data.formData.documents.map((doc) => ({
+            offerId: newOffer.id,
+            name: doc.name,
+            url: doc.url,
+            size: doc.size,
+            mimeType: doc.mimeType,
+          })),
+        });
+      }
+
+      return newOffer;
     });
-
-    // Créer les relations
-    if (data.formData.inclusions.length > 0) {
-      await prisma.offerInclusion.createMany({
-        data: data.formData.inclusions.map((inc) => ({
-          offerId: offer.id,
-          position: inc.position,
-          description: inc.description,
-        })),
-      });
-    }
-
-    if (data.formData.exclusions.length > 0) {
-      await prisma.offerExclusion.createMany({
-        data: data.formData.exclusions.map((exc) => ({
-          offerId: offer.id,
-          position: exc.position,
-          description: exc.description,
-        })),
-      });
-    }
 
     // Récupérer l'organisation avec les membres pour les emails
     const submitterOrg = await prisma.organization.findUnique({
@@ -521,47 +574,6 @@ export async function submitOffer(data: {
       });
     } catch (error) {
       console.error("Error sending offer received notification:", error);
-    }
-
-    if (data.formData.materials.length > 0) {
-      await prisma.offerMaterial.createMany({
-        data: data.formData.materials.map((mat) => ({
-          offerId: offer.id,
-          position: mat.position,
-          name: mat.name,
-          brand: mat.brand,
-          model: mat.model,
-          range: mat.range,
-          manufacturerWarranty: mat.manufacturerWarranty,
-        })),
-      });
-    }
-
-    if (data.formData.lineItems.length > 0) {
-      await prisma.offerLineItem.createMany({
-        data: data.formData.lineItems.map((item) => ({
-          offerId: offer.id,
-          position: item.position,
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit,
-          priceHT: item.priceHT,
-          tvaRate: item.tvaRate,
-        })),
-      });
-    }
-
-    // Créer les documents liés
-    if (data.formData.documents && data.formData.documents.length > 0) {
-      await prisma.offerDocument.createMany({
-        data: data.formData.documents.map((doc) => ({
-          offerId: offer.id,
-          name: doc.name,
-          url: doc.url,
-          size: doc.size,
-          mimeType: doc.mimeType,
-        })),
-      });
     }
 
     return {
@@ -1204,6 +1216,7 @@ export async function getTendersWithUnreadOffers(organizationId: string) {
 
 /**
  * Accepter une offre (marquer comme gagnante)
+ * Note : Pour attribuer le marché définitivement, utilisez awardTender() de features/tenders
  */
 export async function acceptOffer(offerId: string) {
   try {
@@ -1246,6 +1259,10 @@ export async function acceptOffer(offerId: string) {
     if (offer.status !== "SUBMITTED") {
       return { error: "Seules les offres soumises peuvent être acceptées" };
     }
+
+    console.warn(
+      "⚠️ acceptOffer() est déprécié. Utilisez awardOffer() pour attribuer un marché."
+    );
 
     // Mettre à jour l'offre
     const updatedOffer = await prisma.offer.update({
@@ -1855,9 +1872,12 @@ export async function withdrawOffer(offerId: string) {
       };
     }
 
-    // Vérifier que l'offre est bien soumise
-    if (offer.status !== "SUBMITTED") {
-      return { error: "Seules les offres soumises peuvent être retirées" };
+    // Vérifier que l'offre est soumise ou pré-sélectionnée
+    if (offer.status !== "SUBMITTED" && offer.status !== "SHORTLISTED") {
+      return {
+        error:
+          "Seules les offres soumises ou pré-sélectionnées peuvent être retirées",
+      };
     }
 
     // Vérifier que la deadline n'est pas dépassée (on peut retirer seulement avant)
