@@ -152,9 +152,6 @@ export function OfferStep5({
   const handlePreviewPdf = async () => {
     setIsGeneratingPdf(true);
     try {
-      // D'abord, sauvegarder un brouillon pour obtenir un ID
-      toast.info("Préparation du PDF...");
-
       // Note: Pour la prévisualisation, on utilise pdfmake côté client
       const { downloadOfferPDF } = await import("@/lib/pdf/offer-generator");
 
@@ -202,7 +199,7 @@ export function OfferStep5({
         insuranceAmount: formData.insuranceAmount,
       };
 
-      downloadOfferPDF(
+      await downloadOfferPDF(
         pdfData,
         `apercu-offre-${tender.title.substring(0, 20)}.pdf`
       );

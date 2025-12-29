@@ -10,11 +10,17 @@ import type {
 let fontsInitialized = false;
 
 function initializeFonts() {
-  if (!fontsInitialized && typeof window === "undefined") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfFonts = require("pdfmake/build/vfs_fonts");
-    pdfMake.vfs = pdfFonts.pdfMake.vfs;
-    fontsInitialized = true;
+  if (!fontsInitialized) {
+    if (typeof window === "undefined") {
+      // Côté serveur
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfFonts = require("pdfmake/build/vfs_fonts");
+      pdfMake.vfs = pdfFonts.pdfMake.vfs;
+      fontsInitialized = true;
+    } else {
+      // Côté client - les polices seront chargées dynamiquement
+      fontsInitialized = true;
+    }
   }
 }
 
@@ -730,7 +736,6 @@ export async function generateOfferPDF(data: OfferData): Promise<Buffer> {
       },
     },
     defaultStyle: {
-      font: "Helvetica",
       fontSize: 10,
       color: "#374151",
     },
@@ -751,7 +756,16 @@ export async function generateOfferPDF(data: OfferData): Promise<Buffer> {
 /**
  * Générer un PDF et le télécharger côté client
  */
-export function downloadOfferPDF(data: OfferData, filename?: string): void {
+export async function downloadOfferPDF(
+  data: OfferData,
+  filename?: string
+): Promise<void> {
+  // Charger les polices côté client si nécessaire
+  if (typeof window !== "undefined" && !pdfMake.vfs) {
+    const pdfFonts = await import("pdfmake/build/vfs_fonts");
+    pdfMake.vfs = pdfFonts.vfs;
+  }
+
   // Initialiser les polices si côté serveur
   initializeFonts();
 
@@ -767,7 +781,6 @@ export function downloadOfferPDF(data: OfferData, filename?: string): void {
       },
     },
     defaultStyle: {
-      font: "Helvetica",
       fontSize: 10,
       color: "#374151",
     },
