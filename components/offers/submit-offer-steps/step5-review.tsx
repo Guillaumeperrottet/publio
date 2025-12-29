@@ -24,6 +24,7 @@ import {
   Send,
   AlertCircle,
   ChevronLeft,
+  Download,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { submitOffer } from "@/features/offers/actions";
@@ -56,6 +57,7 @@ export function OfferStep5({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -144,6 +146,72 @@ export function OfferStep5({
           : "Erreur lors de la soumission de l'offre"
       );
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePreviewPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      // D'abord, sauvegarder un brouillon pour obtenir un ID
+      toast.info("Préparation du PDF...");
+
+      // Note: Pour la prévisualisation, on utilise pdfmake côté client
+      const { downloadOfferPDF } = await import("@/lib/pdf/offer-generator");
+
+      const pdfData = {
+        offerNumber: formData.offerNumber || `OFF-PREVIEW`,
+        offerDate: new Date(),
+        validityDays: formData.validityDays,
+        organization: {
+          name: organization.name,
+          address: null,
+          city: null,
+          canton: null,
+          country: null,
+          phone: null,
+          email: null,
+          website: null,
+        },
+        tender: {
+          title: tender.title,
+          organization: {
+            name: "Organisation destinataire",
+            address: null,
+            city: null,
+            phone: null,
+            email: null,
+          },
+        },
+        projectSummary: formData.projectSummary,
+        inclusions: formData.inclusions,
+        exclusions: formData.exclusions,
+        materials: formData.materials,
+        priceType: formData.priceType,
+        currency: tender.currency,
+        lineItems: formData.lineItems,
+        price: formData.price,
+        totalHT: formData.totalHT,
+        totalTVA: formData.totalTVA,
+        tvaRate: formData.tvaRate,
+        timeline: formData.timeline,
+        startDate: formData.startDate ? new Date(formData.startDate) : null,
+        durationDays: formData.durationDays,
+        constraints: formData.constraints,
+        paymentTerms: formData.paymentTerms,
+        warrantyYears: formData.warrantyYears,
+        insuranceAmount: formData.insuranceAmount,
+      };
+
+      downloadOfferPDF(
+        pdfData,
+        `apercu-offre-${tender.title.substring(0, 20)}.pdf`
+      );
+      toast.success("PDF généré avec succès !");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Erreur lors de la génération du PDF");
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -492,6 +560,44 @@ export function OfferStep5({
       <HandDrawnCard>
         <HandDrawnCardContent className="p-6">
           <div className="space-y-4">
+            {/* Bouton prévisualisation PDF */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 mb-1">
+                    Prévisualiser votre offre en PDF
+                  </h4>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Téléchargez un aperçu de votre offre au format professionnel
+                    avec le logo Publio. Ce document pourra être régénéré après
+                    soumission.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviewPdf}
+                    disabled={isGeneratingPdf || isSubmitting}
+                    className="border-blue-300 hover:bg-blue-100"
+                  >
+                    {isGeneratingPdf ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Télécharger l&apos;aperçu PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             <div className="flex items-start gap-2 text-sm">
               <AlertCircle className="w-5 h-5 text-artisan-yellow mt-0.5" />
               <div>

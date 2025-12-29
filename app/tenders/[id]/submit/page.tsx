@@ -132,7 +132,7 @@ export default async function SubmitOfferPage({
           }}
           organization={organization}
           userId={user.id}
-          existingOffer={existingOffer}
+          existingOffer={existingOffer || undefined}
         />
       </div>
     </ProtectedLayout>

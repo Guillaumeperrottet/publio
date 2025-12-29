@@ -30,6 +30,7 @@ import { UnshortlistOfferButton } from "@/components/offers/unshortlist-offer-bu
 import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
 import { OfferComments } from "@/components/offers/offer-comments";
+import { DownloadOfferPdfButton } from "@/components/offers/download-offer-pdf-button";
 
 interface Offer {
   id: string;
@@ -40,6 +41,7 @@ interface Offer {
   timeline: string | null;
   submittedAt: Date | null;
   status: string;
+  offerNumber?: string | null;
   _count?: {
     comments: number;
   };
@@ -271,6 +273,19 @@ export function OffersTable({
                                 <Eye className="w-4 h-4 mr-2" />
                                 Voir le détail
                               </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <DownloadOfferPdfButton
+                                offerId={offer.id}
+                                offerNumber={offer.offerNumber}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start p-0 h-auto font-normal"
+                              />
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

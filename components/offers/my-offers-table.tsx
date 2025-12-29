@@ -34,6 +34,7 @@ import { format, formatDistanceToNow, isPast } from "date-fns";
 import { fr } from "date-fns/locale";
 import { WithdrawOfferButton } from "@/components/offers/withdraw-offer-button";
 import { DeleteDraftOfferButton } from "@/components/offers/delete-draft-offer-button";
+import { DownloadOfferPdfButton } from "@/components/offers/download-offer-pdf-button";
 
 const statusConfig: Record<
   string,
@@ -89,6 +90,7 @@ interface MyOffersTableProps {
     submittedAt: Date | null;
     createdAt: Date;
     paymentStatus: string;
+    offerNumber?: string | null;
     tender: {
       id: string;
       title: string;
@@ -404,6 +406,24 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                   Voir l&apos;appel d&apos;offre
                                 </Link>
                               </DropdownMenuItem>
+
+                              {/* Télécharger PDF (seulement pour offres soumises) */}
+                              {offer.status !== "DRAFT" && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                >
+                                  <DownloadOfferPdfButton
+                                    offerId={offer.id}
+                                    offerNumber={offer.offerNumber}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start p-0 h-auto font-normal"
+                                  />
+                                </DropdownMenuItem>
+                              )}
+
                               {offer.status === "DRAFT" && (
                                 <>
                                   <DropdownMenuSeparator />
