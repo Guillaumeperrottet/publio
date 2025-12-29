@@ -101,7 +101,7 @@ export function OfferSuccessContent({ offer }: OfferSuccessContentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-deep-green/5 to-white py-8">
+    <div className="min-h-screen bg-linear-to-b from-deep-green/5 to-white py-8">
       <div className="container max-w-3xl mx-auto px-4">
         {/* Header avec animation */}
         <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -172,7 +172,7 @@ export function OfferSuccessContent({ offer }: OfferSuccessContentProps) {
             <Card className="border-l-4 border-l-artisan-yellow hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-artisan-yellow/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-artisan-yellow/20 rounded-full flex items-center justify-center shrink-0">
                     <Mail className="w-5 h-5 text-artisan-yellow" />
                   </div>
                   <div>
@@ -195,7 +195,7 @@ export function OfferSuccessContent({ offer }: OfferSuccessContentProps) {
             <Card className="border-l-4 border-l-deep-green hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-deep-green/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-deep-green/20 rounded-full flex items-center justify-center shrink-0">
                     <Eye className="w-5 h-5 text-deep-green" />
                   </div>
                   <div>
@@ -227,7 +227,7 @@ export function OfferSuccessContent({ offer }: OfferSuccessContentProps) {
             <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
                     <Bell className="w-5 h-5 text-blue-500" />
                   </div>
                   <div>

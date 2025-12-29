@@ -386,17 +386,7 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                     </Link>
                                   </DropdownMenuItem>
                                 )
-                              ) : (
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/dashboard/tenders/${offer.tender.id}/offers/${offer.id}`}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Voir les détails
-                                  </Link>
-                                </DropdownMenuItem>
-                              )}
+                              ) : null}
                               <DropdownMenuItem asChild>
                                 <Link
                                   href={`/tenders/${offer.tender.id}`}
@@ -591,22 +581,33 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                   </Button>
                                 </Link>
                               )
-                            ) : (
-                              <Link
-                                href={`/dashboard/tenders/${offer.tender.id}/offers/${offer.id}`}
-                              >
-                                <Button variant="outline" size="sm">
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Voir tous les détails
-                                </Button>
-                              </Link>
-                            )}
+                            ) : null}
                             <Link href={`/tenders/${offer.tender.id}`}>
                               <Button variant="outline" size="sm">
                                 <FileText className="w-4 h-4 mr-2" />
                                 Voir l&apos;appel d&apos;offre
                               </Button>
                             </Link>
+
+                            {/* Télécharger PDF - pour offres soumises */}
+                            {offer.status !== "DRAFT" && (
+                              <DownloadOfferPdfButton
+                                offerId={offer.id}
+                                offerNumber={offer.offerNumber}
+                                variant="outline"
+                                size="sm"
+                              />
+                            )}
+
+                            {/* Retirer l'offre - si soumise et deadline pas passée */}
+                            {offer.status === "SUBMITTED" &&
+                              !isPast(new Date(offer.tender.deadline)) && (
+                                <WithdrawOfferButton
+                                  offerId={offer.id}
+                                  tenderTitle={offer.tender.title}
+                                  tenderDeadline={offer.tender.deadline}
+                                />
+                              )}
                           </div>
                         </div>
                       )}
@@ -668,16 +669,7 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                 Modifier le brouillon
                               </Link>
                             </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/dashboard/tenders/${offer.tender.id}/offers/${offer.id}`}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Voir les détails
-                              </Link>
-                            </DropdownMenuItem>
-                          )}
+                          ) : null}
                           <DropdownMenuItem asChild>
                             <Link href={`/tenders/${offer.tender.id}`}>
                               <FileText className="w-4 h-4 mr-2" />
