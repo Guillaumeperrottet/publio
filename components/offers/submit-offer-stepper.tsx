@@ -229,7 +229,8 @@ export function SubmitOfferStepper({
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [formData, draftOfferId, tender.id, organization.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tender.id, organization.id]); // Retirer formData et draftOfferId des deps
 
   const handleSaveDraft = async () => {
     setIsSaving(true);

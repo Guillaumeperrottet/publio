@@ -289,7 +289,7 @@ export function OfferSuccessContent({ offer }: OfferSuccessContentProps) {
         {/* CTA principal */}
         <div className="text-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000">
           <Button
-            onClick={() => router.push("/mes-offres")}
+            onClick={() => router.push("/dashboard/offers")}
             size="lg"
             className="bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black font-bold px-6 py-4 shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >

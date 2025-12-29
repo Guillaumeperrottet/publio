@@ -41,7 +41,7 @@ export function OfferPreview({
   return (
     <div className="sticky top-4 bg-white rounded-lg border-2 border-artisan-yellow/30 shadow-lg overflow-hidden">
       {/* En-tête style PDF */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+      <div className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-6">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-xl font-bold mb-1">Publio</h3>

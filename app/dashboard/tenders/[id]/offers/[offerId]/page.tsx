@@ -38,6 +38,7 @@ import { RejectOfferButton } from "@/components/offers/reject-offer-button";
 import { AwardTenderButton } from "@/components/tenders/award-tender-button";
 import { OfferComments } from "@/components/offers/offer-comments";
 import { OfferCommentsInline } from "@/components/offers/offer-comments-inline";
+import { DownloadOfferPdfButton } from "@/components/offers/download-offer-pdf-button";
 
 export default async function OfferDetailPage({
   params,
@@ -144,6 +145,14 @@ export default async function OfferDetailPage({
             <div className="mt-6 p-4 bg-white border-2 border-matte-black rounded-lg">
               <h3 className="text-sm font-semibold mb-3">Actions</h3>
               <div className="flex flex-wrap gap-3">
+                {/* Télécharger PDF */}
+                <DownloadOfferPdfButton
+                  offerId={offer.id}
+                  offerNumber={offer.offerNumber}
+                  variant="outline"
+                  size="sm"
+                />
+
                 {/* Commentaires internes */}
                 <OfferComments
                   offerId={offer.id}
@@ -222,6 +231,33 @@ export default async function OfferDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Prévisualisation PDF */}
+            <HandDrawnCard>
+              <HandDrawnCardHeader>
+                <HandDrawnCardTitle className="font-handdrawn text-2xl flex items-center gap-2">
+                  <FileText className="w-6 h-6" />
+                  Aperçu de l&apos;offre (PDF)
+                </HandDrawnCardTitle>
+              </HandDrawnCardHeader>
+              <HandDrawnCardContent>
+                <div className="border-2 border-matte-black rounded-lg overflow-hidden bg-gray-50">
+                  <iframe
+                    src={`/api/offers/${offer.id}/pdf`}
+                    className="w-full h-[800px]"
+                    title="Aperçu PDF de l'offre"
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <DownloadOfferPdfButton
+                    offerId={offer.id}
+                    offerNumber={offer.offerNumber}
+                    variant="outline"
+                    size="sm"
+                  />
+                </div>
+              </HandDrawnCardContent>
+            </HandDrawnCard>
+
             {/* Informations générales */}
             <HandDrawnCard>
               <HandDrawnCardHeader>
