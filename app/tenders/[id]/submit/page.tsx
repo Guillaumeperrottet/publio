@@ -129,6 +129,12 @@ export default async function SubmitOfferPage({
             currency: tender.currency,
             description: tender.description,
             budget: tender.budget || undefined,
+            deadline: tender.deadline,
+            organization: {
+              name: tender.organization.name,
+              address: tender.organization.address,
+              city: tender.organization.city,
+            },
           }}
           organization={organization}
           userId={user.id}

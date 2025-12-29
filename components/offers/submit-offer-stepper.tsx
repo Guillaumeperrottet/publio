@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { OfferStep1 } from "./submit-offer-steps/step1-info";
-import { OfferStep2 } from "./submit-offer-steps/step2-prestations";
-import { OfferStep3 } from "./submit-offer-steps/step3-prix";
-import { OfferStep4 } from "./submit-offer-steps/step4-delais-paiement";
-import { OfferStep5 } from "./submit-offer-steps/step5-review";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
-import { saveDraftOffer } from "@/features/offers/actions";
+import { ChevronLeft, ChevronRight, Save, Send } from "lucide-react";
+import { saveDraftOffer, submitOffer } from "@/features/offers/actions";
 import { toastSuccess, handleError } from "@/lib/utils/toast-messages";
+import { OfferTemplateProfessional } from "./offer-template-professional";
+import { Step2Documents } from "./submit-offer-steps/step2-documents";
+import { Step3Review } from "./submit-offer-steps/step3-review";
 
 export interface OfferLineItem {
   position: number;
@@ -44,7 +43,18 @@ export interface OfferFormData {
   // Étape 1
   offerNumber?: string;
   validityDays: number;
+  usesTenderDeadline?: boolean; // Pour tracker si on utilise la deadline du tender
   projectSummary: string;
+
+  // Contact et coordonnées
+  contactPerson?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  organizationAddress?: string;
+  organizationCity?: string;
+  organizationPhone?: string;
+  organizationEmail?: string;
+  organizationWebsite?: string;
 
   // Étape 2
   inclusions: OfferInclusion[];
@@ -59,6 +69,7 @@ export interface OfferFormData {
   totalHT?: number;
   totalTVA?: number;
   tvaRate: number;
+  discount?: number; // Rabais en pourcentage
   lineItems: OfferLineItem[];
 
   // Étape 4
@@ -94,10 +105,17 @@ interface SubmitOfferStepperProps {
     currency: string;
     description: string;
     budget?: number;
+    deadline: Date;
+    organization: {
+      name: string;
+      address?: string | null;
+      city?: string | null;
+    };
   };
   organization: {
     id: string;
     name: string;
+    logo?: string | null;
   };
   userId: string;
   existingOffer?: {
@@ -110,11 +128,17 @@ interface SubmitOfferStepperProps {
 }
 
 const STEPS = [
-  { number: 1, title: "Informations", subtitle: "Référence & validité" },
-  { number: 2, title: "Prestations", subtitle: "Ce qui est inclus/exclu" },
-  { number: 3, title: "Prix", subtitle: "Décomposition tarifaire" },
-  { number: 4, title: "Délais & Paiement", subtitle: "Planning & conditions" },
-  { number: 5, title: "Révision", subtitle: "Vérification finale" },
+  {
+    number: 1,
+    title: "Établissement de l'offre",
+    subtitle: "Complétez tous les champs",
+  },
+  { number: 2, title: "Documents", subtitle: "Images, plans, certifications" },
+  {
+    number: 3,
+    title: "Révision & Envoi",
+    subtitle: "Vérification finale",
+  },
 ];
 
 export function SubmitOfferStepper({
@@ -122,35 +146,54 @@ export function SubmitOfferStepper({
   organization,
   existingOffer,
 }: SubmitOfferStepperProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [draftOfferId, setDraftOfferId] = useState<string | undefined>(
+    existingOffer?.id
+  );
 
   const [formData, setFormData] = useState<OfferFormData>({
     offerNumber: existingOffer?.offerNumber || "",
     validityDays: existingOffer?.validityDays || 60,
+    usesTenderDeadline: (existingOffer?.usesTenderDeadline as boolean) || false,
     projectSummary: existingOffer?.projectSummary || "",
-    inclusions: [],
-    exclusions: [],
-    materials: [],
-    description: "",
-    methodology: "",
-    priceType: "GLOBAL",
-    price: 0,
-    totalHT: undefined,
-    totalTVA: undefined,
-    tvaRate: 7.7,
-    lineItems: [],
-    timeline: "",
-    startDate: undefined,
-    durationDays: undefined,
-    constraints: "",
-    paymentTerms: undefined,
-    warrantyYears: undefined,
-    insuranceAmount: undefined,
-    manufacturerWarranty: "",
-    references: "",
-    documents: [],
+    contactPerson: (existingOffer?.contactPerson as string) || "",
+    contactEmail: (existingOffer?.contactEmail as string) || "",
+    contactPhone: (existingOffer?.contactPhone as string) || "",
+    organizationAddress: (existingOffer?.organizationAddress as string) || "",
+    organizationCity: (existingOffer?.organizationCity as string) || "",
+    organizationPhone: (existingOffer?.organizationPhone as string) || "",
+    organizationEmail: (existingOffer?.organizationEmail as string) || "",
+    organizationWebsite: (existingOffer?.organizationWebsite as string) || "",
+    inclusions: (existingOffer?.inclusions as OfferInclusion[]) || [],
+    exclusions: (existingOffer?.exclusions as OfferExclusion[]) || [],
+    materials: (existingOffer?.materials as OfferMaterial[]) || [],
+    description: (existingOffer?.description as string) || "",
+    methodology: (existingOffer?.methodology as string) || "",
+    priceType: (existingOffer?.priceType as "GLOBAL" | "DETAILED") || "GLOBAL",
+    price: (existingOffer?.price as number) || 0,
+    totalHT: (existingOffer?.totalHT as number) || undefined,
+    totalTVA: (existingOffer?.totalTVA as number) || undefined,
+    tvaRate: (existingOffer?.tvaRate as number) || 7.7,
+    discount: (existingOffer?.discount as number) || undefined,
+    lineItems: (existingOffer?.lineItems as OfferLineItem[]) || [],
+    timeline: (existingOffer?.timeline as string) || "",
+    startDate: existingOffer?.startDate
+      ? new Date(existingOffer.startDate as Date).toISOString().split("T")[0]
+      : undefined,
+    durationDays: (existingOffer?.durationDays as number) || undefined,
+    constraints: (existingOffer?.constraints as string) || "",
+    paymentTerms:
+      (existingOffer?.paymentTerms as OfferFormData["paymentTerms"]) ||
+      undefined,
+    warrantyYears: (existingOffer?.warrantyYears as number) || undefined,
+    insuranceAmount: (existingOffer?.insuranceAmount as number) || undefined,
+    manufacturerWarranty: (existingOffer?.manufacturerWarranty as string) || "",
+    references: (existingOffer?.references as string) || "",
+    documents: (existingOffer?.documents as OfferFormData["documents"]) || [],
   });
 
   // Auto-save brouillon toutes les 30 secondes
@@ -159,7 +202,7 @@ export function SubmitOfferStepper({
       setIsSaving(true);
       try {
         const result = await saveDraftOffer({
-          offerId: existingOffer?.id,
+          offerId: draftOfferId,
           tenderId: tender.id,
           organizationId: organization.id,
           formData,
@@ -169,6 +212,10 @@ export function SubmitOfferStepper({
           console.error("Error saving draft:", result.error);
         } else {
           setLastSaved(new Date());
+          // Conserver l'ID du brouillon créé pour les futures sauvegardes
+          if (result.offerId && !draftOfferId) {
+            setDraftOfferId(result.offerId);
+          }
         }
       } catch (error) {
         console.error("Error saving draft:", error);
@@ -182,13 +229,13 @@ export function SubmitOfferStepper({
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [formData, existingOffer?.id, tender.id, organization.id]);
+  }, [formData, draftOfferId, tender.id, organization.id]);
 
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
       const result = await saveDraftOffer({
-        offerId: existingOffer?.id,
+        offerId: draftOfferId,
         tenderId: tender.id,
         organizationId: organization.id,
         formData,
@@ -198,6 +245,10 @@ export function SubmitOfferStepper({
         handleError(new Error(result.error), "saveDraftOffer");
       } else {
         setLastSaved(new Date());
+        // Conserver l'ID du brouillon créé pour les futures sauvegardes
+        if (result.offerId && !draftOfferId) {
+          setDraftOfferId(result.offerId);
+        }
         toastSuccess.saved();
       }
     } catch (error) {
@@ -230,25 +281,69 @@ export function SubmitOfferStepper({
       case 1:
         return formData.projectSummary.length >= 50;
       case 2:
-        return (
-          formData.inclusions.length > 0 && formData.description.length >= 50
-        );
-      case 3:
-        if (formData.priceType === "GLOBAL") {
-          return formData.price > 0;
-        } else {
-          return (
-            formData.lineItems.length > 0 &&
-            formData.totalHT &&
-            formData.totalHT > 0
-          );
-        }
-      case 4:
-        return formData.durationDays && formData.durationDays > 0;
-      case 5:
+        // Étape 2 (documents) est optionnelle
         return true;
+      case 3:
+        // Étape 3 (révision) - vérifier que les données essentielles sont présentes
+        return (
+          formData.projectSummary.length >= 50 &&
+          formData.lineItems.length > 0 &&
+          formData.price > 0
+        );
       default:
         return true;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!draftOfferId) {
+      handleError(
+        new Error("Veuillez d'abord sauvegarder l'offre"),
+        "submitOffer"
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const result = await submitOffer({
+        tenderId: tender.id,
+        organizationId: organization.id,
+        formData,
+      });
+
+      if (result.error) {
+        handleError(new Error(result.error), "submitOffer");
+        return;
+      }
+
+      if (result.offerId) {
+        // Rediriger vers la page de succès avec confettis
+        router.push(
+          `/tenders/${tender.id}/submit/success?offerId=${result.offerId}`
+        );
+      }
+    } catch (error) {
+      handleError(error, "submitOffer");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadPreview = async () => {
+    if (!draftOfferId) {
+      handleError(
+        new Error("Veuillez d'abord sauvegarder l'offre"),
+        "downloadPreview"
+      );
+      return;
+    }
+    try {
+      // Download via API route instead
+      window.open(`/api/offers/${draftOfferId}/pdf`, "_blank");
+    } catch (error) {
+      handleError(error, "downloadPreview");
     }
   };
 
@@ -257,52 +352,60 @@ export function SubmitOfferStepper({
       {/* Indicateur d'étapes */}
       <div className="relative">
         <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => (
-            <div key={step.number} className="flex-1 relative">
-              <div className="flex flex-col items-center">
-                {/* Numéro de l'étape */}
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 font-bold transition-all ${
-                    currentStep === step.number
-                      ? "bg-artisan-yellow border-artisan-yellow text-matte-black shadow-lg scale-110"
-                      : currentStep > step.number
-                      ? "bg-deep-green border-deep-green text-white"
-                      : "bg-white border-gray-300 text-gray-400"
-                  }`}
-                >
-                  {step.number}
-                </div>
+          {STEPS.map((step, index) => {
+            const isCompleted = currentStep > step.number;
+            const isCurrent = currentStep === step.number;
 
-                {/* Titre et sous-titre */}
-                <div className="mt-2 text-center hidden md:block">
-                  <div
-                    className={`text-sm font-semibold ${
-                      currentStep === step.number
-                        ? "text-artisan-yellow"
-                        : currentStep > step.number
-                        ? "text-deep-green"
-                        : "text-gray-400"
+            return (
+              <div key={step.number} className="flex-1 relative">
+                <div className="flex flex-col items-center">
+                  {/* Numéro de l'étape */}
+                  <button
+                    onClick={() => setCurrentStep(step.number)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center border-2 font-bold transition-all cursor-pointer ${
+                      isCurrent
+                        ? "bg-artisan-yellow border-artisan-yellow text-matte-black shadow-lg scale-110"
+                        : isCompleted
+                        ? "bg-deep-green border-deep-green text-white hover:scale-105"
+                        : "bg-white border-gray-300 text-gray-600 hover:border-artisan-yellow hover:text-artisan-yellow"
                     }`}
                   >
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {step.subtitle}
+                    {step.number}
+                  </button>
+
+                  {/* Titre et sous-titre */}
+                  <div className="mt-2 text-center hidden md:block">
+                    <div
+                      className={`text-sm font-semibold ${
+                        isCurrent
+                          ? "text-artisan-yellow"
+                          : isCompleted
+                          ? "text-deep-green"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {step.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {step.subtitle}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Ligne de connexion */}
-              {index < STEPS.length - 1 && (
-                <div
-                  className={`absolute top-6 left-1/2 w-full h-0.5 -z-10 transition-all ${
-                    currentStep > step.number ? "bg-deep-green" : "bg-gray-300"
-                  }`}
-                  style={{ transform: "translateY(-50%)" }}
-                />
-              )}
-            </div>
-          ))}
+                {/* Ligne de connexion */}
+                {index < STEPS.length - 1 && (
+                  <div
+                    className={`absolute top-6 left-1/2 w-full h-0.5 -z-10 transition-all ${
+                      currentStep > step.number
+                        ? "bg-deep-green"
+                        : "bg-gray-300"
+                    }`}
+                    style={{ transform: "translateY(-50%)" }}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -331,70 +434,106 @@ export function SubmitOfferStepper({
       </div>
 
       {/* Contenu de l'étape */}
-      <div className="min-h-[500px]">
-        {currentStep === 1 && (
-          <OfferStep1
+      {currentStep === 1 ? (
+        <div>
+          <OfferTemplateProfessional
             formData={formData}
             updateFormData={updateFormData}
-            tender={tender}
-          />
-        )}
-        {currentStep === 2 && (
-          <OfferStep2
-            formData={formData}
-            updateFormData={updateFormData}
-            tender={tender}
-          />
-        )}
-        {currentStep === 3 && (
-          <OfferStep3
-            formData={formData}
-            updateFormData={updateFormData}
-            tender={tender}
-          />
-        )}
-        {currentStep === 4 && (
-          <OfferStep4
-            formData={formData}
-            updateFormData={updateFormData}
-            tender={tender}
-          />
-        )}
-        {currentStep === 5 && (
-          <OfferStep5
-            formData={formData}
-            updateFormData={updateFormData}
-            tender={tender}
             organization={organization}
-            onBack={previousStep}
+            tender={tender}
           />
-        )}
-      </div>
 
-      {/* Navigation */}
-      {currentStep < 5 && (
-        <div className="flex items-center justify-between pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={previousStep}
-            disabled={currentStep === 1}
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Précédent
-          </Button>
-
-          <div className="text-sm text-muted-foreground">
-            Étape {currentStep} sur {STEPS.length}
+          {/* Navigation pour étape 1 */}
+          <div className="flex items-center justify-between pt-6 border-t mt-6">
+            <div></div>
+            <div className="flex gap-3">
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={handleSaveDraft}
+                loading={isSaving}
+              >
+                Sauvegarder
+              </LoadingButton>
+              <Button
+                onClick={nextStep}
+                disabled={!canProceed()}
+                className="bg-artisan-yellow hover:bg-artisan-yellow/90"
+              >
+                Suivant
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Colonne formulaire (2/3) */}
+          <div className="lg:col-span-2">
+            {/* Contenu de l'étape */}
+            <div className="min-h-[500px]">
+              {currentStep === 2 && (
+                <Step2Documents
+                  documents={formData.documents || []}
+                  onDocumentsChange={(docs) =>
+                    updateFormData({ documents: docs })
+                  }
+                />
+              )}
+              {currentStep === 3 && (
+                <Step3Review
+                  formData={formData}
+                  tender={tender}
+                  organization={organization}
+                  onDownloadPreview={handleDownloadPreview}
+                />
+              )}
+            </div>
 
-          <Button
-            onClick={nextStep}
-            disabled={!canProceed()}
-            className="bg-artisan-yellow hover:bg-artisan-yellow/90"
-          >
-            Suivant
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-6 border-t mt-6">
+              <Button
+                variant="outline"
+                onClick={previousStep}
+                disabled={currentStep === 1}
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Précédent
+              </Button>
+
+              <div className="flex gap-3">
+                <LoadingButton
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                >
+                  Enregistrer
+                </LoadingButton>
+
+                {currentStep < STEPS.length ? (
+                  <Button
+                    onClick={nextStep}
+                    disabled={!canProceed()}
+                    className="bg-artisan-yellow hover:bg-artisan-yellow/90"
+                  >
+                    Suivant
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <LoadingButton
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!canProceed()}
+                    loading={isSubmitting}
+                    className="bg-deep-green hover:bg-deep-green/90 text-white font-bold text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
+                  >
+                    <Send className="w-5 h-5 mr-2" />
+                    Soumettre l&apos;offre
+                  </LoadingButton>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

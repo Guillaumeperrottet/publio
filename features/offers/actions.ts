@@ -17,7 +17,16 @@ import { createOrganizationNotification } from "@/features/notifications/actions
 interface OfferFormData {
   offerNumber?: string;
   validityDays: number;
+  usesTenderDeadline?: boolean;
   projectSummary: string;
+  contactPerson?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  organizationAddress?: string;
+  organizationCity?: string;
+  organizationPhone?: string;
+  organizationEmail?: string;
+  organizationWebsite?: string;
   inclusions: Array<{ position: number; description: string }>;
   exclusions: Array<{ position: number; description: string }>;
   materials: Array<{
@@ -35,6 +44,7 @@ interface OfferFormData {
   totalHT?: number;
   totalTVA?: number;
   tvaRate: number;
+  discount?: number;
   lineItems: Array<{
     position: number;
     description: string;
@@ -101,7 +111,16 @@ export async function saveDraftOffer(data: {
         data: {
           offerNumber: data.formData.offerNumber,
           validityDays: data.formData.validityDays,
+          usesTenderDeadline: data.formData.usesTenderDeadline,
           projectSummary: data.formData.projectSummary,
+          contactPerson: data.formData.contactPerson,
+          contactEmail: data.formData.contactEmail,
+          contactPhone: data.formData.contactPhone,
+          organizationAddress: data.formData.organizationAddress,
+          organizationCity: data.formData.organizationCity,
+          organizationPhone: data.formData.organizationPhone,
+          organizationEmail: data.formData.organizationEmail,
+          organizationWebsite: data.formData.organizationWebsite,
           description: data.formData.description,
           methodology: data.formData.methodology,
           priceType: data.formData.priceType,
@@ -109,6 +128,7 @@ export async function saveDraftOffer(data: {
           totalHT: data.formData.totalHT,
           totalTVA: data.formData.totalTVA,
           tvaRate: data.formData.tvaRate,
+          discount: data.formData.discount,
           timeline: data.formData.timeline,
           startDate: data.formData.startDate
             ? new Date(data.formData.startDate)
@@ -128,6 +148,7 @@ export async function saveDraftOffer(data: {
       await prisma.offerExclusion.deleteMany({ where: { offerId: offer.id } });
       await prisma.offerMaterial.deleteMany({ where: { offerId: offer.id } });
       await prisma.offerLineItem.deleteMany({ where: { offerId: offer.id } });
+      await prisma.offerDocument.deleteMany({ where: { offerId: offer.id } });
 
       if (data.formData.inclusions.length > 0) {
         await prisma.offerInclusion.createMany({
@@ -177,6 +198,18 @@ export async function saveDraftOffer(data: {
         });
       }
 
+      if (data.formData.documents && data.formData.documents.length > 0) {
+        await prisma.offerDocument.createMany({
+          data: data.formData.documents.map((doc) => ({
+            offerId: offer.id,
+            name: doc.name,
+            url: doc.url,
+            size: doc.size,
+            mimeType: doc.mimeType,
+          })),
+        });
+      }
+
       return { success: true, offerId: offer.id };
     }
 
@@ -195,7 +228,16 @@ export async function saveDraftOffer(data: {
         organizationId: data.organizationId,
         offerNumber: data.formData.offerNumber,
         validityDays: data.formData.validityDays,
+        usesTenderDeadline: data.formData.usesTenderDeadline,
         projectSummary: data.formData.projectSummary,
+        contactPerson: data.formData.contactPerson,
+        contactEmail: data.formData.contactEmail,
+        contactPhone: data.formData.contactPhone,
+        organizationAddress: data.formData.organizationAddress,
+        organizationCity: data.formData.organizationCity,
+        organizationPhone: data.formData.organizationPhone,
+        organizationEmail: data.formData.organizationEmail,
+        organizationWebsite: data.formData.organizationWebsite,
         description: data.formData.description,
         methodology: data.formData.methodology,
         priceType: data.formData.priceType,
@@ -203,6 +245,7 @@ export async function saveDraftOffer(data: {
         totalHT: data.formData.totalHT,
         totalTVA: data.formData.totalTVA,
         tvaRate: data.formData.tvaRate,
+        discount: data.formData.discount,
         timeline: data.formData.timeline,
         startDate: data.formData.startDate
           ? new Date(data.formData.startDate)
@@ -263,6 +306,18 @@ export async function saveDraftOffer(data: {
           unit: item.unit,
           priceHT: item.priceHT,
           tvaRate: item.tvaRate,
+        })),
+      });
+    }
+
+    if (data.formData.documents && data.formData.documents.length > 0) {
+      await prisma.offerDocument.createMany({
+        data: data.formData.documents.map((doc) => ({
+          offerId: offer.id,
+          name: doc.name,
+          url: doc.url,
+          size: doc.size,
+          mimeType: doc.mimeType,
         })),
       });
     }
@@ -329,17 +384,18 @@ export async function submitOffer(data: {
       };
     }
 
-    // Vérifier si l'organisation a déjà une offre (DRAFT ou SUBMITTED ou WITHDRAWN) pour éviter les doublons
+    // Vérifier si l'organisation a déjà une offre
     const existingOffer = await prisma.offer.findFirst({
       where: {
         tenderId: data.tenderId,
         organizationId: data.organizationId,
         status: {
-          in: ["DRAFT", "SUBMITTED", "WITHDRAWN"], // Empêcher re-soumission après retrait
+          in: ["DRAFT", "SUBMITTED", "WITHDRAWN"],
         },
       },
     });
 
+    // Si l'offre existe et est déjà soumise ou retirée, refuser
     if (existingOffer) {
       if (existingOffer.status === "SUBMITTED") {
         return {
@@ -350,12 +406,8 @@ export async function submitOffer(data: {
           error:
             "Vous avez retiré votre offre pour cet appel d'offres. Vous ne pouvez plus soumettre de nouvelle offre.",
         };
-      } else {
-        return {
-          error:
-            "Vous avez déjà un brouillon d'offre pour cet appel d'offres. Veuillez le terminer ou le supprimer avant d'en créer un nouveau.",
-        };
       }
+      // Si c'est un DRAFT, on continue pour le soumettre (ne pas retourner d'erreur)
     }
 
     // Générer un numéro d'offre si vide
@@ -366,7 +418,201 @@ export async function submitOffer(data: {
         .substring(2, 8)
         .toUpperCase()}`;
 
-    // Créer l'offre et ses relations en transaction atomique
+    // Si un brouillon existe, le mettre à jour et le soumettre
+    if (existingOffer && existingOffer.status === "DRAFT") {
+      const offer = await prisma.$transaction(async (tx) => {
+        // Mettre à jour l'offre existante
+        const updatedOffer = await tx.offer.update({
+          where: { id: existingOffer.id },
+          data: {
+            offerNumber,
+            validityDays: data.formData.validityDays,
+            usesTenderDeadline: data.formData.usesTenderDeadline,
+            projectSummary: data.formData.projectSummary,
+            contactPerson: data.formData.contactPerson,
+            contactEmail: data.formData.contactEmail,
+            contactPhone: data.formData.contactPhone,
+            organizationAddress: data.formData.organizationAddress,
+            organizationCity: data.formData.organizationCity,
+            organizationPhone: data.formData.organizationPhone,
+            organizationEmail: data.formData.organizationEmail,
+            organizationWebsite: data.formData.organizationWebsite,
+            description: data.formData.description,
+            methodology: data.formData.methodology,
+            priceType: data.formData.priceType,
+            price: data.formData.price,
+            totalHT: data.formData.totalHT,
+            totalTVA: data.formData.totalTVA,
+            tvaRate: data.formData.tvaRate,
+            discount: data.formData.discount,
+            timeline: data.formData.timeline,
+            startDate: data.formData.startDate
+              ? new Date(data.formData.startDate)
+              : null,
+            durationDays: data.formData.durationDays,
+            constraints: data.formData.constraints,
+            paymentTerms: data.formData.paymentTerms,
+            warrantyYears: data.formData.warrantyYears,
+            insuranceAmount: data.formData.insuranceAmount,
+            manufacturerWarranty: data.formData.manufacturerWarranty,
+            references: data.formData.references,
+            status: OfferStatus.SUBMITTED,
+            submittedAt: new Date(),
+          },
+        });
+
+        // Supprimer et recréer les relations
+        await tx.offerInclusion.deleteMany({
+          where: { offerId: updatedOffer.id },
+        });
+        await tx.offerExclusion.deleteMany({
+          where: { offerId: updatedOffer.id },
+        });
+        await tx.offerMaterial.deleteMany({
+          where: { offerId: updatedOffer.id },
+        });
+        await tx.offerLineItem.deleteMany({
+          where: { offerId: updatedOffer.id },
+        });
+        await tx.offerDocument.deleteMany({
+          where: { offerId: updatedOffer.id },
+        });
+
+        if (data.formData.inclusions.length > 0) {
+          await tx.offerInclusion.createMany({
+            data: data.formData.inclusions.map((inc) => ({
+              offerId: updatedOffer.id,
+              position: inc.position,
+              description: inc.description,
+            })),
+          });
+        }
+
+        if (data.formData.exclusions.length > 0) {
+          await tx.offerExclusion.createMany({
+            data: data.formData.exclusions.map((exc) => ({
+              offerId: updatedOffer.id,
+              position: exc.position,
+              description: exc.description,
+            })),
+          });
+        }
+
+        if (data.formData.materials.length > 0) {
+          await tx.offerMaterial.createMany({
+            data: data.formData.materials.map((mat) => ({
+              offerId: updatedOffer.id,
+              position: mat.position,
+              name: mat.name,
+              brand: mat.brand,
+              model: mat.model,
+              range: mat.range,
+              manufacturerWarranty: mat.manufacturerWarranty,
+            })),
+          });
+        }
+
+        if (data.formData.lineItems.length > 0) {
+          await tx.offerLineItem.createMany({
+            data: data.formData.lineItems.map((item) => ({
+              offerId: updatedOffer.id,
+              position: item.position,
+              description: item.description,
+              quantity: item.quantity,
+              unit: item.unit,
+              priceHT: item.priceHT,
+              tvaRate: item.tvaRate,
+            })),
+          });
+        }
+
+        if (data.formData.documents && data.formData.documents.length > 0) {
+          await tx.offerDocument.createMany({
+            data: data.formData.documents.map((doc) => ({
+              offerId: updatedOffer.id,
+              name: doc.name,
+              url: doc.url,
+              size: doc.size,
+              mimeType: doc.mimeType,
+            })),
+          });
+        }
+
+        return updatedOffer;
+      });
+
+      // Continuer avec les notifications (code existant)
+      const submitterOrg = await prisma.organization.findUnique({
+        where: { id: data.organizationId },
+        include: {
+          members: {
+            where: {
+              role: {
+                in: ["OWNER", "ADMIN"],
+              },
+            },
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      const tenderOrg = await prisma.organization.findUnique({
+        where: { id: tender.organizationId },
+        include: {
+          members: {
+            where: {
+              role: {
+                in: ["OWNER", "ADMIN"],
+              },
+            },
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      const totalOffersCount = await prisma.offer.count({
+        where: {
+          tenderId: data.tenderId,
+          status: "SUBMITTED",
+        },
+      });
+
+      // Envoyer emails (même code que ci-dessous)
+      if (submitterOrg) {
+        for (const member of submitterOrg.members) {
+          await sendOfferSubmittedEmail({
+            to: member.user.email,
+            tenderTitle: tender.title,
+            tenderId: tender.id,
+            offerPrice: offer.price,
+            offerCurrency: offer.currency,
+            deadline: tender.deadline,
+          });
+        }
+      }
+
+      if (tenderOrg) {
+        for (const member of tenderOrg.members) {
+          await sendNewOfferReceivedEmail({
+            to: member.user.email,
+            tenderTitle: tender.title,
+            tenderId: tender.id,
+            offerPrice: offer.price,
+            offerCurrency: offer.currency,
+            organizationName: submitterOrg?.name || "Organisation",
+            totalOffersCount,
+          });
+        }
+      }
+
+      return { success: true, offerId: offer.id };
+    }
+
+    // Sinon, créer une nouvelle offre
     const offer = await prisma.$transaction(async (tx) => {
       // Créer l'offre en mode SUBMITTED
       const newOffer = await tx.offer.create({

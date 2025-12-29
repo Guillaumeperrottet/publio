@@ -22,6 +22,7 @@ export async function GET(
             organization: true,
           },
         },
+        documents: true,
         lineItems: {
           orderBy: { position: "asc" },
         },
@@ -68,6 +69,7 @@ export async function GET(
       validityDays: offer.validityDays,
       organization: {
         name: offer.organization.name,
+        logo: offer.organization.logo,
         address: offer.organization.address,
         city: offer.organization.city,
         canton: offer.organization.canton,
@@ -87,6 +89,9 @@ export async function GET(
         },
       },
       projectSummary: offer.projectSummary,
+      contactPerson: offer.contactPerson || undefined,
+      contactEmail: offer.contactEmail || undefined,
+      contactPhone: offer.contactPhone || undefined,
       inclusions: offer.inclusions,
       exclusions: offer.exclusions,
       materials: offer.materials.map((m) => ({
@@ -109,6 +114,13 @@ export async function GET(
       totalHT: offer.totalHT || undefined,
       totalTVA: offer.totalTVA || undefined,
       tvaRate: offer.tvaRate,
+      discount: offer.discount || undefined,
+      documents: offer.documents.map((doc) => ({
+        name: doc.name,
+        url: doc.url,
+        size: doc.size,
+        mimeType: doc.mimeType,
+      })),
       timeline: offer.timeline || undefined,
       startDate: offer.startDate,
       durationDays: offer.durationDays || undefined,
