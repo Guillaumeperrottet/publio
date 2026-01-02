@@ -48,7 +48,7 @@ export function AwardTenderButton({
       }
 
       toast.success("Marché attribué avec succès");
-      router.refresh();
+      router.push(`/dashboard/tenders/${tenderId}/awarded`);
       setShowDialog(false);
     } catch (error) {
       console.error("Error awarding tender:", error);

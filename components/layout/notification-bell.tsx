@@ -32,11 +32,22 @@ export function NotificationBell() {
       | null
       | undefined;
 
-    // Naviguer si possible
-    if (metadata?.tenderId && metadata?.offerId) {
+    // Naviguer selon le type de notification
+    if (notification.type === "TENDER_AWARDED") {
+      // Pour les marchés attribués, rediriger vers la page de succès
+      if (metadata?.tenderId) {
+        router.push(`/dashboard/tenders/${metadata.tenderId}/awarded`);
+        setIsOpen(false);
+      }
+    } else if (metadata?.tenderId && metadata?.offerId) {
+      // Pour les autres notifications d'offre
       router.push(
         `/dashboard/tenders/${metadata.tenderId}/offers/${metadata.offerId}`
       );
+      setIsOpen(false);
+    } else if (metadata?.tenderId) {
+      // Si on a juste un tenderId
+      router.push(`/dashboard/tenders/${metadata.tenderId}`);
       setIsOpen(false);
     }
   };

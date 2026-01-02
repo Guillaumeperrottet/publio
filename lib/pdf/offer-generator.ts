@@ -98,12 +98,15 @@ export interface OfferData {
     unit?: string;
     priceHT: number;
     tvaRate: number;
+    category?: string;
+    sectionOrder?: number;
   }>;
   price?: number;
   totalHT?: number;
   totalTVA?: number;
   tvaRate?: number;
   discount?: number; // Rabais en pourcentage
+  signature?: string; // Signature manuscrite en base64
 
   // Documents joints
   documents?: Array<{
@@ -415,7 +418,7 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
     margin: [0, 0, 0, 20],
   });
 
-  // TABLEAU DES POSITIONS - Style Baloise
+  // TABLEAU DES POSITIONS - Style Baloise avec catégories
   if (data.lineItems && data.lineItems.length > 0) {
     const tableBody: TableCell[][] = [
       [
@@ -426,7 +429,7 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
           fillColor: "#f3f4f6",
         },
         {
-          text: "Article",
+          text: "Unité",
           style: "tableHeader",
           alignment: "center",
           fillColor: "#f3f4f6",
@@ -437,19 +440,19 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
           fillColor: "#f3f4f6",
         },
         {
-          text: "Nombre",
+          text: "Quantité",
           style: "tableHeader",
           alignment: "center",
           fillColor: "#f3f4f6",
         },
         {
-          text: "Prix/pièce",
+          text: "Prix unitaire",
           style: "tableHeader",
           alignment: "right",
           fillColor: "#f3f4f6",
         },
         {
-          text: "Total (CHF)",
+          text: "Total HT",
           style: "tableHeader",
           alignment: "right",
           fillColor: "#f3f4f6",
@@ -457,49 +460,210 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
       ],
     ];
 
-    // Lignes de positions
-    data.lineItems.forEach((item) => {
-      const qty = typeof item.quantity === "number" ? item.quantity : 1;
-      const total = item.priceHT * qty;
+    // Grouper par catégories
+    const hasCategories = data.lineItems.some((item) => item.category);
 
-      tableBody.push([
-        {
-          text: String(item.position).padStart(2, "0"),
-          alignment: "center",
-          fontSize: 9,
-        },
-        {
-          text: item.article || item.unit || "Art. n° " + item.position,
-          alignment: "center",
-          fontSize: 9,
-        },
-        {
-          text: item.description,
-          fontSize: 9,
-        },
-        {
-          text:
-            typeof item.quantity === "string"
-              ? item.quantity
-              : item.quantity || "#",
-          alignment: "center",
-          fontSize: 9,
-        },
-        {
-          text: formatCurrency(item.priceHT, data.currency),
-          alignment: "right",
-          fontSize: 9,
-        },
-        {
-          text:
-            typeof item.quantity === "number"
-              ? formatCurrency(total, data.currency)
-              : "x xxx.xx",
-          alignment: "right",
-          fontSize: 9,
-        },
-      ]);
-    });
+    if (hasCategories) {
+      // Grouper les items par catégorie
+      const categories = new Map<string, typeof data.lineItems>();
+      const uncategorized: typeof data.lineItems = [];
+
+      data.lineItems.forEach((item) => {
+        if (item.category) {
+          if (!categories.has(item.category)) {
+            categories.set(item.category, []);
+          }
+          categories.get(item.category)!.push(item);
+        } else {
+          uncategorized.push(item);
+        }
+      });
+
+      // Afficher les catégories
+      categories.forEach((items, categoryName) => {
+        // Ligne de titre de catégorie
+        tableBody.push([
+          {
+            text: categoryName,
+            colSpan: 6,
+            fillColor: "#fef3c7",
+            bold: true,
+            fontSize: 10,
+            margin: [5, 5, 5, 5],
+          },
+          {},
+          {},
+          {},
+          {},
+          {},
+        ]);
+
+        // Items de la catégorie
+        items.forEach((item) => {
+          const qty = typeof item.quantity === "number" ? item.quantity : 1;
+          const total = item.priceHT * qty;
+
+          tableBody.push([
+            {
+              text: String(item.position).padStart(2, "0"),
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: item.unit || "-",
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: item.description,
+              fontSize: 9,
+            },
+            {
+              text:
+                typeof item.quantity === "string"
+                  ? item.quantity
+                  : item.quantity || "1",
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: formatCurrency(item.priceHT, data.currency),
+              alignment: "right",
+              fontSize: 9,
+            },
+            {
+              text:
+                typeof item.quantity === "number"
+                  ? formatCurrency(total, data.currency)
+                  : "-",
+              alignment: "right",
+              fontSize: 9,
+            },
+          ]);
+        });
+
+        // Sous-total de la catégorie
+        const categorySubtotal = items.reduce((sum, item) => {
+          const qty = typeof item.quantity === "number" ? item.quantity : 0;
+          return sum + item.priceHT * qty;
+        }, 0);
+
+        tableBody.push([
+          {
+            text: "",
+            colSpan: 4,
+            border: [false, false, false, false],
+          },
+          {},
+          {},
+          {},
+          {
+            text: "Sous-total " + categoryName,
+            alignment: "right",
+            fontSize: 9,
+            bold: true,
+            fillColor: "#fffbeb",
+          },
+          {
+            text: formatCurrency(categorySubtotal, data.currency),
+            alignment: "right",
+            fontSize: 9,
+            bold: true,
+            fillColor: "#fffbeb",
+          },
+        ]);
+      });
+
+      // Items sans catégorie
+      if (uncategorized.length > 0) {
+        uncategorized.forEach((item) => {
+          const qty = typeof item.quantity === "number" ? item.quantity : 1;
+          const total = item.priceHT * qty;
+
+          tableBody.push([
+            {
+              text: String(item.position).padStart(2, "0"),
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: item.unit || "-",
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: item.description,
+              fontSize: 9,
+            },
+            {
+              text:
+                typeof item.quantity === "string"
+                  ? item.quantity
+                  : item.quantity || "1",
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: formatCurrency(item.priceHT, data.currency),
+              alignment: "right",
+              fontSize: 9,
+            },
+            {
+              text:
+                typeof item.quantity === "number"
+                  ? formatCurrency(total, data.currency)
+                  : "-",
+              alignment: "right",
+              fontSize: 9,
+            },
+          ]);
+        });
+      }
+    } else {
+      // Pas de catégories, affichage normal
+      data.lineItems.forEach((item) => {
+        const qty = typeof item.quantity === "number" ? item.quantity : 1;
+        const total = item.priceHT * qty;
+
+        tableBody.push([
+          {
+            text: String(item.position).padStart(2, "0"),
+            alignment: "center",
+            fontSize: 9,
+          },
+          {
+            text: item.unit || "-",
+            alignment: "center",
+            fontSize: 9,
+          },
+          {
+            text: item.description,
+            fontSize: 9,
+          },
+          {
+            text:
+              typeof item.quantity === "string"
+                ? item.quantity
+                : item.quantity || "1",
+            alignment: "center",
+            fontSize: 9,
+          },
+          {
+            text: formatCurrency(item.priceHT, data.currency),
+            alignment: "right",
+            fontSize: 9,
+          },
+          {
+            text:
+              typeof item.quantity === "number"
+                ? formatCurrency(total, data.currency)
+                : "-",
+            alignment: "right",
+            fontSize: 9,
+          },
+        ]);
+      });
+    }
 
     // Somme intermédiaire
     const subtotal = data.lineItems.reduce((sum, item) => {
@@ -679,15 +843,6 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
     });
   }
 
-  // NOTE LÉGALE
-  content.push({
-    text: "Les prestations supplémentaires qui ne sont pas explicitement mentionnées dans cette offre seront facturées séparément.",
-    fontSize: 8,
-    italics: true,
-    color: "#666",
-    margin: [0, 10, 0, 10],
-  });
-
   // CONDITIONS
   content.push({
     columns: [
@@ -843,8 +998,17 @@ async function generateOfferContent(data: OfferData): Promise<Content> {
     text: data.organization.name,
     fontSize: 9,
     bold: true,
-    margin: [0, 0, 0, 20],
+    margin: [0, 0, 0, 10],
   });
+
+  // Signature manuscrite si présente
+  if (data.signature) {
+    content.push({
+      image: data.signature,
+      width: 150,
+      margin: [0, 5, 0, 5],
+    });
+  }
 
   content.push({
     text: data.contactPerson || "Prénom Nom",

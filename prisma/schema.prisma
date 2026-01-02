@@ -552,6 +552,9 @@ model Offer {
   // Références
   references String? // Références de projets similaires
 
+  // Signature
+  signature String? @db.Text // Signature manuscrite en base64
+
   // Statut
   status OfferStatus @default(DRAFT)
 
@@ -613,6 +616,10 @@ model OfferLineItem {
   unit        String? // Unité (m², pièces, heures...)
   priceHT     Float // Prix HT
   tvaRate     Float   @default(7.7) // Taux de TVA
+  
+  // Catégories pour sous-totaux
+  category     String? // Catégorie (ex: "Main d'œuvre", "Matériaux", "Transport")
+  sectionOrder Int?    // Ordre d'affichage des sections
 
   // Relations
   offerId String

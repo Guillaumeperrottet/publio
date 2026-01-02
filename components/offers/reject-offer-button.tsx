@@ -43,6 +43,9 @@ export function RejectOfferButton({
         return;
       }
 
+      toast.success(`Offre de ${organizationName} rejetée`, {
+        description: "Le soumissionnaire a été notifié par email",
+      });
       router.refresh();
       setShowDialog(false);
     } catch (error) {

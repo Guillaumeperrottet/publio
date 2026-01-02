@@ -12,6 +12,7 @@ import {
   sendOfferWithdrawnEmail,
 } from "@/lib/email/tender-emails";
 import { createOrganizationNotification } from "@/features/notifications/actions";
+import { createEquityLog } from "@/features/equity-log/actions";
 
 // Type pour le formulaire d'offre
 interface OfferFormData {
@@ -52,6 +53,8 @@ interface OfferFormData {
     unit?: string;
     priceHT: number;
     tvaRate: number;
+    category?: string;
+    sectionOrder?: number;
   }>;
   timeline?: string;
   startDate?: string;
@@ -67,6 +70,7 @@ interface OfferFormData {
   insuranceAmount?: number;
   manufacturerWarranty?: string;
   references?: string;
+  signature?: string;
   documents?: Array<{
     name: string;
     url: string;
@@ -140,6 +144,7 @@ export async function saveDraftOffer(data: {
           insuranceAmount: data.formData.insuranceAmount,
           manufacturerWarranty: data.formData.manufacturerWarranty,
           references: data.formData.references,
+          signature: data.formData.signature,
         },
       });
 
@@ -194,6 +199,8 @@ export async function saveDraftOffer(data: {
             unit: item.unit,
             priceHT: item.priceHT,
             tvaRate: item.tvaRate,
+            category: item.category,
+            sectionOrder: item.sectionOrder,
           })),
         });
       }
@@ -257,6 +264,7 @@ export async function saveDraftOffer(data: {
         insuranceAmount: data.formData.insuranceAmount,
         manufacturerWarranty: data.formData.manufacturerWarranty,
         references: data.formData.references,
+        signature: data.formData.signature,
         status: OfferStatus.DRAFT,
       },
     });
@@ -306,6 +314,8 @@ export async function saveDraftOffer(data: {
           unit: item.unit,
           priceHT: item.priceHT,
           tvaRate: item.tvaRate,
+          category: item.category,
+          sectionOrder: item.sectionOrder,
         })),
       });
     }
@@ -1051,6 +1061,15 @@ export async function getTenderOffers(tenderId: string) {
     include: {
       organization: true,
       documents: true,
+      materials: {
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          model: true,
+          range: true,
+        },
+      },
       _count: {
         select: {
           comments: true,
@@ -1624,6 +1643,22 @@ export async function rejectOffer(offerId: string) {
       },
     });
 
+    // Notification in-app au soumissionnaire
+    try {
+      await createOrganizationNotification(offer.organizationId, user.id, {
+        type: "OFFER_REJECTED",
+        title: "Offre non retenue",
+        message: `Votre offre pour "${offer.tender.title}" n'a pas été retenue`,
+        metadata: {
+          tenderId: offer.tender.id,
+          offerId: offer.id,
+          tenderTitle: offer.tender.title,
+        },
+      });
+    } catch (error) {
+      console.error("Error sending offer rejected notification:", error);
+    }
+
     // Récupérer les admins de l'organisation soumissionnaire
     const submitterOrg = await prisma.organization.findUnique({
       where: { id: offer.organizationId },
@@ -1657,6 +1692,31 @@ export async function rejectOffer(offerId: string) {
           console.error("Error sending rejection email:", error);
         }
       }
+    }
+
+    // Log d'équité pour traçabilité
+    try {
+      await createEquityLog({
+        tenderId: offer.tender.id,
+        userId: user.id,
+        action: "OFFER_REJECTED",
+        description: `Offre de "${
+          offer.organization.name
+        }" rejetée (${new Intl.NumberFormat("fr-CH", {
+          style: "currency",
+          currency: offer.currency,
+        }).format(offer.price)})`,
+        metadata: {
+          offerId: offer.id,
+          organizationName: offer.organization.name,
+          price: offer.price,
+          currency: offer.currency,
+          previousStatus:
+            offer.status === "SUBMITTED" ? "SUBMITTED" : "SHORTLISTED",
+        },
+      });
+    } catch (error) {
+      console.error("Error creating equity log for rejection:", error);
     }
 
     return { success: true, offer: updatedOffer };

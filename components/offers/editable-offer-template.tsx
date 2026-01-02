@@ -13,6 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  groupLineItemsByCategory,
+  hasCategories,
+} from "@/lib/utils/offer-line-items";
 
 interface EditableOfferTemplateProps {
   formData: OfferFormData;
@@ -434,79 +438,207 @@ export function EditableOfferTemplate({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {formData.lineItems.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          {String(item.position).padStart(2, "0")}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.description}
-                            onChange={(e) =>
-                              updateLineItem(
-                                index,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Description"
-                            className="min-w-[200px]"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.quantity || ""}
-                            onChange={(e) =>
-                              updateLineItem(
-                                index,
-                                "quantity",
-                                parseFloat(e.target.value)
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.unit || ""}
-                            onChange={(e) =>
-                              updateLineItem(index, "unit", e.target.value)
-                            }
-                            placeholder="m², h..."
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.priceHT}
-                            onChange={(e) =>
-                              updateLineItem(
-                                index,
-                                "priceHT",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {formatCurrency(item.priceHT * (item.quantity || 1))}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeLineItem(index)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {/* Totaux */}
+                    {hasCategories(formData.lineItems) ? (
+                      // Affichage groupé par catégories avec sous-totaux
+                      <>
+                        {groupLineItemsByCategory(formData.lineItems).map(
+                          (group, groupIndex) => (
+                            <>
+                              {/* En-tête de catégorie */}
+                              <TableRow
+                                key={`cat-${groupIndex}`}
+                                className="bg-gray-100"
+                              >
+                                <TableCell
+                                  colSpan={7}
+                                  className="font-bold text-sm py-2"
+                                >
+                                  {group.category}
+                                </TableCell>
+                              </TableRow>
+
+                              {/* Lignes de la catégorie */}
+                              {group.items.map((item, index) => {
+                                const globalIndex =
+                                  formData.lineItems.indexOf(item);
+                                return (
+                                  <TableRow key={`${groupIndex}-${index}`}>
+                                    <TableCell>
+                                      {String(item.position).padStart(2, "0")}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        value={item.description}
+                                        onChange={(e) =>
+                                          updateLineItem(
+                                            globalIndex,
+                                            "description",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Description"
+                                        className="min-w-[200px]"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        value={item.quantity || ""}
+                                        onChange={(e) =>
+                                          updateLineItem(
+                                            globalIndex,
+                                            "quantity",
+                                            parseFloat(e.target.value)
+                                          )
+                                        }
+                                        className="w-full"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        value={item.unit || ""}
+                                        onChange={(e) =>
+                                          updateLineItem(
+                                            globalIndex,
+                                            "unit",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="m², h..."
+                                        className="w-full"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        value={item.priceHT}
+                                        onChange={(e) =>
+                                          updateLineItem(
+                                            globalIndex,
+                                            "priceHT",
+                                            parseFloat(e.target.value) || 0
+                                          )
+                                        }
+                                        className="w-full"
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-right font-semibold">
+                                      {formatCurrency(
+                                        item.priceHT * (item.quantity || 1)
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() =>
+                                          removeLineItem(globalIndex)
+                                        }
+                                      >
+                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+
+                              {/* Sous-total de la catégorie */}
+                              <TableRow className="bg-gray-50">
+                                <TableCell
+                                  colSpan={5}
+                                  className="text-right font-semibold text-sm"
+                                >
+                                  Sous-total {group.category}
+                                </TableCell>
+                                <TableCell className="text-right font-semibold text-sm">
+                                  {formatCurrency(group.subtotalHT)}
+                                </TableCell>
+                                <TableCell></TableCell>
+                              </TableRow>
+                            </>
+                          )
+                        )}
+                      </>
+                    ) : (
+                      // Affichage simple sans catégories
+                      formData.lineItems.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {String(item.position).padStart(2, "0")}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={item.description}
+                              onChange={(e) =>
+                                updateLineItem(
+                                  index,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Description"
+                              className="min-w-[200px]"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.quantity || ""}
+                              onChange={(e) =>
+                                updateLineItem(
+                                  index,
+                                  "quantity",
+                                  parseFloat(e.target.value)
+                                )
+                              }
+                              className="w-full"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={item.unit || ""}
+                              onChange={(e) =>
+                                updateLineItem(index, "unit", e.target.value)
+                              }
+                              placeholder="m², h..."
+                              className="w-full"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.priceHT}
+                              onChange={(e) =>
+                                updateLineItem(
+                                  index,
+                                  "priceHT",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              className="w-full"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {formatCurrency(
+                              item.priceHT * (item.quantity || 1)
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeLineItem(index)}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+
+                    {/* Totaux finaux */}
                     <TableRow className="border-t-2">
                       <TableCell colSpan={5} className="text-right font-bold">
                         Total hors TVA
@@ -614,12 +746,6 @@ export function EditableOfferTemplate({
             </div>
           </div>
         )}
-
-        {/* Note légale */}
-        <div className="border-t pt-6 text-xs text-muted-foreground italic">
-          Les prestations supplémentaires qui ne sont pas explicitement
-          mentionnées dans cette offre seront facturées séparément.
-        </div>
 
         {/* Signature */}
         <div className="pt-4">

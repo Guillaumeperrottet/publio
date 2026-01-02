@@ -5,18 +5,12 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, GripVertical, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { OfferFormData } from "./submit-offer-stepper";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { updateOrganization } from "@/features/organizations/actions";
 import { handleError, toastSuccess } from "@/lib/utils/toast-messages";
+import { LineItemsWithCategories } from "./line-items-with-categories";
+import { SignaturePad } from "./signature-pad";
 
 interface OfferTemplateProps {
   formData: OfferFormData;
@@ -126,42 +120,6 @@ export function OfferTemplateProfessional({
     } catch (err) {
       handleError(err, "removeLogo");
     }
-  };
-
-  const addLineItem = () => {
-    const newPosition = formData.lineItems.length + 1;
-    updateFormData({
-      lineItems: [
-        ...formData.lineItems,
-        {
-          position: newPosition,
-          description: "",
-          quantity: 1,
-          unit: "",
-          priceHT: 0,
-          tvaRate: formData.tvaRate,
-        },
-      ],
-    });
-  };
-
-  const removeLineItem = (index: number) => {
-    const updated = formData.lineItems.filter((_, i) => i !== index);
-    // Recalculer les positions
-    const reindexed = updated.map((item, i) => ({ ...item, position: i + 1 }));
-    updateFormData({ lineItems: reindexed });
-    recalculateTotals(reindexed);
-  };
-
-  const updateLineItem = (
-    index: number,
-    field: string,
-    value: string | number
-  ) => {
-    const updated = [...formData.lineItems];
-    updated[index] = { ...updated[index], [field]: value };
-    updateFormData({ lineItems: updated });
-    recalculateTotals(updated);
   };
 
   const recalculateTotals = (items: OfferFormData["lineItems"]) => {
@@ -357,224 +315,108 @@ export function OfferTemplateProfessional({
 
         {/* Tableau des positions */}
         <div className="border-t-2 pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold">Décomposition tarifaire</h3>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={addLineItem}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Ajouter une position
-            </Button>
+          <h3 className="font-bold mb-4">Décomposition tarifaire</h3>
+
+          <LineItemsWithCategories
+            lineItems={formData.lineItems}
+            onLineItemsChange={(items) => {
+              updateFormData({ lineItems: items });
+              recalculateTotals(items);
+            }}
+            currency={tender.currency}
+            tvaRate={formData.tvaRate}
+          />
+
+          {/* Totaux */}
+          <div className="mt-6 space-y-2">
+            {/* Somme intermédiaire */}
+            <div className="flex justify-between p-3 bg-gray-50 rounded">
+              <span className="font-bold">Somme intermédiaire</span>
+              <span className="font-bold">
+                {formatCurrency(
+                  formData.lineItems.reduce(
+                    (sum, item) =>
+                      sum +
+                      (typeof item.quantity === "number"
+                        ? item.priceHT * item.quantity
+                        : 0),
+                    0
+                  )
+                )}
+              </span>
+            </div>
+
+            {/* Rabais */}
+            <div className="flex justify-between items-center p-3">
+              <div className="flex items-center gap-2">
+                <span>Rabais</span>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={formData.discount || 0}
+                  onChange={(e) => {
+                    updateFormData({
+                      discount: parseFloat(e.target.value) || 0,
+                    });
+                    recalculateTotals(formData.lineItems);
+                  }}
+                  className="w-20 text-sm text-right"
+                />
+                <span>%</span>
+              </div>
+              <span>
+                {formatCurrency(
+                  (formData.lineItems.reduce(
+                    (sum, item) =>
+                      sum +
+                      (typeof item.quantity === "number"
+                        ? item.priceHT * item.quantity
+                        : 0),
+                    0
+                  ) *
+                    (formData.discount || 0)) /
+                    100
+                )}
+              </span>
+            </div>
+
+            {/* Total HT */}
+            <div className="flex justify-between p-3 bg-gray-50 rounded">
+              <span className="font-bold">Total hors TVA</span>
+              <span className="font-bold">
+                {formatCurrency(formData.totalHT || 0)}
+              </span>
+            </div>
+
+            {/* TVA */}
+            <div className="flex justify-between items-center p-3">
+              <div className="flex items-center gap-2">
+                <span>TVA</span>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={formData.tvaRate}
+                  onChange={(e) => {
+                    updateFormData({
+                      tvaRate: parseFloat(e.target.value) || 7.7,
+                    });
+                    recalculateTotals(formData.lineItems);
+                  }}
+                  className="w-20 text-sm text-right"
+                />
+                <span>%</span>
+              </div>
+              <span>{formatCurrency(formData.totalTVA || 0)}</span>
+            </div>
+
+            {/* Total TTC */}
+            <div className="flex justify-between p-4 bg-artisan-yellow/20 border-2 border-artisan-yellow rounded">
+              <span className="font-bold text-lg">Total TVA incluse</span>
+              <span className="font-bold text-lg text-deep-green">
+                {formatCurrency(formData.price)}
+              </span>
+            </div>
           </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead className="w-16">Pos</TableHead>
-                <TableHead className="w-32">Article</TableHead>
-                <TableHead>Désignation</TableHead>
-                <TableHead className="w-24">Nombre</TableHead>
-                <TableHead className="w-32">Prix/pièce</TableHead>
-                <TableHead className="w-32 text-right">Total (CHF)</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {formData.lineItems.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
-                  </TableCell>
-                  <TableCell>
-                    {String(item.position).padStart(2, "0")}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.unit || ""}
-                      onChange={(e) =>
-                        updateLineItem(index, "unit", e.target.value)
-                      }
-                      placeholder="Art. n° 1"
-                      className="text-sm"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Textarea
-                      value={item.description}
-                      onChange={(e) =>
-                        updateLineItem(index, "description", e.target.value)
-                      }
-                      placeholder="Désignation de la position"
-                      rows={1}
-                      className="text-sm min-w-[250px]"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="text"
-                      value={item.quantity || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        // Permettre # ou #h ou nombre
-                        if (
-                          val === "#" ||
-                          val.endsWith("h") ||
-                          !isNaN(Number(val))
-                        ) {
-                          updateLineItem(index, "quantity", val);
-                        }
-                      }}
-                      placeholder="#"
-                      className="w-full text-sm text-center"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.priceHT}
-                      onChange={(e) =>
-                        updateLineItem(
-                          index,
-                          "priceHT",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      className="text-sm"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {typeof item.quantity === "number"
-                      ? formatCurrency(item.priceHT * item.quantity)
-                      : "x xxx.xx"}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeLineItem(index)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {/* Somme intermédiaire */}
-              <TableRow className="border-t-2 bg-gray-50">
-                <TableCell colSpan={6} className="text-right font-bold">
-                  Somme intermédiaire
-                </TableCell>
-                <TableCell className="text-right font-bold">
-                  {formatCurrency(
-                    formData.lineItems.reduce(
-                      (sum, item) =>
-                        sum +
-                        (typeof item.quantity === "number"
-                          ? item.priceHT * item.quantity
-                          : 0),
-                      0
-                    )
-                  )}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-
-              {/* Rabais */}
-              <TableRow>
-                <TableCell colSpan={6} className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <span>Rabais</span>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={formData.discount || 0}
-                      onChange={(e) =>
-                        updateFormData({
-                          discount: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="w-20 text-sm text-right"
-                    />
-                    <span>%</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(
-                    (formData.lineItems.reduce(
-                      (sum, item) =>
-                        sum +
-                        (typeof item.quantity === "number"
-                          ? item.priceHT * item.quantity
-                          : 0),
-                      0
-                    ) *
-                      (formData.discount || 0)) /
-                      100
-                  )}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-
-              {/* Total HT */}
-              <TableRow className="bg-gray-50">
-                <TableCell colSpan={6} className="text-right font-bold">
-                  Total hors TVA
-                </TableCell>
-                <TableCell className="text-right font-bold">
-                  {formatCurrency(formData.totalHT || 0)}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-
-              {/* TVA */}
-              <TableRow>
-                <TableCell colSpan={6} className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <span>TVA</span>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={formData.tvaRate}
-                      onChange={(e) =>
-                        updateFormData({
-                          tvaRate: parseFloat(e.target.value) || 7.7,
-                        })
-                      }
-                      className="w-20 text-sm text-right"
-                    />
-                    <span>%</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(formData.totalTVA || 0)}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-
-              {/* Total TTC */}
-              <TableRow className="bg-artisan-yellow/20 border-t-2">
-                <TableCell colSpan={6} className="text-right font-bold text-lg">
-                  Total TVA incluse
-                </TableCell>
-                <TableCell className="text-right font-bold text-lg text-deep-green">
-                  {formatCurrency(formData.price)}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Note légale */}
-        <div className="text-sm text-gray-600 italic border-t pt-4">
-          Les prestations supplémentaires qui ne sont pas explicitement
-          mentionnées dans cette offre seront facturées séparément.
         </div>
 
         {/* Conditions */}
@@ -668,37 +510,50 @@ export function OfferTemplateProfessional({
             les meilleures.
           </p>
           <p className="text-sm font-bold mt-2">{organization.name}</p>
+
+          {/* Signature manuscrite */}
+          <div className="mt-4">
+            <label className="block text-sm font-semibold mb-2">
+              Signature
+            </label>
+            <SignaturePad
+              value={formData.signature}
+              onChange={(signature) => updateFormData({ signature })}
+            />
+          </div>
+
           <div className="mt-4 text-sm">
-            <Input placeholder="Prénom Nom" className="w-64" />
+            <Input
+              placeholder="Prénom Nom"
+              className="w-64"
+              value={formData.contactPerson || ""}
+              onChange={(e) =>
+                updateFormData({ contactPerson: e.target.value })
+              }
+            />
           </div>
         </div>
       </div>
 
       {/* Pied de page */}
-      <div className="bg-gray-100 p-6 text-xs text-gray-600 space-y-1">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <span className="font-semibold">Taxe sur la valeur ajoutée:</span>
-            <Input placeholder="CHE-123.456.789 TVA" className="mt-1 text-xs" />
-          </div>
-          <div>
-            <span className="font-semibold">Coordonnées bancaires:</span>
-            <Input
-              placeholder="Banque Exemple, CH-3030 Ville Exemple"
-              className="mt-1 text-xs"
-            />
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <Input
-                placeholder="IBAN: CH99 0000 0000 0000 0000 9"
-                className="text-xs"
-              />
-              <Input placeholder="Compte 1111-1111.222" className="text-xs" />
-            </div>
-            <Input
-              placeholder="Code SWIFT: ABCDEFGH12I"
-              className="mt-1 text-xs"
-            />
-          </div>
+      <div className="bg-gray-100 p-6 text-xs text-gray-600 space-y-3">
+        <div>
+          <span className="font-semibold">Taxe sur la valeur ajoutée:</span>
+          <Input
+            placeholder="CHE-123.456.789 TVA (optionnel)"
+            className="mt-1 text-xs"
+          />
+        </div>
+        <div>
+          <span className="font-semibold">Coordonnées bancaires:</span>
+          <Input
+            placeholder="Banque Exemple, CH-3030 Ville Exemple (optionnel)"
+            className="mt-1 text-xs"
+          />
+          <Input
+            placeholder="IBAN: CH99 0000 0000 0000 0000 9 (optionnel)"
+            className="mt-1 text-xs"
+          />
         </div>
       </div>
     </div>

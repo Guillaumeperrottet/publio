@@ -109,12 +109,15 @@ export async function GET(
         unit: item.unit || undefined,
         priceHT: item.priceHT,
         tvaRate: item.tvaRate,
+        category: item.category || undefined,
+        sectionOrder: item.sectionOrder || undefined,
       })),
       price: offer.price,
       totalHT: offer.totalHT || undefined,
       totalTVA: offer.totalTVA || undefined,
       tvaRate: offer.tvaRate,
       discount: offer.discount || undefined,
+      signature: offer.signature || undefined,
       documents: offer.documents.map((doc) => ({
         name: doc.name,
         url: doc.url,
@@ -140,11 +143,11 @@ export async function GET(
     // Générer le PDF
     const pdfBuffer = await generateOfferPDF(pdfData);
 
-    // Retourner le PDF
+    // Retourner le PDF avec inline pour affichage dans le navigateur
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="offre-${pdfData.offerNumber}.pdf"`,
+        "Content-Disposition": `inline; filename="offre-${pdfData.offerNumber}.pdf"`,
       },
     });
   } catch (error) {

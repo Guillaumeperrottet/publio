@@ -540,7 +540,7 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">
-                                    Statut tender :
+                                    Statut :
                                   </span>
                                   <span>
                                     {offer.tender.status === "PUBLISHED" &&
@@ -565,9 +565,9 @@ export function MyOffersTable({ offers }: MyOffersTableProps) {
                                       ⚠️ Brouillon expiré
                                     </p>
                                     <p className="text-xs text-red-700 mt-1">
-                                      La date limite de cet appel d'offres est
-                                      dépassée. Ce brouillon ne peut plus être
-                                      soumis.
+                                      La date limite de cet appel d&apos;offres
+                                      est dépassée. Ce brouillon ne peut plus
+                                      être soumis.
                                     </p>
                                   </div>
                                 </div>

@@ -22,6 +22,8 @@ import {
   ChevronDown,
   ChevronUp,
   Star,
+  Package,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -42,6 +44,8 @@ interface Offer {
   submittedAt: Date | null;
   status: string;
   offerNumber?: string | null;
+  validityDays: number;
+  usesTenderDeadline: boolean;
   _count?: {
     comments: number;
   };
@@ -50,6 +54,19 @@ interface Offer {
     city: string | null;
     canton: string | null;
   };
+  documents?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    mimeType: string;
+  }>;
+  materials?: Array<{
+    id: string;
+    name: string;
+    brand: string | null;
+    model: string | null;
+    range: string | null;
+  }>;
 }
 
 interface OffersTableProps {
@@ -159,11 +176,12 @@ export function OffersTable({
           <div className="hidden md:block border-2 border-matte-black rounded-lg overflow-hidden bg-white">
             {/* Header */}
             <div className="grid grid-cols-12 gap-4 p-4 bg-sand-light border-b-2 border-matte-black font-semibold text-sm">
-              <div className="col-span-4">Soumissionnaire</div>
+              <div className="col-span-3">Soumissionnaire</div>
               <div className="col-span-2">Prix</div>
               <div className="col-span-2">Délai</div>
+              <div className="col-span-1 text-center">Docs</div>
+              <div className="col-span-2">Validité</div>
               <div className="col-span-2">Statut</div>
-              <div className="col-span-2">Date</div>
             </div>
 
             {/* Lignes */}
@@ -187,7 +205,7 @@ export function OffersTable({
                       }`}
                     >
                       {/* Soumissionnaire avec chevron */}
-                      <div className="col-span-4 flex items-center gap-2 min-w-0">
+                      <div className="col-span-3 flex items-center gap-2 min-w-0">
                         {offer.status === "SHORTLISTED" && (
                           <Star className="w-4 h-4 text-artisan-yellow shrink-0 fill-artisan-yellow" />
                         )}
@@ -231,8 +249,32 @@ export function OffersTable({
                         )}
                       </div>
 
+                      {/* Nombre de documents */}
+                      <div className="col-span-1 flex items-center justify-center">
+                        <div className="flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {offer.documents?.length || 0}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Validité */}
+                      <div className="col-span-2 flex items-center text-sm">
+                        {offer.usesTenderDeadline ? (
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Deadline
+                          </span>
+                        ) : (
+                          <span className="truncate">
+                            {offer.validityDays} jours
+                          </span>
+                        )}
+                      </div>
+
                       {/* Statut */}
-                      <div className="col-span-2 flex items-center">
+                      <div className="col-span-2 flex items-center justify-between">
                         <Badge
                           className={`${
                             statusConfig[offer.status]?.color || ""
@@ -240,55 +282,41 @@ export function OffersTable({
                         >
                           {statusConfig[offer.status]?.label || offer.status}
                         </Badge>
-                      </div>
-
-                      {/* Date */}
-                      <div className="col-span-2 flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          {offer.submittedAt
-                            ? format(
-                                new Date(offer.submittedAt),
-                                "dd/MM/yyyy",
-                                {
-                                  locale: fr,
-                                }
-                              )
-                            : "-"}
-                        </span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/tenders/${tenderId}/offers/${offer.id}`}
                             onClick={(e) => e.stopPropagation()}
+                            className="text-artisan-yellow hover:text-artisan-yellow/80 transition-colors"
+                            title="Voir tous les détails"
                           >
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/dashboard/tenders/${tenderId}/offers/${offer.id}`}
-                                className="cursor-pointer"
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Voir le détail
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <DownloadOfferPdfButton
-                                offerId={offer.id}
-                                offerNumber={offer.offerNumber}
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start p-0 h-auto font-normal"
-                              />
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <DownloadOfferPdfButton
+                                  offerId={offer.id}
+                                  offerNumber={offer.offerNumber}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start p-0 h-auto font-normal"
+                                />
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </div>
 
@@ -303,7 +331,7 @@ export function OffersTable({
                                 <FileText className="w-4 h-4" />
                                 Description
                               </h4>
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
                                 {offer.description}
                               </p>
                             </div>
@@ -316,9 +344,78 @@ export function OffersTable({
                                 <Lightbulb className="w-4 h-4" />
                                 Méthodologie
                               </h4>
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
                                 {offer.methodology}
                               </p>
+                            </div>
+                          )}
+
+                          {/* Matériaux */}
+                          {offer.materials && offer.materials.length > 0 && (
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <Package className="w-4 h-4" />
+                                Matériaux ({offer.materials.length})
+                              </h4>
+                              <ul className="text-sm text-muted-foreground space-y-1">
+                                {offer.materials.slice(0, 3).map((material) => (
+                                  <li
+                                    key={material.id}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <span className="text-artisan-yellow">
+                                      •
+                                    </span>
+                                    <span className="truncate">
+                                      {material.name}
+                                      {material.brand && ` - ${material.brand}`}
+                                      {material.model && ` ${material.model}`}
+                                      {material.range && ` (${material.range})`}
+                                    </span>
+                                  </li>
+                                ))}
+                                {offer.materials.length > 3 && (
+                                  <li className="text-xs text-muted-foreground italic">
+                                    +{offer.materials.length - 3} autre(s)...
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Documents */}
+                          {offer.documents && offer.documents.length > 0 && (
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                Documents ({offer.documents.length})
+                              </h4>
+                              <ul className="text-sm text-muted-foreground space-y-1">
+                                {offer.documents.slice(0, 3).map((doc) => (
+                                  <li
+                                    key={doc.id}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <span className="text-artisan-yellow">
+                                      •
+                                    </span>
+                                    <a
+                                      href={doc.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="truncate hover:underline"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {doc.name}
+                                    </a>
+                                  </li>
+                                ))}
+                                {offer.documents.length > 3 && (
+                                  <li className="text-xs text-muted-foreground italic">
+                                    +{offer.documents.length - 3} autre(s)...
+                                  </li>
+                                )}
+                              </ul>
                             </div>
                           )}
 
@@ -334,6 +431,32 @@ export function OffersTable({
                               </p>
                             </div>
                           )}
+
+                          {/* Validité détaillée */}
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Validité de l'offre
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {offer.usesTenderDeadline
+                                ? "Valable jusqu'à la deadline du tender"
+                                : `Valable ${offer.validityDays} jours après soumission`}
+                            </p>
+                            {offer.submittedAt && !offer.usesTenderDeadline && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Expire le{" "}
+                                {format(
+                                  new Date(
+                                    new Date(offer.submittedAt).getTime() +
+                                      offer.validityDays * 24 * 60 * 60 * 1000
+                                  ),
+                                  "dd MMMM yyyy",
+                                  { locale: fr }
+                                )}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         {/* Actions sur l'offre - Toujours visibles */}
@@ -399,15 +522,6 @@ export function OffersTable({
                             )}
                           </div>
                         </div>
-
-                        {/* Lien vers les détails */}
-                        <Link
-                          href={`/dashboard/tenders/${tenderId}/offers/${offer.id}`}
-                          className="mt-4 text-sm text-artisan-yellow font-medium flex items-center gap-2 hover:underline"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Cliquer pour voir tous les détails
-                        </Link>
                       </div>
                     )}
                   </div>

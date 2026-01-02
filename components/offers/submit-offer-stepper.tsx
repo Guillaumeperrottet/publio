@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -18,6 +18,8 @@ export interface OfferLineItem {
   unit?: string;
   priceHT: number;
   tvaRate: number;
+  category?: string;
+  sectionOrder?: number;
 }
 
 export interface OfferInclusion {
@@ -95,6 +97,7 @@ export interface OfferFormData {
     size: number;
     mimeType: string;
   }>;
+  signature?: string; // Signature manuscrite en base64
 }
 
 interface SubmitOfferStepperProps {
@@ -194,7 +197,21 @@ export function SubmitOfferStepper({
     manufacturerWarranty: (existingOffer?.manufacturerWarranty as string) || "",
     references: (existingOffer?.references as string) || "",
     documents: (existingOffer?.documents as OfferFormData["documents"]) || [],
+    signature: (existingOffer?.signature as string) || undefined,
   });
+
+  // Refs pour l'auto-save (déclarés après les states)
+  const formDataRef = useRef(formData);
+  const draftOfferIdRef = useRef(draftOfferId);
+
+  // Synchroniser les refs avec les states
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    draftOfferIdRef.current = draftOfferId;
+  }, [draftOfferId]);
 
   // Auto-save brouillon toutes les 30 secondes
   useEffect(() => {
@@ -202,10 +219,10 @@ export function SubmitOfferStepper({
       setIsSaving(true);
       try {
         const result = await saveDraftOffer({
-          offerId: draftOfferId,
+          offerId: draftOfferIdRef.current,
           tenderId: tender.id,
           organizationId: organization.id,
-          formData,
+          formData: formDataRef.current,
         });
 
         if (result.error) {
@@ -213,8 +230,9 @@ export function SubmitOfferStepper({
         } else {
           setLastSaved(new Date());
           // Conserver l'ID du brouillon créé pour les futures sauvegardes
-          if (result.offerId && !draftOfferId) {
+          if (result.offerId && !draftOfferIdRef.current) {
             setDraftOfferId(result.offerId);
+            draftOfferIdRef.current = result.offerId;
           }
         }
       } catch (error) {
