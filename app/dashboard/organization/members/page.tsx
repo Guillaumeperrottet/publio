@@ -163,7 +163,8 @@ async function MembersContent() {
             </HandDrawnCard>
           </div>
         </div>
-      </>
+      </div>
+    </ProtectedLayout>
   );
 }
 
