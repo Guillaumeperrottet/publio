@@ -19,7 +19,6 @@ import {
   Award,
   CheckCircle2,
   AlertCircle,
-  TrendingUp,
   Eye,
   Users,
   Flame,
@@ -450,25 +449,28 @@ async function TenderContent({ id }: { id: string }) {
                           Photos ({tender.images.length})
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {tender.images.map((img: any, index: number) => (
-                            <a
-                              key={index}
-                              href={img.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group relative aspect-video overflow-hidden rounded-lg border border-gray-300 hover:border-artisan-yellow transition-colors"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={img.url}
-                                alt={img.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Eye className="w-6 h-6 text-white" />
-                              </div>
-                            </a>
-                          ))}
+                          {tender.images.map((img, index: number) => {
+                            const image = img as { url: string; name: string };
+                            return (
+                              <a
+                                key={index}
+                                href={image.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative aspect-video overflow-hidden rounded-lg border border-gray-300 hover:border-artisan-yellow transition-colors"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={image.url}
+                                  alt={image.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Eye className="w-6 h-6 text-white" />
+                                </div>
+                              </a>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -480,23 +482,29 @@ async function TenderContent({ id }: { id: string }) {
                           Documents PDF ({tender.pdfs.length})
                         </h3>
                         <div className="space-y-2">
-                          {tender.pdfs.map((pdf: any, index: number) => (
-                            <a
-                              key={index}
-                              href={pdf.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-3 bg-sand-light rounded-lg border border-gray-300 hover:border-artisan-yellow hover:bg-artisan-yellow/5 transition-colors group"
-                            >
-                              <FileText className="w-5 h-5 text-red-500 shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {pdf.name}
-                                </p>
-                              </div>
-                              <Download className="w-4 h-4 text-muted-foreground group-hover:text-artisan-yellow shrink-0" />
-                            </a>
-                          ))}
+                          {tender.pdfs.map((pdf, index: number) => {
+                            const document = pdf as {
+                              url: string;
+                              name: string;
+                            };
+                            return (
+                              <a
+                                key={index}
+                                href={document.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 bg-sand-light rounded-lg border border-gray-300 hover:border-artisan-yellow hover:bg-artisan-yellow/5 transition-colors group"
+                              >
+                                <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {document.name}
+                                  </p>
+                                </div>
+                                <Download className="w-4 h-4 text-muted-foreground group-hover:text-artisan-yellow shrink-0" />
+                              </a>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -895,7 +903,7 @@ async function TenderContent({ id }: { id: string }) {
           </div>
         </div>
       </div>
-    </>
+    </PublicLayout>
   );
 }
 
