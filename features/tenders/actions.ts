@@ -25,6 +25,8 @@ import {
   createOrganizationNotification,
   notifyMatchingSavedSearches,
 } from "@/features/notifications/actions";
+import { toastError, handleError } from "@/lib/utils/toast-messages";
+import { toast } from "sonner";
 
 /**
  * Créer un nouvel appel d'offres
@@ -628,11 +630,15 @@ export async function closeTender(tenderId: string) {
     });
 
     if (!tender) {
+      toast.error("Appel d'offres introuvable", {
+        description: "Cet appel d'offres n'existe pas ou a été supprimé.",
+      });
       return { error: "Appel d'offres introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits
     if (!tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour clôturer cet appel d'offres",
       };
@@ -640,6 +646,9 @@ export async function closeTender(tenderId: string) {
 
     // Vérifier que le tender est publié
     if (tender.status !== TenderStatus.PUBLISHED) {
+      toast.error("Action impossible", {
+        description: "Seuls les appels d'offres publiés peuvent être clôturés.",
+      });
       return {
         error: "Seuls les appels d'offres publiés peuvent être clôturés",
       };
@@ -717,9 +726,13 @@ export async function closeTender(tenderId: string) {
       },
     });
 
+    toast.success("Appel d'offres clôturé", {
+      description: `L'appel d'offres "${tender.title}" a été clôturé avec ${tender._count.offers} offre(s) reçue(s).`,
+    });
+
     return { success: true, tender: updatedTender };
   } catch (error) {
-    console.error("Error closing tender:", error);
+    handleError(error, "closeTender");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -761,11 +774,15 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
     });
 
     if (!tender) {
+      toast.error("Appel d'offres introuvable", {
+        description: "Cet appel d'offres n'existe pas ou a été supprimé.",
+      });
       return { error: "Appel d'offres introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN seulement)
     if (!tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour attribuer cet appel d'offres",
       };
@@ -776,6 +793,10 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       tender.status !== TenderStatus.CLOSED &&
       tender.status !== TenderStatus.PUBLISHED
     ) {
+      toast.error("Action impossible", {
+        description:
+          "L'appel d'offres doit être clôturé avant d'être attribué.",
+      });
       return {
         error: "L'appel d'offres doit être clôturé avant d'être attribué",
       };
@@ -784,6 +805,9 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
     // Vérifier que l'offre existe
     const winningOffer = tender.offers[0];
     if (!winningOffer) {
+      toast.error("Offre gagnante introuvable", {
+        description: "L'offre sélectionnée n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre gagnante introuvable" };
     }
 
@@ -792,6 +816,10 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       winningOffer.status !== "SUBMITTED" &&
       winningOffer.status !== "SHORTLISTED"
     ) {
+      toast.error("Action impossible", {
+        description:
+          "L'offre doit être soumise ou pré-sélectionnée pour être attribuée.",
+      });
       return {
         error:
           "L'offre doit être soumise ou pré-sélectionnée pour être attribuée",
@@ -1024,9 +1052,13 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
       }
     }
 
+    toast.success("Marché attribué", {
+      description: `Le marché "${tender.title}" a été attribué avec succès.`,
+    });
+
     return { success: true };
   } catch (error) {
-    console.error("Error awarding tender:", error);
+    handleError(error, "awardTender");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -1061,11 +1093,15 @@ export async function revealTenderIdentity(tenderId: string) {
     });
 
     if (!tender) {
+      toast.error("Appel d'offres introuvable", {
+        description: "Cet appel d'offres n'existe pas ou a été supprimé.",
+      });
       return { error: "Appel d'offres introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits
     if (!tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error:
           "Vous n'avez pas les droits pour révéler l'identité de cet appel d'offres",
@@ -1074,6 +1110,9 @@ export async function revealTenderIdentity(tenderId: string) {
 
     // Vérifier que le tender est en mode anonyme
     if (tender.mode !== TenderMode.ANONYMOUS) {
+      toast.error("Action impossible", {
+        description: "Cet appel d'offres n'est pas en mode anonyme.",
+      });
       return {
         error: "Cet appel d'offres n'est pas en mode anonyme",
       };
@@ -1081,6 +1120,9 @@ export async function revealTenderIdentity(tenderId: string) {
 
     // Vérifier que l'identité n'a pas déjà été révélée
     if (tender.identityRevealed) {
+      toast.error("Déjà révélée", {
+        description: "L'identité a déjà été révélée pour cet appel d'offres.",
+      });
       return {
         error: "L'identité a déjà été révélée",
       };
@@ -1139,11 +1181,15 @@ export async function cancelTender(tenderId: string) {
     });
 
     if (!tender) {
+      toast.error("Appel d'offres introuvable", {
+        description: "Cet appel d'offres n'existe pas ou a été supprimé.",
+      });
       return { error: "Appel d'offres introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN seulement)
     if (!tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour annuler cet appel d'offres",
       };
@@ -1151,6 +1197,9 @@ export async function cancelTender(tenderId: string) {
 
     // Ne peut pas annuler un tender déjà attribué
     if (tender.status === TenderStatus.AWARDED) {
+      toast.error("Action impossible", {
+        description: "Impossible d'annuler un appel d'offres déjà attribué.",
+      });
       return {
         error: "Impossible d'annuler un appel d'offres déjà attribué",
       };

@@ -13,6 +13,12 @@ import {
 } from "@/lib/email/tender-emails";
 import { createOrganizationNotification } from "@/features/notifications/actions";
 import { createEquityLog } from "@/features/equity-log/actions";
+import {
+  toastSuccess,
+  toastError,
+  handleError,
+} from "@/lib/utils/toast-messages";
+import { toast } from "sonner";
 
 // Type pour le formulaire d'offre
 interface OfferFormData {
@@ -226,6 +232,9 @@ export async function saveDraftOffer(data: {
     });
 
     if (!tender) {
+      toast.error("Appel d'offres introuvable", {
+        description: "Cet appel d'offres n'existe pas.",
+      });
       return { error: "Appel d'offres introuvable" };
     }
 
@@ -408,10 +417,18 @@ export async function submitOffer(data: {
     // Si l'offre existe et est déjà soumise ou retirée, refuser
     if (existingOffer) {
       if (existingOffer.status === "SUBMITTED") {
+        toast.error("Offre déjà soumise", {
+          description:
+            "Vous avez déjà soumis une offre pour cet appel d'offres.",
+        });
         return {
           error: "Vous avez déjà soumis une offre pour cet appel d'offres",
         };
       } else if (existingOffer.status === "WITHDRAWN") {
+        toast.error("Action impossible", {
+          description:
+            "Vous avez retiré votre offre. Vous ne pouvez plus soumettre de nouvelle offre.",
+        });
         return {
           error:
             "Vous avez retiré votre offre pour cet appel d'offres. Vous ne pouvez plus soumettre de nouvelle offre.",
@@ -834,12 +851,14 @@ export async function submitOffer(data: {
       console.error("Error sending offer received notification:", error);
     }
 
+    toastSuccess.offerSubmitted();
+
     return {
       success: true,
       offerId: offer.id,
     };
   } catch (error) {
-    console.error("Error submitting offer:", error);
+    handleError(error, "submitOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -879,6 +898,7 @@ export async function createOffer(data: {
     });
 
     if (!membership) {
+      toastError.unauthorized();
       return {
         error:
           "Vous n'avez pas les droits pour créer une offre pour cette organisation",
@@ -894,15 +914,24 @@ export async function createOffer(data: {
     });
 
     if (!tender || tender.status !== "PUBLISHED") {
+      toast.error("Appel d'offres indisponible", {
+        description:
+          "Cet appel d'offres n'est pas disponible ou n'est plus ouvert.",
+      });
       return { error: "Cet appel d'offres n'est pas disponible" };
     }
 
     if (new Date() > tender.deadline) {
+      toastError.deadlinePassed();
       return { error: "La date limite est dépassée" };
     }
 
     // Vérifier que l'organisation ne soumet pas une offre à son propre tender
     if (tender.organizationId === data.organizationId) {
+      toast.error("Action impossible", {
+        description:
+          "Vous ne pouvez pas soumettre une offre à votre propre appel d'offres.",
+      });
       return {
         error:
           "Vous ne pouvez pas soumettre une offre à votre propre appel d'offres",
@@ -921,6 +950,9 @@ export async function createOffer(data: {
     });
 
     if (existingOffer) {
+      toast.error("Offre déjà soumise", {
+        description: "Vous avez déjà soumis une offre pour cet appel d'offres.",
+      });
       return {
         error: "Vous avez déjà soumis une offre pour cet appel d'offres",
       };
@@ -1249,16 +1281,23 @@ export async function revealOfferIdentities(tenderId: string) {
   });
 
   if (!tender?.organization.members.length) {
+    toastError.unauthorized();
     return { error: "Vous n'avez pas les droits pour révéler les identités" };
   }
 
   // Vérifier que la deadline est passée
   if (new Date() < tender.deadline) {
+    toast.error("Action impossible", {
+      description: "La date limite n'est pas encore passée.",
+    });
     return { error: "La date limite n'est pas encore passée" };
   }
 
   // Vérifier que le tender est en mode anonyme
   if (tender.mode !== "ANONYMOUS") {
+    toast.error("Action impossible", {
+      description: "Cet appel d'offres n'est pas en mode anonyme.",
+    });
     return { error: "Cet appel d'offres n'est pas en mode anonyme" };
   }
 
@@ -1269,6 +1308,10 @@ export async function revealOfferIdentities(tenderId: string) {
       identityRevealed: true,
       revealedAt: new Date(),
     },
+  });
+
+  toast.success("Identités révélées", {
+    description: "Les identités des soumissionnaires sont maintenant visibles.",
   });
 
   return { success: true };
@@ -1514,16 +1557,23 @@ export async function acceptOffer(offerId: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits
     if (!offer.tender.organization.members.length) {
+      toastError.unauthorized();
       return { error: "Vous n'avez pas les droits pour accepter cette offre" };
     }
 
     // Vérifier que l'offre est bien soumise
     if (offer.status !== "SUBMITTED") {
+      toast.error("Action impossible", {
+        description: "Seules les offres soumises peuvent être acceptées.",
+      });
       return { error: "Seules les offres soumises peuvent être acceptées" };
     }
 
@@ -1537,6 +1587,10 @@ export async function acceptOffer(offerId: string) {
       data: {
         status: OfferStatus.ACCEPTED,
       },
+    });
+
+    toast.success("Offre acceptée", {
+      description: `L'offre de ${offer.organization.name} a été acceptée.`,
     });
 
     // Récupérer les admins de l'organisation soumissionnaire
@@ -1580,7 +1634,7 @@ export async function acceptOffer(offerId: string) {
 
     return { success: true, offer: updatedOffer };
   } catch (error) {
-    console.error("Error accepting offer:", error);
+    handleError(error, "acceptOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -1619,16 +1673,24 @@ export async function rejectOffer(offerId: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits
     if (!offer.tender.organization.members.length) {
+      toastError.unauthorized();
       return { error: "Vous n'avez pas les droits pour rejeter cette offre" };
     }
 
     // Vérifier que l'offre est soumise ou pré-sélectionnée
     if (offer.status !== "SUBMITTED" && offer.status !== "SHORTLISTED") {
+      toast.error("Action impossible", {
+        description:
+          "Seules les offres soumises ou pré-sélectionnées peuvent être rejetées.",
+      });
       return {
         error:
           "Seules les offres soumises ou pré-sélectionnées peuvent être rejetées",
@@ -1641,6 +1703,10 @@ export async function rejectOffer(offerId: string) {
       data: {
         status: OfferStatus.REJECTED,
       },
+    });
+
+    toast.success("Offre rejetée", {
+      description: `L'offre de ${offer.organization.name} a été rejetée.`,
     });
 
     // Notification in-app au soumissionnaire
@@ -1721,7 +1787,7 @@ export async function rejectOffer(offerId: string) {
 
     return { success: true, offer: updatedOffer };
   } catch (error) {
-    console.error("Error rejecting offer:", error);
+    handleError(error, "rejectOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -1769,12 +1835,16 @@ export async function shortlistOffer(offerId: string) {
 
     if (!offer) {
       console.log("🔴 Error: Offre introuvable");
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
     if (!offer.tender.organization.members.length) {
       console.log("🔴 Error: Pas de droits");
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour pré-sélectionner cette offre",
       };
@@ -1783,6 +1853,10 @@ export async function shortlistOffer(offerId: string) {
     // Vérifier que l'offre est bien soumise
     if (offer.status !== "SUBMITTED") {
       console.log("🔴 Error: Statut invalide:", offer.status);
+      toast.error("Action impossible", {
+        description:
+          "Seules les offres soumises peuvent être pré-sélectionnées.",
+      });
       return {
         error: "Seules les offres soumises peuvent être pré-sélectionnées",
       };
@@ -1810,6 +1884,10 @@ export async function shortlistOffer(offerId: string) {
       updatedOffer.id,
       updatedOffer.status
     );
+
+    toast.success("Offre pré-sélectionnée", {
+      description: `L'offre de ${updatedOffer.organization.name} a été mise en liste restreinte.`,
+    });
 
     // Notification in-app à l'organisation soumissionnaire (sauf si tender anonyme non révélé)
     if (
@@ -1839,6 +1917,7 @@ export async function shortlistOffer(offerId: string) {
     return { success: true, offer: updatedOffer };
   } catch (error) {
     console.error("🔴 Error shortlisting offer:", error);
+    handleError(error, "shortlistOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -1877,11 +1956,15 @@ export async function unshortlistOffer(offerId: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur a les droits (OWNER ou ADMIN)
     if (!offer.tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error:
           "Vous n'avez pas les droits pour retirer cette offre de la liste",
@@ -1890,6 +1973,10 @@ export async function unshortlistOffer(offerId: string) {
 
     // Vérifier que l'offre est bien pré-sélectionnée
     if (offer.status !== "SHORTLISTED") {
+      toast.error("Action impossible", {
+        description:
+          "Seules les offres pré-sélectionnées peuvent être retirées de la liste.",
+      });
       return {
         error:
           "Seules les offres pré-sélectionnées peuvent être retirées de la liste",
@@ -1904,9 +1991,13 @@ export async function unshortlistOffer(offerId: string) {
       },
     });
 
+    toast.success("Offre retirée de la sélection", {
+      description: "L'offre a été retirée de la liste des pré-sélectionnées.",
+    });
+
     return { success: true, offer: updatedOffer };
   } catch (error) {
-    console.error("Error unshortlisting offer:", error);
+    handleError(error, "unshortlistOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -1947,10 +2038,14 @@ export async function addOfferComment(offerId: string, content: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     if (!offer.tender.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour commenter cette offre",
       };
@@ -1993,9 +2088,13 @@ export async function addOfferComment(offerId: string, content: string) {
       }
     );
 
+    toast.success("Commentaire ajouté", {
+      description: "Votre commentaire a été ajouté avec succès.",
+    });
+
     return { success: true, comment };
   } catch (error) {
-    console.error("Error adding comment:", error);
+    handleError(error, "addOfferComment");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -2090,16 +2189,23 @@ export async function deleteOfferComment(commentId: string) {
     });
 
     if (!comment) {
+      toast.error("Commentaire introuvable", {
+        description: "Ce commentaire n'existe pas ou a été supprimé.",
+      });
       return { error: "Commentaire introuvable" };
     }
 
     // Vérifier que l'utilisateur est membre de l'organisation
     if (!comment.offer.tender.organization.members.length) {
+      toastError.unauthorized();
       return { error: "Non autorisé" };
     }
 
     // Vérifier que l'utilisateur est l'auteur du commentaire
     if (comment.authorId !== user.id) {
+      toast.error("Action non autorisée", {
+        description: "Vous ne pouvez supprimer que vos propres commentaires.",
+      });
       return {
         error: "Vous ne pouvez supprimer que vos propres commentaires",
       };
@@ -2110,9 +2216,13 @@ export async function deleteOfferComment(commentId: string) {
       where: { id: commentId },
     });
 
+    toast.success("Commentaire supprimé", {
+      description: "Le commentaire a été supprimé avec succès.",
+    });
+
     return { success: true };
   } catch (error) {
-    console.error("Error deleting comment:", error);
+    handleError(error, "deleteOfferComment");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -2170,11 +2280,15 @@ export async function withdrawOffer(offerId: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur appartient à l'organisation soumissionnaire
     if (!offer.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour retirer cette offre",
       };
@@ -2182,6 +2296,10 @@ export async function withdrawOffer(offerId: string) {
 
     // Vérifier que l'offre est soumise ou pré-sélectionnée
     if (offer.status !== "SUBMITTED" && offer.status !== "SHORTLISTED") {
+      toast.error("Action impossible", {
+        description:
+          "Seules les offres soumises ou pré-sélectionnées peuvent être retirées.",
+      });
       return {
         error:
           "Seules les offres soumises ou pré-sélectionnées peuvent être retirées",
@@ -2190,6 +2308,10 @@ export async function withdrawOffer(offerId: string) {
 
     // Vérifier que la deadline n'est pas dépassée (on peut retirer seulement avant)
     if (new Date() > offer.tender.deadline) {
+      toast.error("Deadline dépassée", {
+        description:
+          "Vous ne pouvez plus retirer votre offre après la deadline.",
+      });
       return {
         error: "Vous ne pouvez plus retirer votre offre après la deadline",
       };
@@ -2201,6 +2323,10 @@ export async function withdrawOffer(offerId: string) {
       data: {
         status: OfferStatus.WITHDRAWN,
       },
+    });
+
+    toast.success("Offre retirée", {
+      description: `Votre offre pour "${offer.tender.title}" a été retirée avec succès.`,
     });
 
     // Envoyer email de confirmation à l'organisation soumissionnaire
@@ -2238,7 +2364,7 @@ export async function withdrawOffer(offerId: string) {
 
     return { success: true, offer: updatedOffer };
   } catch (error) {
-    console.error("Error withdrawing offer:", error);
+    handleError(error, "withdrawOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };
@@ -2272,11 +2398,15 @@ export async function deleteDraftOffer(offerId: string) {
     });
 
     if (!offer) {
+      toast.error("Offre introuvable", {
+        description: "Cette offre n'existe pas ou a été supprimée.",
+      });
       return { error: "Offre introuvable" };
     }
 
     // Vérifier que l'utilisateur appartient à l'organisation soumissionnaire
     if (!offer.organization.members.length) {
+      toastError.unauthorized();
       return {
         error: "Vous n'avez pas les droits pour supprimer cette offre",
       };
@@ -2284,6 +2414,9 @@ export async function deleteDraftOffer(offerId: string) {
 
     // Vérifier que l'offre est bien un brouillon
     if (offer.status !== "DRAFT") {
+      toast.error("Action impossible", {
+        description: "Seuls les brouillons peuvent être supprimés.",
+      });
       return { error: "Seuls les brouillons peuvent être supprimés" };
     }
 
@@ -2305,9 +2438,11 @@ export async function deleteDraftOffer(offerId: string) {
       prisma.offer.delete({ where: { id: offerId } }),
     ]);
 
+    toastSuccess.deleted();
+
     return { success: true };
   } catch (error) {
-    console.error("Error deleting draft offer:", error);
+    handleError(error, "deleteDraftOffer");
     return {
       error: error instanceof Error ? error.message : "Une erreur est survenue",
     };

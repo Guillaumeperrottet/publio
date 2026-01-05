@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import PublicLayout from "@/components/layout/public-layout";
 import { getTenderById } from "@/features/tenders/actions";
 import { notFound } from "next/navigation";
@@ -56,12 +57,7 @@ const selectionPriorityLabels: Record<string, string> = {
   ECO_FRIENDLY: "Respect de l'environnement",
 };
 
-export default async function TenderDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+async function TenderContent({ id }: { id: string }) {
   const tender = await getTenderById(id);
 
   if (!tender) {
@@ -898,6 +894,73 @@ export default async function TenderDetailPage({
             </div>
           </div>
         </div>
+      </div>
+    </>
+  );
+}
+
+function TenderDetailSkeleton() {
+  return (
+    <>
+      {/* Breadcrumb Skeleton */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 md:px-6 py-3">
+          <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 md:px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+              {/* Title Skeleton */}
+              <div className="space-y-3">
+                <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse" />
+              </div>
+
+              {/* Badges Skeleton */}
+              <div className="flex gap-2">
+                <div className="h-6 w-24 bg-gray-200 rounded-full animate-pulse" />
+                <div className="h-6 w-24 bg-gray-200 rounded-full animate-pulse" />
+              </div>
+
+              {/* Description Skeleton */}
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+              <div className="h-12 w-full bg-gray-200 rounded animate-pulse" />
+              <div className="h-32 w-full bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default async function TenderDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  return (
+    <PublicLayout>
+      <div className="bg-white min-h-screen">
+        <Suspense fallback={<TenderDetailSkeleton />}>
+          <TenderContent id={id} />
+        </Suspense>
       </div>
     </PublicLayout>
   );

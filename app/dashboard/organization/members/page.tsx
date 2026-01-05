@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -21,7 +22,7 @@ import {
 import MembersList from "@/features/organizations/members-list";
 import InviteMemberForm from "@/features/organizations/invite-member-form";
 
-export default async function OrganizationMembersPage() {
+async function MembersContent() {
   await getCurrentUser();
   const memberships = await getUserOrganizations();
 
@@ -162,6 +163,80 @@ export default async function OrganizationMembersPage() {
             </HandDrawnCard>
           </div>
         </div>
+      </>
+  );
+}
+
+function MembersSkeleton() {
+  return (
+    <>
+      {/* Éléments décoratifs */}
+      <div className="absolute top-4 right-8 opacity-20">
+        <HandDrawnStar className="w-12 h-12 text-deep-green" />
+      </div>
+      <div className="absolute top-20 right-20 opacity-15">
+        <HandDrawnCircle className="w-20 h-20 text-artisan-yellow" />
+      </div>
+
+      <div className="mb-8">
+        <div className="h-12 w-64 bg-sand-light/50 rounded animate-pulse mb-3" />
+        <div className="h-6 w-96 bg-sand-light/50 rounded animate-pulse" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Liste des membres skeleton */}
+        <div className="lg:col-span-2">
+          <HandDrawnCard>
+            <HandDrawnCardHeader>
+              <div className="space-y-2">
+                <div className="h-8 w-64 bg-sand-light/50 rounded animate-pulse" />
+                <div className="h-5 w-32 bg-sand-light/50 rounded animate-pulse" />
+              </div>
+            </HandDrawnCardHeader>
+            <HandDrawnCardContent>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4 p-4">
+                    <div className="w-12 h-12 bg-sand-light/50 rounded-full animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 w-48 bg-sand-light/50 rounded animate-pulse" />
+                      <div className="h-4 w-32 bg-sand-light/50 rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </HandDrawnCardContent>
+          </HandDrawnCard>
+        </div>
+
+        {/* Invitation skeleton */}
+        <div>
+          <HandDrawnCard>
+            <HandDrawnCardHeader>
+              <div className="h-8 w-48 bg-sand-light/50 rounded animate-pulse mb-2" />
+              <div className="h-4 w-64 bg-sand-light/50 rounded animate-pulse" />
+            </HandDrawnCardHeader>
+            <HandDrawnCardContent>
+              <div className="space-y-4">
+                <div className="h-10 w-full bg-sand-light/50 rounded animate-pulse" />
+                <div className="h-10 w-full bg-sand-light/50 rounded animate-pulse" />
+                <div className="h-10 w-full bg-sand-light/50 rounded animate-pulse" />
+              </div>
+            </HandDrawnCardContent>
+          </HandDrawnCard>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function OrganizationMembersPage() {
+  return (
+    <ProtectedLayout>
+      <div className="p-8 max-w-6xl mx-auto relative">
+        <Suspense fallback={<MembersSkeleton />}>
+          <MembersContent />
+        </Suspense>
       </div>
     </ProtectedLayout>
   );
