@@ -83,6 +83,26 @@ export function VeilleSettingsForm({
       return;
     }
 
+    // Validation de la limite de cantons
+    if (maxCantons > 0 && selectedCantons.length > maxCantons) {
+      toast.error(
+        `Votre plan est limité à ${maxCantons} canton${
+          maxCantons > 1 ? "s" : ""
+        }`,
+        {
+          description:
+            maxCantons === 1
+              ? "Vous pouvez changer de canton, mais pas en surveiller plusieurs. Passez à Unlimited pour plus de cantons."
+              : "Passez à un plan supérieur pour surveiller plus de cantons.",
+          action: {
+            label: "Voir les plans",
+            onClick: () => router.push("/dashboard/billing"),
+          },
+        }
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {

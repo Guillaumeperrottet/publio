@@ -71,13 +71,24 @@ export async function upsertVeilleSubscription(
 
     // Vérifier le nombre de cantons selon le plan
     const maxCantons =
-      plan === "VEILLE_UNLIMITED" ? -1 : plan === "VEILLE_BASIC" ? 1 : 0;
-    if (maxCantons !== -1 && data.cantons.length > maxCantons) {
-      throw new Error(
-        `Votre plan ${plan} est limité à ${maxCantons} canton${
-          maxCantons > 1 ? "s" : ""
-        }. Passez à un plan supérieur.`
-      );
+      plan === "VEILLE_UNLIMITED" ? 999 : plan === "VEILLE_BASIC" ? 1 : 0;
+
+    if (data.cantons.length > maxCantons) {
+      if (plan === "VEILLE_BASIC") {
+        throw new Error(
+          "Votre plan Basic est limité à 1 canton. Vous pouvez changer de canton, mais pas en surveiller plusieurs simultanément. Passez à Unlimited (CHF 10/mois) pour surveiller tous les cantons."
+        );
+      } else if (plan === "FREE") {
+        throw new Error(
+          "Vous devez souscrire à un abonnement Veille pour surveiller des cantons. Plan Basic (CHF 5/mois) pour 1 canton ou Unlimited (CHF 10/mois) pour tous les cantons."
+        );
+      } else {
+        throw new Error(
+          `Votre plan ${plan} est limité à ${maxCantons} canton${
+            maxCantons > 1 ? "s" : ""
+          }. Passez à un plan supérieur.`
+        );
+      }
     }
 
     // Upsert l'abonnement veille
