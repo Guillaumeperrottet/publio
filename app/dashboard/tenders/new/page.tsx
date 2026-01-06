@@ -1,5 +1,5 @@
 import ProtectedLayout from "@/components/layout/protected-layout";
-import { CreateTenderStepper } from "@/components/tenders/create-tender-stepper";
+import { TenderModeChoice } from "@/components/tenders/tender-mode-choice";
 import { getUserOrganizations } from "@/features/organizations/actions";
 import { redirect } from "next/navigation";
 
@@ -21,7 +21,7 @@ export default async function NewTenderPage() {
   return (
     <ProtectedLayout>
       <div className="bg-sand-light/30 min-h-screen">
-        <CreateTenderStepper organizationId={currentOrganization.id} />
+        <TenderModeChoice organization={currentOrganization} />
       </div>
     </ProtectedLayout>
   );
