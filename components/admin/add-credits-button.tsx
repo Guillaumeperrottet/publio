@@ -73,10 +73,12 @@ export function AddCreditsButton({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-white border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-white">Add Manual Credits</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogTitle className="text-gray-900">
+              Add Manual Credits
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
               Add credits to {organizationName}&apos;s account. This will create
               a negative invoice entry.
             </DialogDescription>
@@ -84,7 +86,7 @@ export function AddCreditsButton({
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount" className="text-white">
+              <Label htmlFor="amount" className="text-gray-900">
                 Amount (CHF)
               </Label>
               <Input
@@ -95,12 +97,12 @@ export function AddCreditsButton({
                 placeholder="100.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-white border-gray-200 text-gray-900"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="credits-reason" className="text-white">
+              <Label htmlFor="credits-reason" className="text-gray-900">
                 Reason (required)
               </Label>
               <Input
@@ -108,7 +110,7 @@ export function AddCreditsButton({
                 placeholder="e.g., Promotional credit, Compensation..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-white border-gray-200 text-gray-900"
               />
             </div>
           </div>

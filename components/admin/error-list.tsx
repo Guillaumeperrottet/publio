@@ -69,8 +69,8 @@ export function ErrorList({ errors }: ErrorListProps) {
           key={error.id}
           className={`border rounded-lg p-4 transition-colors ${
             error.status === "resolved"
-              ? "bg-gray-900/50 border-gray-800"
-              : "bg-gray-900 border-gray-800 hover:border-gray-700"
+              ? "bg-gray-50 border-gray-200"
+              : "bg-white border-gray-200 hover:border-gray-300"
           }`}
         >
           <div className="flex items-start justify-between gap-4">

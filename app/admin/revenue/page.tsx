@@ -64,8 +64,10 @@ export default async function RevenuePage() {
           <DollarSign className="w-8 h-8 text-green-500" />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-white">Revenue Analytics</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-4xl font-bold text-gray-900">
+            Revenue Analytics
+          </h1>
+          <p className="text-gray-600 mt-1">
             Financial metrics and subscription insights
           </p>
         </div>
@@ -76,7 +78,7 @@ export default async function RevenuePage() {
         {statCards.map((stat) => (
           <Card
             key={stat.title}
-            className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors"
+            className="bg-white border-gray-200 hover:border-gray-300 transition-colors"
           >
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -85,11 +87,11 @@ export default async function RevenuePage() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-white mb-1">
+                <p className="text-sm text-gray-500 mb-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
                   {stat.value}
                 </p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
+                <p className="text-xs text-gray-600">{stat.description}</p>
               </div>
             </CardContent>
           </Card>
@@ -97,11 +99,9 @@ export default async function RevenuePage() {
       </div>
 
       {/* Revenue Chart */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white">
-            Revenue Trend (Last 12 Months)
-          </CardTitle>
+          <CardTitle>Revenue Trend (Last 12 Months)</CardTitle>
         </CardHeader>
         <CardContent>
           <RevenueChart data={stats.monthlyRevenue} />
@@ -109,19 +109,19 @@ export default async function RevenuePage() {
       </Card>
 
       {/* Subscriptions by Plan */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white">Subscriptions by Plan</CardTitle>
+          <CardTitle>Subscriptions by Plan</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(stats.subscriptionsByPlan).map(([plan, count]) => (
               <div
                 key={plan}
-                className="p-4 rounded-lg bg-gray-900 border border-gray-700 text-center"
+                className="p-4 rounded-lg bg-gray-50 border border-gray-200 text-center"
               >
-                <p className="text-3xl font-bold text-white mb-1">{count}</p>
-                <p className="text-sm text-gray-400">{plan}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1">{count}</p>
+                <p className="text-sm text-gray-600">{plan}</p>
               </div>
             ))}
           </div>
@@ -129,29 +129,29 @@ export default async function RevenuePage() {
       </Card>
 
       {/* Recent Invoices */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white">Recent Invoices</CardTitle>
+          <CardTitle>Recent Invoices</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {stats.recentInvoices.map((invoice) => (
               <div
                 key={invoice.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-gray-900 hover:bg-gray-750 transition-colors"
+                className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex-1">
-                  <p className="text-white font-medium">
+                  <p className="text-gray-900 font-medium">
                     {invoice.organization.name}
                   </p>
-                  <p className="text-sm text-gray-400">{invoice.description}</p>
+                  <p className="text-sm text-gray-600">{invoice.description}</p>
                   <p className="text-xs text-gray-500">
                     {invoice.number} •{" "}
                     {new Date(invoice.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="text-lg font-bold text-white">
+                  <p className="text-lg font-bold text-gray-900">
                     CHF {invoice.amount.toFixed(2)}
                   </p>
                   <Badge
@@ -174,8 +174,8 @@ export default async function RevenuePage() {
 
             {stats.recentInvoices.length === 0 && (
               <div className="p-12 text-center">
-                <CreditCard className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No invoices yet</p>
+                <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No invoices yet</p>
               </div>
             )}
           </div>

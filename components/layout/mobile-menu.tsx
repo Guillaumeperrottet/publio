@@ -17,6 +17,7 @@ import {
   CreditCard,
   LogOut,
   User,
+  Shield,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import {
@@ -37,6 +38,7 @@ interface MobileMenuProps {
     name: string;
     email: string;
     image?: string;
+    isSuperAdmin?: boolean;
   };
   organization?: {
     name: string;
@@ -347,6 +349,23 @@ export function MobileMenu({
                   </Link>
                 </div>
               </div>
+
+              {/* Super Admin - uniquement pour les super admins */}
+              {user?.isSuperAdmin && (
+                <>
+                  <Separator className="my-2" />
+                  <div className="px-3">
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 text-amber-600 font-semibold transition-colors"
+                    >
+                      <Shield className="w-5 h-5" />
+                      <span>Super Admin Panel</span>
+                    </Link>
+                  </div>
+                </>
+              )}
 
               <Separator className="my-2" />
 

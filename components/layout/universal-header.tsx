@@ -71,6 +71,7 @@ export async function UniversalHeader() {
                     name: user.name || "Utilisateur",
                     email: user.email || "",
                     image: user.image || undefined,
+                    isSuperAdmin: user.isSuperAdmin || false,
                   }
                 : undefined
             }
@@ -315,6 +316,7 @@ export async function UniversalHeader() {
                       name: user?.name || "Utilisateur",
                       email: user?.email || "",
                       image: user?.image || undefined,
+                      isSuperAdmin: user?.isSuperAdmin || false,
                     }}
                     organization={organization}
                     userRole={userRole}

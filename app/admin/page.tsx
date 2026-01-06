@@ -57,16 +57,16 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-white mb-2">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
           Dashboard Overview
         </h1>
-        <p className="text-gray-400">System metrics and activity at a glance</p>
+        <p className="text-gray-600">System metrics and activity at a glance</p>
       </div>
 
       {/* System Health */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             System Health
             <Badge
               variant={health.status === "healthy" ? "default" : "destructive"}
@@ -84,24 +84,24 @@ export default async function AdminDashboard() {
           {health.status === "healthy" && health.database && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-gray-400">DB Response</p>
-                <p className="text-white font-semibold">
+                <p className="text-gray-600">DB Response</p>
+                <p className="text-gray-900 font-semibold">
                   {health.database.responseTime}ms
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">DB Size</p>
-                <p className="text-white font-semibold">
+                <p className="text-gray-600">DB Size</p>
+                <p className="text-gray-900 font-semibold">
                   {(health.database.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Status</p>
+                <p className="text-gray-600">Status</p>
                 <p className="text-green-500 font-semibold">Connected</p>
               </div>
               <div>
-                <p className="text-gray-400">Last Check</p>
-                <p className="text-white font-semibold">
+                <p className="text-gray-600">Last Check</p>
+                <p className="text-gray-900 font-semibold">
                   {new Date(health.timestamp).toLocaleTimeString()}
                 </p>
               </div>
@@ -115,13 +115,15 @@ export default async function AdminDashboard() {
         {statCards.map((stat) => (
           <Card
             key={stat.title}
-            className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors"
+            className="bg-white border-gray-200 hover:border-gray-300 transition-colors"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold text-white">{stat.value}</p>
+                  <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {stat.value}
+                  </p>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                   <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -133,25 +135,25 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Recent Users */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white">Recent Users</CardTitle>
+          <CardTitle>Recent Users</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {stats.recentUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-gray-900 hover:bg-gray-750 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div>
-                  <p className="text-white font-medium">
+                  <p className="text-gray-900 font-medium">
                     {user.name || "No name"}
                   </p>
-                  <p className="text-sm text-gray-400">{user.email}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     {user.memberships.length} org
                     {user.memberships.length !== 1 ? "s" : ""}
                   </p>
@@ -166,20 +168,20 @@ export default async function AdminDashboard() {
       </Card>
 
       {/* Recent Organizations */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white">Recent Organizations</CardTitle>
+          <CardTitle>Recent Organizations</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {stats.recentOrgs.map((org) => (
               <div
                 key={org.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-gray-900 hover:bg-gray-750 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div>
-                  <p className="text-white font-medium">{org.name}</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-gray-900 font-medium">{org.name}</p>
+                  <p className="text-sm text-gray-600">
                     {org._count.members} members • {org._count.tenders} tenders
                   </p>
                 </div>

@@ -30,8 +30,8 @@ export default async function ActivityPage() {
           <ActivityIcon className="w-8 h-8 text-orange-500" />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-white">Activity Logs</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-4xl font-bold text-gray-900">Activity Logs</h1>
+          <p className="text-gray-600 mt-1">
             System audit trail and activity history
           </p>
         </div>
@@ -42,7 +42,7 @@ export default async function ActivityPage() {
         {logs.map((log) => (
           <Card
             key={log.id}
-            className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors"
+            className="bg-white border-gray-200 hover:border-gray-300 transition-colors"
           >
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -69,7 +69,7 @@ export default async function ActivityPage() {
                           {new Date(log.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-white font-medium">
+                      <p className="text-gray-900 font-medium">
                         {log.description}
                       </p>
                     </div>
@@ -77,7 +77,7 @@ export default async function ActivityPage() {
 
                   {/* User Info */}
                   {log.user && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                       <User className="w-4 h-4" />
                       <span>{log.user.name || log.user.email}</span>
                     </div>
@@ -85,11 +85,11 @@ export default async function ActivityPage() {
 
                   {/* Metadata */}
                   {log.metadata && (
-                    <details className="text-xs text-gray-500">
-                      <summary className="cursor-pointer hover:text-gray-400">
+                    <details className="text-xs text-gray-600">
+                      <summary className="cursor-pointer hover:text-gray-700">
                         View metadata
                       </summary>
-                      <pre className="mt-2 p-3 bg-gray-900 rounded border border-gray-700 overflow-x-auto">
+                      <pre className="mt-2 p-3 bg-gray-50 rounded border border-gray-200 overflow-x-auto">
                         {JSON.stringify(log.metadata, null, 2)}
                       </pre>
                     </details>
@@ -109,10 +109,10 @@ export default async function ActivityPage() {
         ))}
 
         {logs.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-white border-gray-200">
             <CardContent className="p-12 text-center">
-              <ActivityIcon className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">No activity logs yet</p>
+              <ActivityIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">No activity logs yet</p>
             </CardContent>
           </Card>
         )}

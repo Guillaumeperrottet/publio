@@ -13,8 +13,8 @@ export default async function UsersPage() {
           <UsersIcon className="w-8 h-8 text-blue-500" />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-white">Users Management</h1>
-          <p className="text-gray-400 mt-1">{users.length} total users</p>
+          <h1 className="text-4xl font-bold text-gray-900">Users Management</h1>
+          <p className="text-gray-600 mt-1">{users.length} total users</p>
         </div>
       </div>
 

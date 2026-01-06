@@ -30,6 +30,7 @@ interface UserMenuProps {
     name: string;
     email: string;
     image?: string;
+    isSuperAdmin?: boolean;
   };
   organization?: {
     id: string;
@@ -157,6 +158,22 @@ export function UserMenu({ user, organization, userRole }: UserMenuProps) {
             <span>Préférences de notification</span>
           </Link>
         </DropdownMenuItem>
+
+        {/* Super Admin - uniquement pour les super admins */}
+        {user.isSuperAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 cursor-pointer text-amber-600 font-semibold"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Super Admin Panel</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
 
         <DropdownMenuSeparator />
 

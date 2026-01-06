@@ -10,6 +10,14 @@ import { toggleSuperAdmin } from "@/features/admin/actions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type User = {
   id: string;
@@ -38,6 +46,12 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
   const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    name: string | null;
+    isSuperAdmin: boolean;
+  } | null>(null);
   const router = useRouter();
 
   const filteredUsers = users.filter(
@@ -46,26 +60,58 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
       user.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleToggleSuperAdmin = async (userId: string) => {
+  const handleToggleSuperAdmin = async () => {
+    if (!selectedUser) return;
+
     try {
-      setLoading(userId);
-      const result = await toggleSuperAdmin(userId);
+      setLoading(selectedUser.id);
+      const result = await toggleSuperAdmin(selectedUser.id);
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === userId ? { ...u, isSuperAdmin: result.isSuperAdmin } : u
+          u.id === selectedUser.id
+            ? { ...u, isSuperAdmin: result.isSuperAdmin }
+            : u
         )
       );
 
+      // Son de succès
+      const audio = new Audio("/sounds/notification.mp3");
+      audio.volume = 0.5;
+      audio.play().catch(() => {
+        // Ignore les erreurs si le son ne peut pas être joué
+      });
+
       toast.success(
-        result.isSuperAdmin ? "Super admin granted" : "Super admin revoked"
+        result.isSuperAdmin ? "Super admin accordé" : "Super admin révoqué",
+        {
+          description: result.isSuperAdmin
+            ? "L'utilisateur a maintenant accès au panneau super admin"
+            : "L'utilisateur n'a plus accès au panneau super admin",
+          duration: 4000,
+        }
       );
+      setConfirmOpen(false);
+      setSelectedUser(null);
     } catch (error) {
-      toast.error("Failed to update user");
+      toast.error("Échec de la mise à jour", {
+        description:
+          "Une erreur s'est produite lors de la modification des privilèges",
+        duration: 4000,
+      });
       console.error(error);
     } finally {
       setLoading(null);
     }
+  };
+
+  const openConfirmDialog = (user: {
+    id: string;
+    name: string | null;
+    isSuperAdmin: boolean;
+  }) => {
+    setSelectedUser(user);
+    setConfirmOpen(true);
   };
 
   return (
@@ -77,7 +123,7 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
           placeholder="Search users by email or name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+          className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
         />
       </div>
 
@@ -86,7 +132,7 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
         {filteredUsers.map((user) => (
           <Card
             key={user.id}
-            className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+            className="bg-white border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
             onClick={() => router.push(`/admin/users/${user.id}`)}
           >
             <CardContent className="p-6">
@@ -95,16 +141,16 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-gray-900">
                         {user.name || "No name"}
                       </h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                         <Mail className="w-4 h-4" />
                         {user.email}
                       </div>
                     </div>
                     {user.isSuperAdmin && (
-                      <Badge className="bg-red-500 hover:bg-red-600">
+                      <Badge className="bg-red-500 hover:bg-red-600 text-white">
                         SUPER ADMIN
                       </Badge>
                     )}
@@ -117,7 +163,7 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
                         <Badge
                           key={membership.organization.id}
                           variant="outline"
-                          className="border-gray-600 text-gray-300"
+                          className="border-gray-300 text-gray-700 bg-gray-50"
                         >
                           {membership.organization.name} ({membership.role})
                         </Badge>
@@ -126,7 +172,7 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
                   )}
 
                   {/* Stats */}
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       Joined {new Date(user.createdAt).toLocaleDateString()}
@@ -143,9 +189,19 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
                   <Button
                     variant={user.isSuperAdmin ? "destructive" : "default"}
                     size="sm"
-                    onClick={() => handleToggleSuperAdmin(user.id)}
+                    onClick={() =>
+                      openConfirmDialog({
+                        id: user.id,
+                        name: user.name,
+                        isSuperAdmin: user.isSuperAdmin,
+                      })
+                    }
                     disabled={loading === user.id}
-                    className="whitespace-nowrap"
+                    className={
+                      user.isSuperAdmin
+                        ? "whitespace-nowrap bg-red-600 hover:bg-red-700 text-white"
+                        : "whitespace-nowrap"
+                    }
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     {loading === user.id
@@ -161,13 +217,64 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
         ))}
 
         {filteredUsers.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-white border-gray-200">
             <CardContent className="p-12 text-center">
-              <p className="text-gray-400">No users found</p>
+              <p className="text-gray-600">No users found</p>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="bg-white border-gray-200">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">
+              {selectedUser?.isSuperAdmin
+                ? "Révoquer les privilèges super admin ?"
+                : "Accorder les privilèges super admin ?"}
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {selectedUser?.isSuperAdmin
+                ? `${
+                    selectedUser.name || "Cet utilisateur"
+                  } perdra l'accès au panneau d'administration et toutes les fonctionnalités super admin.`
+                : `${
+                    selectedUser?.name || "Cet utilisateur"
+                  } aura un accès complet au panneau d'administration avec tous les privilèges super admin.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setConfirmOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={loading !== null}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant={selectedUser?.isSuperAdmin ? "destructive" : "default"}
+              onClick={handleToggleSuperAdmin}
+              disabled={loading !== null}
+              className={
+                !selectedUser?.isSuperAdmin
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-red-600 hover:bg-red-700 text-white"
+              }
+            >
+              {loading !== null
+                ? "..."
+                : selectedUser?.isSuperAdmin
+                ? "Révoquer"
+                : "Accorder"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

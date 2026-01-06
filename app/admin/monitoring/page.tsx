@@ -36,14 +36,14 @@ export default async function MonitoringPage() {
 
       {/* Alert Banner */}
       {unresolvedErrors.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
           <div>
-            <p className="font-medium text-red-500">
+            <p className="font-medium text-red-900">
               {unresolvedErrors.length} unresolved error
               {unresolvedErrors.length > 1 ? "s" : ""} detected
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-red-700">
               Review and resolve critical issues below
             </p>
           </div>

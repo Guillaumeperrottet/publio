@@ -15,8 +15,8 @@ export default async function OrganizationsPage() {
           <Building2 className="w-8 h-8 text-green-500" />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-white">Organizations</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-4xl font-bold text-gray-900">Organizations</h1>
+          <p className="text-gray-600 mt-1">
             {organizations.length} total organizations
           </p>
         </div>
@@ -29,21 +29,21 @@ export default async function OrganizationsPage() {
 
           return (
             <Link key={org.id} href={`/admin/organizations/${org.id}`}>
-              <Card className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
+              <Card className="bg-white border-gray-200 hover:border-gray-300 transition-colors cursor-pointer">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-xl font-semibold text-white mb-2">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
                           {org.name}
                         </h3>
                         {org.email && (
-                          <p className="text-sm text-gray-400">{org.email}</p>
+                          <p className="text-sm text-gray-600">{org.email}</p>
                         )}
                       </div>
                       {subscription && (
-                        <Badge className="bg-purple-500 hover:bg-purple-600">
+                        <Badge className="bg-purple-500 hover:bg-purple-600 text-white">
                           {subscription.plan}
                         </Badge>
                       )}
@@ -52,29 +52,29 @@ export default async function OrganizationsPage() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span className="text-white font-medium">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-900 font-medium">
                           {org.members.length}
                         </span>
-                        <span className="text-gray-400">members</span>
+                        <span className="text-gray-600">members</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <FileText className="w-4 h-4 text-gray-400" />
-                        <span className="text-white font-medium">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-900 font-medium">
                           {org._count.tenders}
                         </span>
-                        <span className="text-gray-400">tenders</span>
+                        <span className="text-gray-600">tenders</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <CreditCard className="w-4 h-4 text-gray-400" />
-                        <span className="text-white font-medium">
+                        <CreditCard className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-900 font-medium">
                           {org._count.offers}
                         </span>
-                        <span className="text-gray-400">offers</span>
+                        <span className="text-gray-600">offers</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-400">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600">
                           {new Date(org.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -91,7 +91,7 @@ export default async function OrganizationsPage() {
                             <Badge
                               key={member.id}
                               variant="outline"
-                              className="border-gray-600 text-gray-300"
+                              className="border-gray-300 text-gray-700 bg-gray-50"
                             >
                               {member.user.name || member.user.email} (
                               {member.role})
@@ -115,8 +115,8 @@ export default async function OrganizationsPage() {
                               }
                               className={
                                 subscription.status === "ACTIVE"
-                                  ? "bg-green-500 hover:bg-green-600"
-                                  : ""
+                                  ? "bg-green-500 hover:bg-green-600 text-white"
+                                  : "bg-gray-200 text-gray-700"
                               }
                             >
                               {subscription.status}
@@ -124,14 +124,14 @@ export default async function OrganizationsPage() {
                           </div>
                           <div>
                             <p className="text-gray-500">Plan</p>
-                            <p className="text-white font-medium">
+                            <p className="text-gray-900 font-medium">
                               {subscription.plan}
                             </p>
                           </div>
                           {subscription.stripeCustomerId && (
                             <div>
                               <p className="text-gray-500">Stripe ID</p>
-                              <p className="text-white font-mono text-xs">
+                              <p className="text-gray-900 font-mono text-xs">
                                 {subscription.stripeCustomerId.slice(0, 20)}...
                               </p>
                             </div>
@@ -139,7 +139,7 @@ export default async function OrganizationsPage() {
                           {subscription.currentPeriodEnd && (
                             <div>
                               <p className="text-gray-500">Renews</p>
-                              <p className="text-white">
+                              <p className="text-gray-900">
                                 {new Date(
                                   subscription.currentPeriodEnd
                                 ).toLocaleDateString()}
@@ -157,7 +157,7 @@ export default async function OrganizationsPage() {
         })}
 
         {organizations.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-white border-gray-200">
             <CardContent className="p-12 text-center">
               <p className="text-gray-400">No organizations found</p>
             </CardContent>

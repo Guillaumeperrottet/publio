@@ -62,6 +62,7 @@ export function ToggleOrganizationSuspensionButton({
       <Button
         variant={isActive ? "destructive" : "default"}
         onClick={() => setOpen(true)}
+        className={isActive ? "bg-red-600 hover:bg-red-700 text-white" : ""}
       >
         {isActive ? (
           <>
@@ -77,12 +78,12 @@ export function ToggleOrganizationSuspensionButton({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-white border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-gray-900">
               {isActive ? "Suspend Organization" : "Reactivate Organization"}
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-gray-600">
               {isActive
                 ? "This will prevent all members from accessing their organization."
                 : "This will restore full access to the organization."}
@@ -91,7 +92,7 @@ export function ToggleOrganizationSuspensionButton({
 
           {!isActive || (
             <div className="space-y-2">
-              <Label htmlFor="reason" className="text-white">
+              <Label htmlFor="reason" className="text-gray-900">
                 Reason (required)
               </Label>
               <Input
@@ -99,7 +100,7 @@ export function ToggleOrganizationSuspensionButton({
                 placeholder="e.g., Non-payment, Terms violation..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-white border-gray-200 text-gray-900"
               />
             </div>
           )}

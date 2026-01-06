@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "./config";
+import { prisma } from "@/lib/db/prisma";
 
 /**
  * Récupère la session utilisateur côté serveur
@@ -48,17 +49,20 @@ export async function requireAuth() {
 export async function getCurrentUser() {
   const session = await requireAuth();
 
-  // TODO: Récupérer l'utilisateur avec ses organisations depuis Prisma
-  // const user = await prisma.user.findUnique({
-  //   where: { id: session.user.id },
-  //   include: {
-  //     memberships: {
-  //       include: {
-  //         organization: true,
-  //       },
-  //     },
-  //   },
-  // });
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      isSuperAdmin: true,
+    },
+  });
 
-  return session.user;
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
 }

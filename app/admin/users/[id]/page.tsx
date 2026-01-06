@@ -32,7 +32,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="text-gray-400 hover:text-white"
+          className="text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Users
@@ -47,16 +47,16 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </div>
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-gray-900">
                 {user.name || "No name"}
               </h1>
               {user.isSuperAdmin && (
-                <Badge className="bg-red-500 hover:bg-red-600">
+                <Badge className="bg-red-500 hover:bg-red-600 text-white">
                   SUPER ADMIN
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex items-center gap-2 text-gray-600">
               <Mail className="w-4 h-4" />
               {user.email}
             </div>
@@ -74,13 +74,13 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
       {/* Info Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
+              <Calendar className="w-5 h-5 text-gray-500" />
               <div>
-                <p className="text-sm text-gray-400">Joined</p>
-                <p className="text-white font-semibold">
+                <p className="text-sm text-gray-600">Joined</p>
+                <p className="text-gray-900 font-semibold">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -88,13 +88,13 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <Building2 className="w-5 h-5 text-gray-400" />
+              <Building2 className="w-5 h-5 text-gray-500" />
               <div>
-                <p className="text-sm text-gray-400">Organizations</p>
-                <p className="text-white font-semibold">
+                <p className="text-sm text-gray-600">Organizations</p>
+                <p className="text-gray-900 font-semibold">
                   {user.memberships.length}
                 </p>
               </div>
@@ -102,13 +102,13 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <Activity className="w-5 h-5 text-gray-400" />
+              <Activity className="w-5 h-5 text-gray-500" />
               <div>
-                <p className="text-sm text-gray-400">Sessions</p>
-                <p className="text-white font-semibold">
+                <p className="text-sm text-gray-600">Sessions</p>
+                <p className="text-gray-900 font-semibold">
                   {user.sessions.length}
                 </p>
               </div>
@@ -119,9 +119,9 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
       {/* Organizations */}
       {user.memberships.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5" />
               Organizations
             </CardTitle>
@@ -134,17 +134,20 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                   href={`/admin/organizations/${membership.organization.id}`}
                   className="block"
                 >
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-900 hover:bg-gray-750 transition-colors">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div>
-                      <p className="text-white font-medium">
+                      <p className="text-gray-900 font-medium">
                         {membership.organization.name}
                       </p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-gray-600">
                         Member since{" "}
                         {new Date(membership.joinedAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant="outline" className="border-gray-600">
+                    <Badge
+                      variant="outline"
+                      className="border-gray-300 text-gray-700 bg-white"
+                    >
                       {membership.role}
                     </Badge>
                   </div>
@@ -156,9 +159,9 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       )}
 
       {/* Recent Sessions */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Recent Sessions
           </CardTitle>
@@ -168,34 +171,34 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             {user.sessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-gray-900 text-sm"
+                className="flex items-center justify-between p-3 rounded-lg bg-gray-50 text-sm"
               >
                 <div className="flex-1">
-                  <p className="text-white font-mono text-xs truncate">
+                  <p className="text-gray-900 font-mono text-xs truncate">
                     {session.id}
                   </p>
                   {session.ipAddress && (
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-gray-600 text-xs">
                       IP: {session.ipAddress}
                     </p>
                   )}
                 </div>
-                <div className="text-right text-gray-400 text-xs">
+                <div className="text-right text-gray-600 text-xs">
                   {new Date(session.createdAt).toLocaleString()}
                 </div>
               </div>
             ))}
             {user.sessions.length === 0 && (
-              <p className="text-center text-gray-400 py-8">No sessions</p>
+              <p className="text-center text-gray-600 py-8">No sessions</p>
             )}
           </div>
         </CardContent>
       </Card>
 
       {/* Recent Notifications */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Bell className="w-5 h-5" />
             Recent Notifications
           </CardTitle>
@@ -203,23 +206,26 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         <CardContent>
           <div className="space-y-2">
             {user.notifications.slice(0, 10).map((notif) => (
-              <div key={notif.id} className="p-3 rounded-lg bg-gray-900">
+              <div key={notif.id} className="p-3 rounded-lg bg-gray-50">
                 <div className="flex items-start justify-between mb-1">
-                  <Badge variant="outline" className="border-gray-600 text-xs">
+                  <Badge
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 bg-white text-xs"
+                  >
                     {notif.type}
                   </Badge>
                   <span className="text-xs text-gray-500">
                     {new Date(notif.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-white text-sm font-medium mb-1">
+                <p className="text-gray-900 text-sm font-medium mb-1">
                   {notif.title}
                 </p>
-                <p className="text-gray-400 text-xs">{notif.message}</p>
+                <p className="text-gray-600 text-xs">{notif.message}</p>
               </div>
             ))}
             {user.notifications.length === 0 && (
-              <p className="text-center text-gray-400 py-8">No notifications</p>
+              <p className="text-center text-gray-600 py-8">No notifications</p>
             )}
           </div>
         </CardContent>
@@ -227,9 +233,9 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
       {/* Activity Logs */}
       {user.activityLogs.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
               Admin Activity Logs
             </CardTitle>
@@ -237,19 +243,16 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <CardContent>
             <div className="space-y-2">
               {user.activityLogs.slice(0, 10).map((log) => (
-                <div
-                  key={log.id}
-                  className="p-3 rounded-lg bg-gray-900 text-sm"
-                >
+                <div key={log.id} className="p-3 rounded-lg bg-gray-50 text-sm">
                   <div className="flex items-start justify-between mb-1">
-                    <Badge className="bg-orange-500 hover:bg-orange-600 text-xs">
+                    <Badge className="bg-orange-500 hover:bg-orange-600 text-white text-xs">
                       {log.type}
                     </Badge>
                     <span className="text-xs text-gray-500">
                       {new Date(log.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-white text-sm">{log.description}</p>
+                  <p className="text-gray-900 text-sm">{log.description}</p>
                 </div>
               ))}
             </div>
