@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -20,6 +21,7 @@ model User {
   emailVerified Boolean  @default(false)
   name          String?
   image         String?
+  isSuperAdmin  Boolean  @default(false) // Super admin role
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -34,6 +36,7 @@ model User {
   offerComments        OfferComment[]       @relation("OfferCommentAuthor")
   notifications        Notification[]       @relation("UserNotifications")
   notificationPrefs    NotificationPreferences? @relation("UserNotificationPreferences")
+  activityLogs         ActivityLog[]        @relation("ActivityLogUser")
 
   @@map("users")
 }
@@ -861,4 +864,48 @@ model InvitationToken {
   @@index([email])
   @@index([organizationId])
   @@map("invitation_tokens")
+}
+
+// ============================================
+// SUPER ADMIN - ACTIVITY LOGS
+// ============================================
+
+enum ActivityType {
+  USER_CREATED
+  USER_DELETED
+  USER_BLOCKED
+  USER_UNBLOCKED
+  ORGANIZATION_CREATED
+  ORGANIZATION_DELETED
+  ORGANIZATION_SUSPENDED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
+  TENDER_PUBLISHED
+  OFFER_SUBMITTED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  ADMIN_LOGIN
+  IMPERSONATION_START
+  IMPERSONATION_END
+  FEATURE_FLAG_CHANGED
+  SYSTEM_ERROR
+}
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String
+  metadata    Json? // Données additionnelles (userId, organizationId, etc.)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  // Relation optionnelle vers User (pour les actions user)
+  userId String?
+  user   User?   @relation("ActivityLogUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
