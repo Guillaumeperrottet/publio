@@ -955,6 +955,10 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
                 finalTender.organization.address || undefined,
               organizationCity: finalTender.organization.city || undefined,
               organizationCanton: finalTender.organization.canton || undefined,
+              organizationContactPerson:
+                finalTender.organization.members.find(
+                  (m) => m.role === "OWNER" || m.role === "ADMIN"
+                )?.user.name || undefined,
             });
           } catch (error) {
             console.error("Error sending winner email:", error);
@@ -978,9 +982,25 @@ export async function awardTender(tenderId: string, winningOfferId: string) {
               offerPrice: winner.price,
               offerCurrency: winner.currency,
               winnerOrganizationName: winner.organization.name,
-              winnerEmail: winner.organization.email || undefined,
-              winnerPhone: winner.organization.phone || undefined,
-              winnerCity: winner.organization.city || undefined,
+              winnerContactPerson: winner.contactPerson || undefined,
+              winnerContactEmail: winner.contactEmail || undefined,
+              winnerContactPhone: winner.contactPhone || undefined,
+              winnerEmail:
+                winner.organizationEmail ||
+                winner.organization.email ||
+                undefined,
+              winnerPhone:
+                winner.organizationPhone ||
+                winner.organization.phone ||
+                undefined,
+              winnerAddress:
+                winner.organizationAddress ||
+                winner.organization.address ||
+                undefined,
+              winnerCity:
+                winner.organizationCity ||
+                winner.organization.city ||
+                undefined,
               winnerCanton: winner.organization.canton || undefined,
             });
           } catch (error) {

@@ -467,6 +467,7 @@ export async function sendTenderAwardedWinnerEmail(params: {
   organizationAddress?: string;
   organizationCity?: string;
   organizationCanton?: string;
+  organizationContactPerson?: string;
 }) {
   const tenderUrl = `${APP_URL}/tenders/${params.tenderId}`;
 
@@ -507,6 +508,11 @@ export async function sendTenderAwardedWinnerEmail(params: {
         <p style="margin: 0 0 8px;"><strong>Organisation :</strong> ${
           params.organizationName
         }</p>
+        ${
+          params.organizationContactPerson
+            ? `<p style="margin: 0 0 8px;"><strong>Contact :</strong> ${params.organizationContactPerson}</p>`
+            : ""
+        }
         ${
           params.organizationEmail
             ? `<p style="margin: 0 0 8px;"><strong>Email :</strong> <a href="mailto:${params.organizationEmail}" style="color: #DEAE00; text-decoration: none;">${params.organizationEmail}</a></p>`
@@ -601,6 +607,9 @@ export async function sendTenderAwardedEmitterEmail(params: {
   offerPrice: number;
   offerCurrency: string;
   winnerOrganizationName: string;
+  winnerContactPerson?: string;
+  winnerContactEmail?: string;
+  winnerContactPhone?: string;
   winnerEmail?: string;
   winnerPhone?: string;
   winnerAddress?: string;
@@ -647,13 +656,26 @@ export async function sendTenderAwardedEmitterEmail(params: {
           params.winnerOrganizationName
         }</p>
         ${
-          params.winnerEmail
-            ? `<p style="margin: 0 0 8px;"><strong>Email :</strong> <a href="mailto:${params.winnerEmail}" style="color: #DEAE00; text-decoration: none;">${params.winnerEmail}</a></p>`
+          params.winnerContactPerson
+            ? `<p style="margin: 0 0 8px;"><strong>Contact :</strong> ${params.winnerContactPerson}</p>`
             : ""
         }
         ${
-          params.winnerPhone
-            ? `<p style="margin: 0 0 8px;"><strong>Téléphone :</strong> <a href="tel:${params.winnerPhone}" style="color: #DEAE00; text-decoration: none;">${params.winnerPhone}</a></p>`
+          params.winnerContactEmail || params.winnerEmail
+            ? `<p style="margin: 0 0 8px;"><strong>Email :</strong> <a href="mailto:${
+                params.winnerContactEmail || params.winnerEmail
+              }" style="color: #DEAE00; text-decoration: none;">${
+                params.winnerContactEmail || params.winnerEmail
+              }</a></p>`
+            : ""
+        }
+        ${
+          params.winnerContactPhone || params.winnerPhone
+            ? `<p style="margin: 0 0 8px;"><strong>Téléphone :</strong> <a href="tel:${
+                params.winnerContactPhone || params.winnerPhone
+              }" style="color: #DEAE00; text-decoration: none;">${
+                params.winnerContactPhone || params.winnerPhone
+              }</a></p>`
             : ""
         }
         ${
