@@ -3,7 +3,7 @@
  * Utilise Faker.js pour générer des données crédibles
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Organization, User, Tender } from "@prisma/client";
 import {
   createUser,
   createOrganization,
@@ -12,6 +12,18 @@ import {
   createOffer,
   createSavedSearch,
   createVeillePublication,
+  createEquityLog,
+  createNotification,
+  createNotificationPreferences,
+  createSavedTender,
+  createVeilleSubscription,
+  createTenderLot,
+  createTenderCriteria,
+  createOfferComment,
+  createInvitationToken,
+  createInvoice,
+  createSubscription,
+  createActivityLog,
 } from "./factories";
 
 const prisma = new PrismaClient();
@@ -67,7 +79,7 @@ async function main() {
   // ====================================
   console.log("🏢 Création des organisations...");
 
-  const organizations = [];
+  const organizations: Organization[] = [];
 
   // 4 Communes (20%)
   for (let i = 0; i < 4; i++) {
@@ -119,7 +131,7 @@ async function main() {
   // ====================================
   console.log("📋 Création des appels d'offres...");
 
-  const tenders = [];
+  const tenders: Tender[] = [];
   const communeOrgs = organizations.filter((o) => o.type === "COMMUNE");
   const privateOrgs = organizations.filter((o) => o.type === "PRIVE");
   const entrepriseOrgs = organizations.filter((o) => o.type === "ENTREPRISE");
@@ -151,14 +163,72 @@ async function main() {
   console.log(`✅ ${tenders.length} appels d'offres créés\n`);
 
   // ====================================
-  // 5. OFFRES (60 offers)
+  // 4. EQUITY LOGS (Journaux d'équité)
+  // ====================================
+  console.log("📜 Création des journaux d'équité...");
+
+  let equityLogCount = 0;
+
+  for (const tender of tenders) {
+    const org = organizations.find((o) => o.id === tender.organizationId);
+    const creator = users.find((u) => u.id === org?.createdBy);
+
+    if (creator) {
+      // Log de création
+      await createEquityLog(tender.id, creator.id, "TENDER_CREATED");
+      equityLogCount++;
+
+      // Log de publication pour les tenders publiés
+      if (tender.status === "PUBLISHED") {
+        await createEquityLog(tender.id, creator.id, "TENDER_PUBLISHED", {
+          publishedAt: tender.publishedAt,
+        });
+        equityLogCount++;
+      }
+    }
+  }
+
+  console.log(`✅ ${equityLogCount} logs d'équité créés\n`);
+
+  // ====================================
+  // 5. LOTS & CRITÈRES (pour tenders avancés)
+  // ====================================
+  console.log("🎯 Création des lots et critères...");
+
+  let lotCount = 0;
+  let criteriaCount = 0;
+
+  const tendersWithLots = tenders.filter((t) => t.hasLots);
+  for (const tender of tendersWithLots) {
+    // Créer 2-4 lots
+    const numLots = Math.floor(Math.random() * 3) + 2;
+    for (let i = 1; i <= numLots; i++) {
+      await createTenderLot(
+        tender.id,
+        i,
+        tender.budget ? Math.round(tender.budget / numLots) : undefined
+      );
+      lotCount++;
+    }
+  }
+
+  // Critères pour tous les tenders non-simples
+  const tendersWithCriteria = tenders.filter((t) => !t.isSimpleMode);
+  for (const tender of tendersWithCriteria) {
+    await createTenderCriteria(tender.id);
+    criteriaCount += 4; // 4 critères par tender
+  }
+
+  console.log(`✅ ${lotCount} lots créés`);
+  console.log(`✅ ${criteriaCount} critères créés\n`);
+
+  // ====================================
+  // 6. OFFRES (60 offers)
   // ====================================
   console.log("💼 Création des offres...");
 
   let offerCount = 0;
-
-  // Chaque tender publié reçoit 1-4 offres
-  const publishedTenders = tenders.filter((t) => t.status === "PUBLISHED");
+  let publishedTenders = tenders.filter((t) => t.status === "PUBLISHED");
 
   for (const tender of publishedTenders) {
     const numOffers = Math.floor(Math.random() * 4) + 1;
@@ -170,8 +240,25 @@ async function main() {
       if (org.id !== tender.organizationId) {
         // 60% avec détails complets (lineItems, inclusions, etc.)
         const withDetails = Math.random() < 0.6;
-        await createOffer(tender.id, org.id, tender, { withDetails });
+        const offer = await createOffer(tender.id, org.id, tender, {
+          withDetails,
+        });
         offerCount++;
+
+        // Ajouter log d'équité pour offre reçue
+        const tenderCreator = users.find(
+          (u) =>
+            u.id ===
+            organizations.find((o) => o.id === tender.organizationId)?.createdBy
+        );
+        if (tenderCreator) {
+          await createEquityLog(tender.id, tenderCreator.id, "OFFER_RECEIVED", {
+            offerId: offer.id,
+            organizationName: org.name,
+            price: offer.price,
+          });
+          equityLogCount++;
+        }
       }
     }
   }
@@ -179,9 +266,133 @@ async function main() {
   console.log(`✅ ${offerCount} offres créées\n`);
 
   // ====================================
-  // 6. RECHERCHES SAUVEGARDÉES (15)
+  // 7. COMMENTAIRES SUR OFFRES
   // ====================================
-  console.log("🔍 Création des recherches sauvegardées...");
+  console.log("💬 Création des commentaires...");
+
+  let commentCount = 0;
+
+  // Récupérer toutes les offres avec leur tender
+  const allOffers = await prisma.offer.findMany({
+    include: { tender: { include: { organization: true } } },
+  });
+
+  // 30% des offres ont des commentaires
+  const offersWithComments = allOffers.filter(() => Math.random() < 0.3);
+
+  for (const offer of offersWithComments) {
+    const tenderOrg = offer.tender.organization;
+    const creator = users.find((u) => u.id === tenderOrg.createdBy);
+
+    if (creator) {
+      await createOfferComment(offer.id, creator.id);
+      commentCount++;
+
+      // Parfois 2-3 commentaires
+      if (Math.random() < 0.3) {
+        await createOfferComment(offer.id, creator.id);
+        commentCount++;
+      }
+    }
+  }
+
+  console.log(`✅ ${commentCount} commentaires créés\n`);
+
+  // ====================================
+  // 8. NOTIFICATIONS
+  // ====================================
+  console.log("🔔 Création des notifications...");
+
+  let notificationCount = 0;
+
+  // Notifications pour les émetteurs ayant reçu des offres
+  for (const tender of publishedTenders.slice(0, 10)) {
+    const org = organizations.find((o) => o.id === tender.organizationId);
+    const creator = users.find((u) => u.id === org?.createdBy);
+
+    if (creator) {
+      await createNotification(creator.id, "OFFER_RECEIVED", {
+        tenderId: tender.id,
+        tenderTitle: tender.title,
+      });
+      notificationCount++;
+    }
+  }
+
+  // Notifications pour deadline proche
+  const tendersClosingSoon = publishedTenders.filter((t) => {
+    const daysUntilDeadline = Math.ceil(
+      (t.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    );
+    return daysUntilDeadline > 0 && daysUntilDeadline <= 3;
+  });
+
+  for (const tender of tendersClosingSoon.slice(0, 5)) {
+    // Notifier 3-5 utilisateurs aléatoires
+    const randomUsers = users
+      .sort(() => 0.5 - Math.random())
+      .slice(0, Math.floor(Math.random() * 3) + 3);
+
+    for (const user of randomUsers) {
+      await createNotification(user.id, "TENDER_CLOSING_SOON", {
+        tenderId: tender.id,
+        tenderTitle: tender.title,
+        deadline: tender.deadline,
+      });
+      notificationCount++;
+    }
+  }
+
+  // Notifications veille
+  for (let i = 0; i < 8; i++) {
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    await createNotification(randomUser.id, "VEILLE_MATCH", {
+      publicationTitle: "Nouvelle mise à l'enquête",
+    });
+    notificationCount++;
+  }
+
+  console.log(`✅ ${notificationCount} notifications créées\n`);
+
+  // ====================================
+  // 9. PRÉFÉRENCES DE NOTIFICATION
+  // ====================================
+  console.log("⚙️ Création des préférences de notification...");
+
+  let prefCount = 0;
+  for (const user of users) {
+    await createNotificationPreferences(user.id);
+    prefCount++;
+  }
+
+  console.log(`✅ ${prefCount} préférences créées\n`);
+
+  // ====================================
+  // 10. TENDERS SAUVEGARDÉS (Favoris)
+  // ====================================
+  console.log("⭐ Création des tenders sauvegardés...");
+
+  let savedTenderCount = 0;
+
+  // Chaque utilisateur sauvegarde 0-3 tenders
+  for (const user of users) {
+    const numSaved = Math.floor(Math.random() * 4); // 0-3
+    const randomTenders = publishedTenders
+      .sort(() => 0.5 - Math.random())
+      .slice(0, numSaved);
+
+    for (const tender of randomTenders) {
+      const saved = await createSavedTender(user.id, tender.id);
+      if (saved) savedTenderCount++;
+    }
+  }
+
+  console.log(`✅ ${savedTenderCount} tenders sauvegardés\n`);
+
+  // ====================================
+  // 11. RECHERCHES SAUVEGARDÉES (15)
+  // ====================================
+  console.log(" Création des recherches sauvegardées...");
 
   let searchCount = 0;
   for (let i = 0; i < 15; i++) {
@@ -193,17 +404,181 @@ async function main() {
   console.log(`✅ ${searchCount} recherches sauvegardées créées\n`);
 
   // ====================================
-  // 7. PUBLICATIONS DE VEILLE (150)
+  // 12. VEILLE - SUBSCRIPTIONS & PUBLICATIONS
   // ====================================
-  console.log("📰 Création des publications de veille...");
+  console.log("📰 Création des subscriptions et publications de veille...");
 
+  let veilleSubCount = 0;
   let pubCount = 0;
+
+  // 50% des communes ont une subscription veille
+  for (const org of communeOrgs) {
+    if (Math.random() < 0.5) {
+      await createVeilleSubscription(org.id);
+      veilleSubCount++;
+    }
+  }
+
+  // Créer 150 publications
   for (let i = 0; i < 150; i++) {
     await createVeillePublication();
     pubCount++;
   }
 
+  console.log(`✅ ${veilleSubCount} subscriptions veille créées`);
   console.log(`✅ ${pubCount} publications de veille créées\n`);
+
+  // ====================================
+  // 13. SUBSCRIPTIONS & FACTURES (Stripe)
+  // ====================================
+  console.log("💳 Création des subscriptions et factures...");
+
+  let subscriptionCount = 0;
+  let invoiceCount = 0;
+
+  // Subscriptions pour toutes les organisations
+  for (const org of organizations) {
+    let plan: "FREE" | "VEILLE_BASIC" | "VEILLE_UNLIMITED" = "FREE";
+
+    if (org.type === "COMMUNE") {
+      // 60% des communes ont un plan payant
+      if (Math.random() < 0.6) {
+        plan = Math.random() < 0.7 ? "VEILLE_BASIC" : "VEILLE_UNLIMITED";
+      }
+    }
+
+    await createSubscription(org.id, plan);
+    subscriptionCount++;
+
+    // Créer des factures pour les organisations avec plan payant
+    if (plan !== "FREE") {
+      // 2-4 factures par organisation
+      const numInvoices = Math.floor(Math.random() * 3) + 2;
+      for (let i = 0; i < numInvoices; i++) {
+        await createInvoice(
+          org.id,
+          "subscription",
+          plan === "VEILLE_BASIC" ? 5 : 10
+        );
+        invoiceCount++;
+      }
+    }
+  }
+
+  // Factures pour publication de tenders
+  for (const tender of publishedTenders.slice(0, 15)) {
+    await createInvoice(tender.organizationId, "tender", 10);
+    invoiceCount++;
+  }
+
+  // Factures pour soumission d'offres (si payant à l'avenir)
+  const submittedOffers = await prisma.offer.findMany({
+    where: { status: "SUBMITTED" },
+    take: 10,
+  });
+  for (const offer of submittedOffers) {
+    if (Math.random() < 0.3) {
+      // 30% des offres ont une facture
+      await createInvoice(offer.organizationId, "offer", 5);
+      invoiceCount++;
+    }
+  }
+
+  console.log(`✅ ${subscriptionCount} subscriptions créées`);
+  console.log(`✅ ${invoiceCount} factures créées\n`);
+
+  // ====================================
+  // 14. INVITATIONS
+  // ====================================
+  console.log("✉️ Création des invitations...");
+
+  let invitationCount = 0;
+
+  // 30% des organisations ont des invitations en attente
+  for (const org of organizations) {
+    if (Math.random() < 0.3) {
+      const inviter = users.find((u) => u.id === org.createdBy);
+      if (inviter) {
+        const numInvitations = Math.floor(Math.random() * 3) + 1; // 1-3 invitations
+        for (let i = 0; i < numInvitations; i++) {
+          await createInvitationToken(
+            org.id,
+            inviter.id,
+            `invite${invitationCount}@example.com`,
+            Math.random() < 0.5 ? "EDITOR" : "VIEWER"
+          );
+          invitationCount++;
+        }
+      }
+    }
+  }
+
+  console.log(`✅ ${invitationCount} invitations créées\n`);
+
+  // ====================================
+  // 15. ACTIVITY LOGS (Super admin)
+  // ====================================
+  console.log("📊 Création des activity logs...");
+
+  let activityLogCount = 0;
+
+  // Logs de création d'utilisateurs
+  for (const user of users.slice(0, 10)) {
+    await createActivityLog("USER_CREATED", user.id, {
+      email: user.email,
+      name: user.name,
+    });
+    activityLogCount++;
+  }
+
+  // Logs de création d'organisations
+  for (const org of organizations.slice(0, 10)) {
+    const creator = users.find((u) => u.id === org.createdBy);
+    await createActivityLog("ORGANIZATION_CREATED", creator?.id, {
+      organizationId: org.id,
+      organizationName: org.name,
+      type: org.type,
+    });
+    activityLogCount++;
+  }
+
+  // Logs de publication de tenders
+  for (const tender of publishedTenders.slice(0, 15)) {
+    const org = organizations.find((o) => o.id === tender.organizationId);
+    const creator = users.find((u) => u.id === org?.createdBy);
+    await createActivityLog("TENDER_PUBLISHED", creator?.id, {
+      tenderId: tender.id,
+      tenderTitle: tender.title,
+    });
+    activityLogCount++;
+  }
+
+  // Logs de soumission d'offres
+  for (const offer of submittedOffers.slice(0, 20)) {
+    await createActivityLog("OFFER_SUBMITTED", undefined, {
+      offerId: offer.id,
+      tenderId: offer.tenderId,
+      organizationId: offer.organizationId,
+    });
+    activityLogCount++;
+  }
+
+  // Logs de paiements
+  for (let i = 0; i < 10; i++) {
+    const randomOrg =
+      organizations[Math.floor(Math.random() * organizations.length)];
+    const creator = users.find((u) => u.id === randomOrg.createdBy);
+    await createActivityLog("PAYMENT_SUCCESS", creator?.id, {
+      organizationId: randomOrg.id,
+      amount: Math.random() < 0.5 ? 10 : 5,
+    });
+    activityLogCount++;
+  }
+
+  console.log(`✅ ${activityLogCount} activity logs créés\n`);
+
+  // Rafraîchir publishedTenders après ajout des offres
+  publishedTenders = tenders.filter((t) => t.status === "PUBLISHED");
 
   // Statistiques détaillées
   const communeTenders = tenders.filter((t) =>
@@ -273,17 +648,43 @@ async function main() {
     )}%)\n`
   );
 
-  console.log(`💼 Offres & Recherches:`);
+  console.log(`💼 Offres & Interactions:`);
   console.log(`   • ${offerCount} offres déposées`);
-  console.log(`   • ${searchCount} recherches sauvegardées`);
+  console.log(`   • ${commentCount} commentaires sur offres`);
+  console.log(`   • ${savedTenderCount} tenders sauvegardés (favoris)`);
+  console.log(`   • ${searchCount} recherches sauvegardées\n`);
+
+  console.log(`📜 Traçabilité & Notifications:`);
+  console.log(`   • ${equityLogCount} logs d'équité`);
+  console.log(`   • ${notificationCount} notifications`);
+  console.log(`   • ${prefCount} préférences de notification\n`);
+
+  console.log(`🏛️ Module Veille:`);
+  console.log(`   • ${veilleSubCount} subscriptions veille actives`);
   console.log(`   • ${pubCount} publications de veille\n`);
+
+  console.log(`💳 Facturation & Abonnements:`);
+  console.log(`   • ${subscriptionCount} subscriptions (Stripe)`);
+  console.log(`   • ${invoiceCount} factures générées\n`);
+
+  console.log(`✉️ Collaborations:`);
+  console.log(`   • ${invitationCount} invitations en cours\n`);
+
+  console.log(`📊 Administration:`);
+  console.log(`   • ${activityLogCount} activity logs (super admin)\n`);
+
+  console.log(`🎯 Fonctionnalités avancées:`);
+  console.log(`   • ${lotCount} lots créés (tenders avec lots)`);
+  console.log(`   • ${criteriaCount} critères d'évaluation\n`);
+
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   console.log("🔐 Tous les utilisateurs utilisent le mot de passe: Test1234!");
   console.log("📧 Les emails sont vérifiés automatiquement");
   console.log(
-    "🏠 L'application est maintenant optimisée pour les particuliers !\n"
+    "🏠 L'application est maintenant optimisée pour les particuliers !"
   );
+  console.log("✨ Toutes les fonctionnalités sont maintenant testables !\n");
 }
 
 main()
