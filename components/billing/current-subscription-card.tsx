@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/hand-drawn-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Calendar, CreditCard, AlertCircle } from "lucide-react";
+import {
+  Sparkles,
+  Calendar,
+  CreditCard,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 interface CurrentSubscriptionCardProps {
   plan: string;
@@ -186,8 +192,17 @@ export function CurrentSubscriptionCard({
                 variant="default"
                 className="w-full h-10 hover:scale-[1.02] transition-transform"
               >
-                <CreditCard className="w-4 h-4 mr-2" />
-                {isLoading ? "Chargement..." : "Gérer l'abonnement"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Chargement...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Gérer l&apos;:abonnement
+                  </>
+                )}
               </Button>
             )}
           </div>

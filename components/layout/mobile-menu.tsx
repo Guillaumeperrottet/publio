@@ -18,6 +18,7 @@ import {
   LogOut,
   User,
   Shield,
+  Loader2,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import {
@@ -376,8 +377,17 @@ export function MobileMenu({
                   disabled={isLoggingOut}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span>{isLoggingOut ? "Déconnexion..." : "Déconnexion"}</span>
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Déconnexion...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-5 h-5" />
+                      <span>Déconnexion</span>
+                    </>
+                  )}
                 </button>
               </div>
             </>

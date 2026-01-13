@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Ban, CheckCircle } from "lucide-react";
+import { Ban, CheckCircle, Loader2 } from "lucide-react";
 import { toggleOrganizationSuspension } from "@/features/admin/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -118,7 +118,22 @@ export function ToggleOrganizationSuspensionButton({
               onClick={handleToggle}
               disabled={loading || (!isActive && !reason.trim())}
             >
-              {loading ? "..." : isActive ? "Suspend" : "Reactivate"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : isActive ? (
+                <>
+                  <Ban className="w-4 h-4 mr-2" />
+                  Suspend
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Reactivate
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -20,6 +20,7 @@ import {
   CreditCard,
   Shield,
   Bell,
+  Loader2,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
@@ -227,8 +228,17 @@ export function UserMenu({ user, organization, userRole }: UserMenuProps) {
           disabled={isLoading}
           className="text-red-600 focus:text-red-600 cursor-pointer"
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          <span>{isLoading ? "Déconnexion..." : "Déconnexion"}</span>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <span>Déconnexion...</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="w-4 h-4 mr-2" />
+              <span>Déconnexion</span>
+            </>
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

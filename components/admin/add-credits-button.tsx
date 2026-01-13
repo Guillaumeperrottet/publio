@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { addManualCredits } from "@/features/admin/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -127,7 +127,17 @@ export function AddCreditsButton({
               onClick={handleAddCredits}
               disabled={loading || !amount || !reason.trim()}
             >
-              {loading ? "Adding..." : "Add Credits"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Credits
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -66,8 +66,17 @@ export function AwardTenderButton({
         size="sm"
         className="bg-artisan-yellow hover:bg-artisan-yellow/90 text-matte-black"
       >
-        <Award className="w-4 h-4 mr-2" />
-        Attribuer le marché
+        {isAwarding ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Attribution...
+          </>
+        ) : (
+          <>
+            <Award className="w-4 h-4 mr-2" />
+            Attribuer le marché
+          </>
+        )}
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, TrendingUp } from "lucide-react";
+import { Check, Sparkles, TrendingUp, Loader2 } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -198,7 +198,16 @@ export function UpgradeVeilleDialog({
                     onClick={() => handleUpgrade(plan.id)}
                     disabled={isLoading || isFree}
                   >
-                    {isFree ? "Plan actuel" : "Choisir ce plan"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Chargement...
+                      </>
+                    ) : isFree ? (
+                      "Plan actuel"
+                    ) : (
+                      "Choisir ce plan"
+                    )}
                   </Button>
                 )}
               </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
+import { Shield, Loader2 } from "lucide-react";
 import { toggleSuperAdmin } from "@/features/admin/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -107,7 +107,22 @@ export function ToggleSuperAdminButton({
                   : ""
               }
             >
-              {loading ? "..." : isSuperAdmin ? "Révoquer" : "Accorder"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : isSuperAdmin ? (
+                <>
+                  <Shield className="w-4 h-4 mr-2" />
+                  Révoquer
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4 mr-2" />
+                  Accorder
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

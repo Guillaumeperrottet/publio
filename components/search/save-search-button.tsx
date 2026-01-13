@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createSavedSearch } from "@/features/search/actions";
 import { useRouter } from "next/navigation";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Loader2 } from "lucide-react";
 
 interface SaveSearchButtonProps {
   filters: Record<string, unknown>;
@@ -110,11 +110,25 @@ export function SaveSearchButton({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
               Annuler
             </Button>
             <Button onClick={handleSave} disabled={!name.trim() || loading}>
-              {loading ? "Sauvegarde..." : "Sauvegarder"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sauvegarde...
+                </>
+              ) : (
+                <>
+                  <Bookmark className="w-4 h-4 mr-2" />
+                  Sauvegarder
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

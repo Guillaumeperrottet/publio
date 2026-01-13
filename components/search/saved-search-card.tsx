@@ -16,7 +16,7 @@ import {
   toggleSearchAlerts,
 } from "@/features/search/actions";
 import { useRouter } from "next/navigation";
-import { Trash2, Bell, BellOff, ExternalLink } from "lucide-react";
+import { Trash2, Bell, BellOff, ExternalLink, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { SavedSearch } from "@prisma/client";
 
@@ -199,8 +199,15 @@ export function SavedSearchCard({ search }: SavedSearchCardProps) {
             size="sm"
             onClick={handleToggleAlerts}
             disabled={loading}
+            title={
+              search.alertsEnabled
+                ? "Désactiver les alertes"
+                : "Activer les alertes"
+            }
           >
-            {search.alertsEnabled ? (
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : search.alertsEnabled ? (
               <BellOff className="w-4 h-4" />
             ) : (
               <Bell className="w-4 h-4" />
@@ -212,8 +219,13 @@ export function SavedSearchCard({ search }: SavedSearchCardProps) {
             size="sm"
             onClick={handleDelete}
             disabled={loading}
+            title="Supprimer la recherche"
           >
-            <Trash2 className="w-4 h-4 text-red-500" />
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 text-red-500" />
+            )}
           </Button>
         </div>
 
