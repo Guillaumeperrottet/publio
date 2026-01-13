@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
@@ -24,12 +24,11 @@ export function ProgressBarProvider({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Terminer la barre quand la route change
     NProgress.done();
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     // Intercepter tous les clics sur les liens
@@ -39,11 +38,11 @@ export function ProgressBarProvider({
 
       if (link && link.href && !link.target && !link.download) {
         const url = new URL(link.href);
+        const currentUrl = window.location.pathname + window.location.search;
+        const targetUrl = url.pathname + url.search;
+
         // Démarrer la barre si c'est un lien interne différent de la page actuelle
-        if (
-          url.origin === window.location.origin &&
-          url.pathname !== pathname
-        ) {
+        if (url.origin === window.location.origin && targetUrl !== currentUrl) {
           NProgress.start();
         }
       }
