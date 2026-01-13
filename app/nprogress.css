@@ -12,7 +12,8 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 3px;
+  height: 4px; /* Plus épais pour meilleure visibilité */
+  box-shadow: 0 0 10px rgba(222, 174, 0, 0.8); /* Lueur pour visibilité */
 }
 
 /* Effet de lueur */
@@ -22,7 +23,7 @@
   right: 0px;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px #deae00, 0 0 5px #deae00;
+  box-shadow: 0 0 15px #deae00, 0 0 8px #deae00, 0 0 3px #deae00;
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
 }
@@ -44,7 +45,31 @@
   }
 }
 
-/* Spinner (désactivé mais gardé pour référence) */
+/* Spinner - Activé et visible */
 #nprogress .spinner {
-  display: none;
+  display: block;
+  position: fixed;
+  z-index: 9999;
+  top: 20px;
+  right: 20px;
+}
+
+#nprogress .spinner-icon {
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: solid 3px transparent;
+  border-top-color: #deae00;
+  border-left-color: #deae00;
+  border-radius: 50%;
+  animation: nprogress-spinner 400ms linear infinite;
+}
+
+@keyframes nprogress-spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

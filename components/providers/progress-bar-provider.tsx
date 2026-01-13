@@ -7,11 +7,11 @@ import "nprogress/nprogress.css";
 
 // Configuration de NProgress
 NProgress.configure({
-  showSpinner: false, // Pas de spinner, juste la barre
-  trickleSpeed: 200,
+  showSpinner: true, // Afficher le spinner pour feedback visuel clair
+  trickleSpeed: 150,
   minimum: 0.08,
   easing: "ease",
-  speed: 500,
+  speed: 400,
 });
 
 /**
