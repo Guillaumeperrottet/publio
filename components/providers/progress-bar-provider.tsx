@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
@@ -24,19 +24,36 @@ export function ProgressBarProvider({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Démarrer la barre au changement de route
-    NProgress.start();
+    // Terminer la barre quand la route change
+    NProgress.done();
+  }, [pathname, searchParams]);
 
-    // Terminer la barre quand la route est chargée
-    const timer = setTimeout(() => {
-      NProgress.done();
-    }, 100);
+  useEffect(() => {
+    // Intercepter tous les clics sur les liens
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest("a");
+
+      if (link && link.href && !link.target && !link.download) {
+        const url = new URL(link.href);
+        // Démarrer la barre si c'est un lien interne différent de la page actuelle
+        if (
+          url.origin === window.location.origin &&
+          url.pathname !== pathname
+        ) {
+          NProgress.start();
+        }
+      }
+    };
+
+    // Écouter les clics
+    document.addEventListener("click", handleClick);
 
     return () => {
-      clearTimeout(timer);
-      NProgress.done();
+      document.removeEventListener("click", handleClick);
     };
   }, [pathname]);
 
