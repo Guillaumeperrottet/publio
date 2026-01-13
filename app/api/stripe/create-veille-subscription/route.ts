@@ -84,6 +84,35 @@ export async function POST(request: NextRequest) {
         where: { id: organizationId },
         data: { stripeCustomerId: customerId },
       });
+    } else {
+      // Vérifier que le customer existe dans Stripe
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch (error: any) {
+        if (error.statusCode === 404 || error.code === "resource_missing") {
+          // Le customer n'existe plus dans Stripe, en créer un nouveau
+          console.warn(
+            `Customer ${customerId} not found in Stripe, creating new one`
+          );
+
+          const customer = await stripe.customers.create({
+            metadata: {
+              organizationId,
+            },
+            email: user.email,
+          });
+
+          customerId = customer.id;
+
+          // Mettre à jour le customer ID
+          await prisma.organization.update({
+            where: { id: organizationId },
+            data: { stripeCustomerId: customerId },
+          });
+        } else {
+          throw error;
+        }
+      }
     }
 
     // Créer la session de checkout
