@@ -37,7 +37,11 @@ const marketTypeLabels: Record<string, string> = {
 
 const statusConfig: Record<
   string,
-  { label: string; icon: any; className: string }
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    className: string;
+  }
 > = {
   DRAFT: {
     label: "Brouillon",

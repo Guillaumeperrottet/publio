@@ -436,11 +436,11 @@ export function OffersTable({
                           <div>
                             <h4 className="font-semibold mb-2 flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
-                              Validité de l'offre
+                              Validité de l&apos;offre
                             </h4>
                             <p className="text-sm text-muted-foreground">
                               {offer.usesTenderDeadline
-                                ? "Valable jusqu'à la deadline du tender"
+                                ? "Valable jusqu&apos;à la deadline du tender"
                                 : `Valable ${offer.validityDays} jours après soumission`}
                             </p>
                             {offer.submittedAt && !offer.usesTenderDeadline && (

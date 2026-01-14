@@ -104,7 +104,7 @@ export default async function VeilleSettingsPage() {
               <Link href="/dashboard/billing">
                 <Button variant="outline" size="sm">
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Gérer l'abonnement
+                  Gérer l&apos;abonnement
                 </Button>
               </Link>
             </div>

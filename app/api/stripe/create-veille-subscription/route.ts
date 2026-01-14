@@ -88,8 +88,12 @@ export async function POST(request: NextRequest) {
       // Vérifier que le customer existe dans Stripe
       try {
         await stripe.customers.retrieve(customerId);
-      } catch (error: any) {
-        if (error.statusCode === 404 || error.code === "resource_missing") {
+      } catch (error: unknown) {
+        const stripeError = error as { statusCode?: number; code?: string };
+        if (
+          stripeError.statusCode === 404 ||
+          stripeError.code === "resource_missing"
+        ) {
           // Le customer n'existe plus dans Stripe, en créer un nouveau
           console.warn(
             `Customer ${customerId} not found in Stripe, creating new one`

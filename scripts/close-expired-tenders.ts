@@ -10,7 +10,7 @@
  * Ou manuellement : npx tsx scripts/close-expired-tenders.ts
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TenderStatus } from "@prisma/client";
 import {
   sendDeadlinePassedEmail,
   sendTenderAutoClosedEmail,
@@ -116,8 +116,12 @@ async function closeExpiredTenders() {
       );
 
       // Préparer les données de mise à jour
-      const updateData: any = {
-        status: "CLOSED",
+      const updateData: {
+        status: TenderStatus;
+        identityRevealed?: boolean;
+        revealedAt?: Date;
+      } = {
+        status: TenderStatus.CLOSED,
       };
 
       // Si le tender est en mode anonyme, révéler l'identité

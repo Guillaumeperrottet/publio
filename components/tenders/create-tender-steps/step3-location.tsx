@@ -152,7 +152,7 @@ export function TenderStep3({ formData, updateFormData }: TenderStep3Props) {
             Indication complémentaire
           </Label>
           <p className="text-sm text-muted-foreground mb-2">
-            Optionnel - précisions sur le lieu ou l'accès
+            Optionnel - précisions sur le lieu ou l&apos;accès
           </p>
           <Input
             id="location"

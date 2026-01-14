@@ -230,8 +230,8 @@ export default async function VeilleSourcesPage() {
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
               <strong>SIMAP :</strong> Scrapage automatique 6 fois par jour (6h,
-              9h, 12h, 15h, 18h, 21h) pour capturer les nouveaux appels d'offres
-              dès leur publication.
+              9h, 12h, 15h, 18h, 21h) pour capturer les nouveaux appels
+              d&apos;offres dès leur publication.
             </p>
             <p>
               <strong>Feuilles officielles cantonales :</strong> Scrapage

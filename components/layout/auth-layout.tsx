@@ -33,7 +33,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
               <span className="font-handdrawn">Publio</span>
             </h1>
             <p className="text-sm text-muted-foreground">
-              La plateforme d'appels d'offres équitables
+              La plateforme d&apos;appels d&apos;offres équitables
             </p>
           </Link>
         </div>

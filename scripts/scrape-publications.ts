@@ -16,6 +16,7 @@ import {
   deduplicatePublications,
   filterRecentPublications,
 } from "@/features/veille/scraper";
+import type { ScrapedPublication } from "@/features/veille/types";
 import { SimapScraper } from "@/features/veille/scrapers/simap";
 import { FribourgOfficialGazetteScraper } from "@/features/veille/scrapers/fribourg-official";
 import { ValaisOfficialScraper } from "@/features/veille/scrapers/valais-official";
@@ -63,7 +64,7 @@ async function scrapeAndStorePublications(includeWeekly = false) {
     );
 
     // 3. Scraper Fribourg (Feuille Officielle PDF) - uniquement si demandé
-    let fribourgPublications: any[] = [];
+    let fribourgPublications: ScrapedPublication[] = [];
     if (includeWeekly && allCantons.includes("FR")) {
       console.log(`\n📄 Scraping Fribourg FO (hebdomadaire)...`);
       const fribourgScraper = new FribourgOfficialGazetteScraper();
@@ -78,7 +79,7 @@ async function scrapeAndStorePublications(includeWeekly = false) {
     }
 
     // 4. Scraper Valais - Double approche pour couverture complète
-    let valaisPublications: any[] = [];
+    let valaisPublications: ScrapedPublication[] = [];
     if (allCantons.includes("VS")) {
       // 4a. PDF Bulletin Officiel (constructions, marchés publics, annonces)
       console.log(`\n📰 Scraping Valais BO PDF (constructions & marchés)...`);
@@ -108,7 +109,7 @@ async function scrapeAndStorePublications(includeWeekly = false) {
     );
 
     // 5. Combiner toutes les publications
-    const rawPublications = [
+    const rawPublications: ScrapedPublication[] = [
       ...simapPublications,
       ...fribourgPublications,
       ...valaisPublications,

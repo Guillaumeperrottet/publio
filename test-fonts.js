@@ -1,4 +1,4 @@
-const pdfFonts = require("pdfmake/build/vfs_fonts");
+import pdfFonts from "pdfmake/build/vfs_fonts.js";
 
 console.log("Type of pdfFonts:", typeof pdfFonts);
 console.log("pdfFonts keys:", Object.keys(pdfFonts));

@@ -194,7 +194,7 @@ export default async function VeillePage() {
                 cantons={veilleSubscription.cantons}
                 publications={publications.map((pub) => ({
                   ...pub,
-                  metadata: pub.metadata as any,
+                  metadata: pub.metadata as Record<string, unknown> | null,
                 }))}
               />
             )}

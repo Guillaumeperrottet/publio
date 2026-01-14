@@ -39,12 +39,12 @@ export function SaveSearchButton({
     setLoading(true);
 
     // Nettoyer les filtres - supprimer les valeurs undefined/null/empty
-    const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+    const cleanFilters: Record<string, any> = {};
+    Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
-        acc[key] = value;
+        cleanFilters[key] = value;
       }
-      return acc;
-    }, {} as Record<string, any>);
+    });
 
     console.log("Saving filters:", cleanFilters); // Debug
 
